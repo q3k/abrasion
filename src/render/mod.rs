@@ -1,10 +1,16 @@
+use std::sync::Arc;
+
 use winit::{
     dpi::LogicalSize,
+    Window,
     WindowEvent,
     WindowBuilder,
     EventsLoop,
     Event,
 };
+use vulkano_win::VkSurfaceBuild;
+use vulkano::instance as vi;
+use vulkano::swapchain as vs;
 
 mod vulkan;
 
@@ -12,27 +18,29 @@ const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
 pub struct Renderer {
-    instance: vulkan::Instance,
+    instance: vulkan::Instance<winit::Window>,
     events_loop: EventsLoop,
 }
 
 impl Renderer {
     pub fn initialize() -> Self {
-        let instance = vulkan::Instance::new("threepy".to_string());
-        let events_loop = Self::init_window();
+        let mut instance = vulkan::Instance::new("threepy".to_string());
+        let (events_loop, surface) = Self::init_window(instance.get_vulkan());
+        instance.bind_surface(&surface);
         Self {
             instance,
             events_loop,
         }
     }
 
-    fn init_window() -> EventsLoop {
+    fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
         let events_loop = EventsLoop::new();
-        let _window = WindowBuilder::new()
+        let surface = WindowBuilder::new()
             .with_title("threepy")
             .with_dimensions(LogicalSize::new(f64::from(WIDTH), f64::from(HEIGHT)))
-            .build(&events_loop);
-        events_loop
+            .build_vk_surface(&events_loop, instance.clone())
+            .expect("could not create surface");
+        (events_loop, surface)
     }
 
     pub fn main_loop(&mut self) {
