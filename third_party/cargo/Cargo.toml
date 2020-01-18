@@ -1,0 +1,39 @@
+[package]
+edition = "2018"
+name = "compile_with_bazel"
+version = "1.33.7"
+
+[lib]
+path = "fake_lib.rs"
+
+[dependencies]
+env_logger = "0.6.1"
+log = "0.4.6"
+vulkano = "0.11.1"
+vulkano-win = "0.11.1"
+winit = "0.18.0"
+
+[raze]
+workspace_path = "//third_party/cargo"
+target = "x86_64-unknown-linux-gnu"
+
+[raze.crates.andrew.'0.2.1']
+skipped_deps = ['rusttype-0.7.9']
+additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.2:rusttype']
+
+[raze.crates.x11-dl.'2.18.4']
+gen_buildrs = true
+
+[raze.crates.wayland-client.'0.21.13']
+gen_buildrs = true
+
+[raze.crates.wayland-protocols.'0.21.13']
+gen_buildrs = true
+
+[raze.crates.log.'0.4.8']
+additional_flags = [
+    "--cfg=atomic_cas"
+]
+
+[raze.crates.libloading.'0.5.2']
+additional_deps = ['//third_party/cargo/patches:libloading_global_static']

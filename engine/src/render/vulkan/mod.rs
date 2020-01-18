@@ -3,12 +3,19 @@ use log;
 
 use vulkano::instance as vi;
 use vulkano::swapchain as vs;
+use std::ops::Deref;
 
 mod binding;
 mod swapchains;
 mod qfi;
 
 const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
+
+fn required_instance_extensions() -> vi::InstanceExtensions {
+    let mut exts = vulkano_win::required_extensions();
+    exts.ext_debug_report = true;
+    exts
+}
 
 pub struct Instance<WT> {
     debug_callback: vi::debug::DebugCallback,
@@ -27,7 +34,7 @@ impl<WT> Instance<WT> {
             engine_version: Some(VERSION),
         };
 
-        let exts = Self::required_instance_extensions();
+        let exts = required_instance_extensions();
         let layers = ["VK_LAYER_LUNARG_standard_validation"];
         let vulkan = vi::Instance::new(Some(&ai), &exts, layers.iter().cloned()).expect("could not create vulkan instance");
         let debug_callback = Self::init_debug_callback(&vulkan);
@@ -51,12 +58,6 @@ impl<WT> Instance<WT> {
         self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap()));
 
         log::info!("Bound to Vulkan Device: {}", self.binding.as_ref().unwrap().physical_device().name());
-    }
-
-    fn required_instance_extensions() -> vi::InstanceExtensions {
-        let mut exts = vulkano_win::required_extensions();
-        exts.ext_debug_report = true;
-        exts
     }
 
 

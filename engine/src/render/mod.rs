@@ -24,7 +24,7 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn initialize() -> Self {
-        let mut instance = vulkan::Instance::new("threepy".to_string());
+        let mut instance = vulkan::Instance::new("abrasion".to_string());
         let (events_loop, surface) = Self::init_window(instance.get_vulkan());
         instance.use_surface(&surface);
         Self {
@@ -36,7 +36,7 @@ impl Renderer {
     fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
         let events_loop = EventsLoop::new();
         let surface = WindowBuilder::new()
-            .with_title("threepy")
+            .with_title("abrasion")
             .with_dimensions(LogicalSize::new(f64::from(WIDTH), f64::from(HEIGHT)))
             .build_vk_surface(&events_loop, instance.clone())
             .expect("could not create surface");
