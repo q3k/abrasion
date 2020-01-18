@@ -26,7 +26,7 @@ impl Renderer {
     pub fn initialize() -> Self {
         let mut instance = vulkan::Instance::new("threepy".to_string());
         let (events_loop, surface) = Self::init_window(instance.get_vulkan());
-        instance.bind_surface(&surface);
+        instance.use_surface(&surface);
         Self {
             instance,
             events_loop,
