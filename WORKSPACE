@@ -4,11 +4,11 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_rust",
-    sha256 = "71bcdc2d56adf2cf71e53ad453ae19757d2d52704c2f598b73339fe9b9326fcf",
-    strip_prefix = "rules_rust-92f56af72f2929089d00116c12d5d6bc029d839d",
+    # master HEAD as of 2020/01/19
+    sha256 = "66ea4cb3296016234143511e8ce3435b5f186a217a84c251c31d04dc10ca1807",
+    strip_prefix = "rules_rust-a9103cd6260433fb04b36d9a3e1dc4d3ddceaa22",
     urls = [
-        # Need https://github.com/bazelbuild/rules_rust/pull/285 for rusttype
-        "https://github.com/GregBowyer/rules_rust/archive/92f56af72f2929089d00116c12d5d6bc029d839d.tar.gz",
+        "https://github.com/bazelbuild/rules_rust/archive/a9103cd6260433fb04b36d9a3e1dc4d3ddceaa22.tar.gz",
     ],
 )
 
@@ -20,7 +20,6 @@ http_archive(
 )
 
 load("@io_bazel_rules_rust//rust:repositories.bzl", "rust_repository_set")
-#rust_repositories()
 rust_repository_set(
     name = "rust_linux_x86_64",
     exec_triple = "x86_64-unknown-linux-gnu",
