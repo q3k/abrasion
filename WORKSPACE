@@ -30,3 +30,10 @@ rust_repository_set(
 
 load("@io_bazel_rules_rust//:workspace.bzl", "bazel_version")
 bazel_version(name = "bazel_version")
+
+http_archive(
+    name = "glslang",
+    sha256 = "0b79a120ac7826ac31bcd47ba3e11d79d8d2709bfaf17125aa759eeec6799dd3",
+    strip_prefix = "glslang-b0ada80356ca7b560c600b93a596af1331442542",
+    url = "https://github.com/KhronosGroup/glslang/archive/b0ada80356ca7b560c600b93a596af1331442542.tar.gz",
+)
