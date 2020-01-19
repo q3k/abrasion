@@ -6,8 +6,8 @@ use vulkano::format as vf;
 use vulkano::sync as vy;
 
 pub struct Swapchains<WT> {
-    chain: Arc<vs::Swapchain<WT>>,
-    images: Vec<Arc<vm::SwapchainImage<WT>>>,
+    pub chain: Arc<vs::Swapchain<WT>>,
+    pub images: Vec<Arc<vm::SwapchainImage<WT>>>,
 }
 
 impl<WT> Swapchains<WT> {

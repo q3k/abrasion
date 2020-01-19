@@ -5,6 +5,7 @@ glsl_binary(
     srcs = [
         "triangle.vert"
     ],
+    visibility = ["//engine:__pkg__"],
 )
 
 glsl_binary(
@@ -12,4 +13,5 @@ glsl_binary(
     srcs = [
         "triangle.frag"
     ],
+    visibility = ["//engine:__pkg__"],
 )

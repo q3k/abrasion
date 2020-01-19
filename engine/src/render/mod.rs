@@ -27,6 +27,7 @@ impl Renderer {
         let mut instance = vulkan::Instance::new("abrasion".to_string());
         let (events_loop, surface) = Self::init_window(instance.get_vulkan());
         instance.use_surface(&surface);
+
         Self {
             instance,
             events_loop,
@@ -43,8 +44,15 @@ impl Renderer {
         (events_loop, surface)
     }
 
+    fn draw_frame(&mut self) {
+        let future = self.instance.flip();
+        future.wait(None).unwrap()
+    }
+
     pub fn main_loop(&mut self) {
         loop {
+            self.draw_frame();
+
             let mut done = false;
             self.events_loop.poll_events(|ev| {
                 if let Event::WindowEvent { event: WindowEvent::CloseRequested, .. } = ev {

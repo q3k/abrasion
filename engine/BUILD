@@ -9,6 +9,7 @@ rust_binary(
         "src/render/vulkan/mod.rs",
         "src/render/vulkan/binding.rs",
         "src/render/vulkan/qfi.rs",
+        "src/render/vulkan/shaders.rs",
         "src/render/vulkan/swapchains.rs",
     ],
     deps = [
@@ -17,5 +18,10 @@ rust_binary(
         "//third_party/cargo:env_logger",
         "//third_party/cargo:vulkano",
         "//third_party/cargo:vulkano_win",
+        "@io_bazel_rules_rust//tools/runfiles",
+    ],
+    data = [
+        "//engine/shaders:triangle_vert",
+        "//engine/shaders:triangle_frag",
     ],
 )
