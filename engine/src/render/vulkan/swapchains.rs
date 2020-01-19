@@ -11,7 +11,7 @@ pub struct Swapchains<WT> {
 }
 
 impl<WT> Swapchains<WT> {
-    pub fn new(binding: &super::binding::Binding<WT>) -> Self {
+    pub fn new(binding: &super::binding::Binding<WT>, previous: Option<&Swapchains<WT>>) -> Self {
         let physical_device = binding.physical_device();
         let capabilities = binding.surface.capabilities(physical_device).expect("could not get capabilities");
 
@@ -38,6 +38,11 @@ impl<WT> Swapchains<WT> {
             (&binding.graphics_queue).into()
         };
 
+        let prev = match previous {
+            None => None,
+            Some(p) => Some(p.chain.clone()),
+        };
+
         let (chain, images) = vs::Swapchain::new(
             binding.device.clone(),
             binding.surface.clone(),
@@ -51,7 +56,7 @@ impl<WT> Swapchains<WT> {
             vs::CompositeAlpha::Opaque,
             present_mode,
             true,
-            None,
+            prev.as_ref(),
         ).expect("could not create swap chain");
 
         Self {

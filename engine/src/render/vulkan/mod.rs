@@ -25,6 +25,7 @@ pub struct Instance<WT> {
     debug_callback: vi::debug::DebugCallback,
     vulkan: Arc<vi::Instance>,
 
+    surface: Option<Arc<vs::Surface<WT>>>,
     binding: Option<binding::Binding<WT>>,
     swapchains: Option<swapchains::Swapchains<WT>>,
     render_pass: Option<Arc<dyn vf::RenderPassAbstract + Send + Sync>>,
@@ -51,6 +52,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             debug_callback,
             vulkan,
 
+            surface: None,
             binding: None,
             swapchains: None,
             render_pass: None,
@@ -68,20 +70,24 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     }
 
     pub fn use_surface(&mut self, surface: &Arc<vs::Surface<WT>>) {
-        self.binding = Some(binding::Binding::new(&self.vulkan, &surface));
-        self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap()));
+        self.surface = Some(surface.clone());
+        self.arm();
 
         log::info!("Bound to Vulkan Device: {}", self.binding.as_ref().unwrap().physical_device().name());
+    }
+
+    fn arm(&mut self) {
+        self.binding = Some(binding::Binding::new(&self.vulkan, self.surface.as_ref().unwrap().clone()));
+        self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap(), None));
 
         let device = self.binding.as_ref().unwrap().device.clone();
         let chain = self.get_swapchain();
 
         self.create_render_pass(chain.format());
-        let render_pass = self.render_pass.as_ref().unwrap().clone();
-
-        let pipeline = shaders::pipeline_triangle(device, chain.dimensions(), render_pass);
         self.create_framebuffers();
 
+        let render_pass = self.render_pass.as_ref().unwrap().clone();
+        let pipeline = shaders::pipeline_triangle(device, chain.dimensions(), render_pass);
         self.create_command_buffers(pipeline);
     }
 

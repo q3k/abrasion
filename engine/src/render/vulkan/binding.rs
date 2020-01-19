@@ -20,7 +20,7 @@ impl <WT> Binding<WT> {
         vi::PhysicalDevice::from_index(&self.instance, self.physical_device_ix).unwrap()
     }
 
-    pub fn new(instance: &Arc<vi::Instance>, surface: &Arc<vs::Surface<WT>>) -> Self {
+    pub fn new(instance: &Arc<vi::Instance>, surface: Arc<vs::Surface<WT>>) -> Self {
         let physical_device_ix = Self::pick_physical_device(instance, &surface);
         let physical_device = vi::PhysicalDevice::from_index(instance, physical_device_ix).unwrap();
         let indices = super::qfi::QueueFamilyIndices::find(&surface, &physical_device).unwrap();
