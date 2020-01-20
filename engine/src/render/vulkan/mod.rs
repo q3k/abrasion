@@ -33,8 +33,8 @@ pub struct Instance<WT> {
     framebuffers: Vec<Arc<dyn vf::FramebufferAbstract + Send + Sync>>,
     command_buffers: Vec<Arc<vc::AutoCommandBuffer>>,
 
+    armed: bool,
     previous_frame_end: Option<Box<FlipFuture<WT>>>,
-    recreate_swap_chain: bool,
     fps_counter: crate::util::counter::Counter,
 }
 
@@ -67,7 +67,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             command_buffers: vec![],
 
             previous_frame_end: None,
-            recreate_swap_chain: false,
+            armed: false,
             fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(100)),
         }
     }
@@ -90,7 +90,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     }
 
     fn arm(&mut self) {
-        self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap(), None));
+        self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap(), self.swapchains.as_ref()));
 
         let device = self.binding.as_ref().unwrap().device.clone();
         let chain = self.get_swapchain();
@@ -102,7 +102,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let pipeline = shaders::pipeline_triangle(device.clone(), chain.dimensions(), render_pass);
         self.create_command_buffers(pipeline);
 
-        self.previous_frame_end = None
+        self.previous_frame_end = None;
+        self.armed = true;
     }
 
 
@@ -113,8 +114,20 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             Some(future) => future.wait(None).unwrap(),
         }
 
+        if !self.armed {
+            self.arm();
+        }
+
         let chain = self.get_swapchain();
-        let (image_index, acquire_future) = vs::acquire_next_image(chain.clone(), None).unwrap();
+        let (image_index, acquire_future) = match vs::acquire_next_image(chain.clone(), None) {
+            Ok(r) => r,
+            Err(vs::AcquireError::OutOfDate) => {
+                self.armed = false;
+                self.previous_frame_end = None;
+                return;
+            },
+            Err(err) => panic!("{:?}", err),
+        };
         let command_buffer = self.command_buffers[image_index].clone();
 
         let gq = self.binding.as_ref().unwrap().graphics_queue.clone();
@@ -124,11 +137,19 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             .then_execute(gq, command_buffer)
             .unwrap()
             .then_swapchain_present(pq, chain, image_index)
-            .then_signal_fence_and_flush()
-            .unwrap();
+            .then_signal_fence_and_flush();
 
-        self.previous_frame_end = Some(Box::new(future));
+        match future {
+            Ok(_) => (),
+            Err(vulkano::sync::FlushError::OutOfDate) => {
+                self.armed = false;
+                self.previous_frame_end = None;
+                return;
+            },
+            Err(err) => panic!("{:?}", err),
+        };
 
+        self.previous_frame_end = Some(Box::new(future.unwrap()));
         match self.fps_counter.tick() {
             Some(rate) => log::info!("FPS: {}", rate),
             None => ()
