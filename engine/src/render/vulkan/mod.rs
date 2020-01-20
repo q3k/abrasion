@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time;
 use log;
 
 use vulkano::command_buffer as vc;
@@ -31,7 +32,13 @@ pub struct Instance<WT> {
     render_pass: Option<Arc<dyn vf::RenderPassAbstract + Send + Sync>>,
     framebuffers: Vec<Arc<dyn vf::FramebufferAbstract + Send + Sync>>,
     command_buffers: Vec<Arc<vc::AutoCommandBuffer>>,
+
+    previous_frame_end: Option<Box<FlipFuture<WT>>>,
+    recreate_swap_chain: bool,
+    fps_counter: crate::util::counter::Counter,
 }
+
+type FlipFuture<WT> = FenceSignalFuture<vs::PresentFuture<vc::CommandBufferExecFuture<vs::SwapchainAcquireFuture<WT>, Arc<vc::AutoCommandBuffer>>, WT>>;
 
 impl<WT: 'static + Send + Sync> Instance<WT> {
     pub fn new(name: String) -> Self {
@@ -58,6 +65,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             render_pass: None,
             framebuffers: vec![],
             command_buffers: vec![],
+
+            previous_frame_end: None,
+            recreate_swap_chain: false,
+            fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(100)),
         }
     }
 
@@ -71,13 +82,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     pub fn use_surface(&mut self, surface: &Arc<vs::Surface<WT>>) {
         self.surface = Some(surface.clone());
-        self.arm();
 
+        self.binding = Some(binding::Binding::new(&self.vulkan, self.surface.as_ref().unwrap().clone()));
         log::info!("Bound to Vulkan Device: {}", self.binding.as_ref().unwrap().physical_device().name());
+
+        self.arm();
     }
 
     fn arm(&mut self) {
-        self.binding = Some(binding::Binding::new(&self.vulkan, self.surface.as_ref().unwrap().clone()));
         self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap(), None));
 
         let device = self.binding.as_ref().unwrap().device.clone();
@@ -87,11 +99,20 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.create_framebuffers();
 
         let render_pass = self.render_pass.as_ref().unwrap().clone();
-        let pipeline = shaders::pipeline_triangle(device, chain.dimensions(), render_pass);
+        let pipeline = shaders::pipeline_triangle(device.clone(), chain.dimensions(), render_pass);
         self.create_command_buffers(pipeline);
+
+        self.previous_frame_end = None
     }
 
-    pub fn flip(&self) -> FenceSignalFuture<vs::PresentFuture<vc::CommandBufferExecFuture<vs::SwapchainAcquireFuture<WT>, Arc<vc::AutoCommandBuffer>>, WT>> {
+
+    // (╯°□°)╯︵ ┻━┻
+    pub fn flip(&mut self) {
+        match &self.previous_frame_end {
+            None => (),
+            Some(future) => future.wait(None).unwrap(),
+        }
+
         let chain = self.get_swapchain();
         let (image_index, acquire_future) = vs::acquire_next_image(chain.clone(), None).unwrap();
         let command_buffer = self.command_buffers[image_index].clone();
@@ -99,12 +120,19 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let gq = self.binding.as_ref().unwrap().graphics_queue.clone();
         let pq = self.binding.as_ref().unwrap().present_queue.clone();
 
-        acquire_future
+        let future = acquire_future
             .then_execute(gq, command_buffer)
             .unwrap()
             .then_swapchain_present(pq, chain, image_index)
             .then_signal_fence_and_flush()
-            .unwrap()
+            .unwrap();
+
+        self.previous_frame_end = Some(Box::new(future));
+
+        match self.fps_counter.tick() {
+            Some(rate) => log::info!("FPS: {}", rate),
+            None => ()
+        }
     }
 
     fn create_render_pass(&mut self, color_format: vulkano::format::Format) {

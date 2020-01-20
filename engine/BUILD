@@ -11,6 +11,8 @@ rust_binary(
         "src/render/vulkan/qfi.rs",
         "src/render/vulkan/shaders.rs",
         "src/render/vulkan/swapchains.rs",
+        "src/util/mod.rs",
+        "src/util/counter.rs",
     ],
     deps = [
         "//third_party/cargo:winit",

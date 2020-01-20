@@ -45,8 +45,7 @@ impl Renderer {
     }
 
     fn draw_frame(&mut self) {
-        let future = self.instance.flip();
-        future.wait(None).unwrap()
+        self.instance.flip();
     }
 
     pub fn main_loop(&mut self) {

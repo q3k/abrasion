@@ -2,6 +2,7 @@ use log;
 use env_logger;
 
 mod render;
+mod util;
 
 fn main() {
     env_logger::init();
