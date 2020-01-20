@@ -64,7 +64,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
             previous_frame_end: None,
             armed: false,
-            fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(100)),
+            fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(1000)),
         }
     }
 

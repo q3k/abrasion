@@ -65,6 +65,8 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
             prev.as_ref(),
         ).expect("could not create swap chain");
 
+        log::info!("Swap chain: present mode {:?}, {} images", present_mode, images.len());
+
         let render_pass = Self::create_render_pass(surface_binding, chain.format());
         let framebuffers = Self::create_framebuffers(render_pass.clone(), images.clone());
 
