@@ -11,6 +11,7 @@ use vulkano::pipeline as vp;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
 mod binding;
+mod data;
 mod shaders;
 mod swapchains;
 mod qfi;
@@ -102,8 +103,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let render_pass = self.render_pass.as_ref().unwrap().clone();
         let pipeline = shaders::pipeline_forward(device.clone(), chain.dimensions(), render_pass);
-        let buffer = vb::cpu_access::CpuAccessibleBuffer::from_iter(device.clone(),
-            vb::BufferUsage::vertex_buffer(), vertices().iter().cloned()).unwrap();
+
+        let (buffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+            data::vertices().iter().cloned(),
+            vb::BufferUsage::vertex_buffer(),
+            self.binding.as_ref().unwrap().graphics_queue.clone(),
+        ).unwrap();
+        future.flush().unwrap();
+
         self.create_command_buffers(pipeline, buffer);
 
         self.previous_frame_end = None;
@@ -229,25 +236,4 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             log::debug!("validation layer: {:?}", msg.description);
         }).expect("could not create debug callback")
     }
-}
-
-#[derive(Copy, Clone)]
-struct Vertex {
-    pos: [f32; 3],
-    color: [f32; 3],
-}
-
-impl Vertex {
-    pub fn new(pos: [f32; 3], color: [f32; 3]) -> Self {
-        Self { pos, color }
-    }
-}
-vulkano::impl_vertex!(Vertex, pos, color);
-
-fn vertices() -> [Vertex; 3] {
-    [
-        Vertex::new([0.0, -0.5, 0.0], [1.0, 1.0, 1.0]),
-        Vertex::new([0.5, 0.5, 0.0], [0.0, 1.0, 0.0]),
-        Vertex::new([-0.5, 0.5, 0.0], [0.0, 0.0, 1.])
-    ]
 }

@@ -50,7 +50,7 @@ pub fn pipeline_forward(
     };
 
     Arc::new(vp::GraphicsPipeline::start()
-             .vertex_input_single_buffer::<super::Vertex>()
+             .vertex_input_single_buffer::<super::data::Vertex>()
              .vertex_shader(vertex.entry_point(), ())
              .triangle_list()
              .primitive_restart(false)
