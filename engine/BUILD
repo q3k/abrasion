@@ -23,7 +23,7 @@ rust_binary(
         "@io_bazel_rules_rust//tools/runfiles",
     ],
     data = [
-        "//engine/shaders:triangle_vert",
-        "//engine/shaders:triangle_frag",
+        "//engine/shaders:forward_vert",
+        "//engine/shaders:forward_frag",
     ],
 )

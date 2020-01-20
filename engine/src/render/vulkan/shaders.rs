@@ -6,7 +6,6 @@ use std::io::prelude::*;
 use std::sync::Arc;
 
 use runfiles::Runfiles;
-use vulkano::descriptor as vD;
 use vulkano::descriptor::descriptor as vdd;
 use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
@@ -14,26 +13,26 @@ use vulkano::format::Format;
 use vulkano::framebuffer as vf;
 use vulkano::pipeline as vp;
 use vulkano::pipeline::shader as vps;
-use vulkano::pipeline::vertex as vpv;
 
-pub type ConcreteGraphicsPipeline = vp::GraphicsPipeline<vpv::BufferlessDefinition, Box<dyn vD::PipelineLayoutAbstract + Send + Sync + 'static>, Arc<dyn vf::RenderPassAbstract + Send + Sync + 'static>>;
-
-pub fn pipeline_triangle(
+pub fn pipeline_forward(
     device: Arc<vd::Device>,
     swap_chain_extent: [u32; 2],
     render_pass: Arc<dyn vf::RenderPassAbstract + Send + Sync>,
-) -> Arc<ConcreteGraphicsPipeline> {
+) -> Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync> {
     let vertex = ShaderDefinition {
-        name: "triangle_vert.spv".to_string(),
+        name: "forward_vert.spv".to_string(),
         ty: vps::GraphicsShaderType::Vertex,
-        inputs: vec![],
+        inputs: vec![
+            vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("pos")) },
+            vps::ShaderInterfaceDefEntry { location: 1..2, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("color")) },
+        ],
         outputs: vec![
             vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
         ],
     }.load_into(device.clone()).expect("could not load vertex shader");
 
     let fragment = ShaderDefinition {
-        name: "triangle_frag.spv".to_string(),
+        name: "forward_frag.spv".to_string(),
         ty: vps::GraphicsShaderType::Fragment,
         inputs: vec![
             vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
@@ -51,7 +50,7 @@ pub fn pipeline_triangle(
     };
 
     Arc::new(vp::GraphicsPipeline::start()
-             .vertex_input(vpv::BufferlessDefinition {})
+             .vertex_input_single_buffer::<super::Vertex>()
              .vertex_shader(vertex.entry_point(), ())
              .triangle_list()
              .primitive_restart(false)

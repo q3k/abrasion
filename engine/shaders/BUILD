@@ -1,17 +1,17 @@
 load("//tools/bzl:glsl.bzl", "glsl_binary")
 
 glsl_binary(
-    name = "triangle_vert",
+    name = "forward_vert",
     srcs = [
-        "triangle.vert"
+        "forward.vert"
     ],
     visibility = ["//engine:__pkg__"],
 )
 
 glsl_binary(
-    name = "triangle_frag",
+    name = "forward_frag",
     srcs = [
-        "triangle.frag"
+        "forward.frag"
     ],
     visibility = ["//engine:__pkg__"],
 )

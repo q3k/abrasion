@@ -3,10 +3,11 @@ use std::time;
 use log;
 
 use vulkano::command_buffer as vc;
+use vulkano::buffer as vb;
 use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 use vulkano::framebuffer as vf;
-use vulkano::pipeline::vertex as vpv;
+use vulkano::pipeline as vp;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
 mod binding;
@@ -39,6 +40,7 @@ pub struct Instance<WT> {
 }
 
 type FlipFuture<WT> = FenceSignalFuture<vs::PresentFuture<vc::CommandBufferExecFuture<vs::SwapchainAcquireFuture<WT>, Arc<vc::AutoCommandBuffer>>, WT>>;
+
 
 impl<WT: 'static + Send + Sync> Instance<WT> {
     pub fn new(name: String) -> Self {
@@ -99,8 +101,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.create_framebuffers();
 
         let render_pass = self.render_pass.as_ref().unwrap().clone();
-        let pipeline = shaders::pipeline_triangle(device.clone(), chain.dimensions(), render_pass);
-        self.create_command_buffers(pipeline);
+        let pipeline = shaders::pipeline_forward(device.clone(), chain.dimensions(), render_pass);
+        let buffer = vb::cpu_access::CpuAccessibleBuffer::from_iter(device.clone(),
+            vb::BufferUsage::vertex_buffer(), vertices().iter().cloned()).unwrap();
+        self.create_command_buffers(pipeline, buffer);
 
         self.previous_frame_end = None;
         self.armed = true;
@@ -188,18 +192,21 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         .collect::<Vec<_>>();
     }
 
-    fn create_command_buffers(&mut self, pipeline: Arc<shaders::ConcreteGraphicsPipeline>) {
+    fn create_command_buffers(
+        &mut self,
+        pipeline: Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>,
+        vertex_buffer: Arc<dyn vb::BufferAccess + Send + Sync>,
+    ) {
         let device = self.binding.as_ref().unwrap().device.clone();
         let qf = self.binding.as_ref().unwrap().graphics_queue.family();
         self.command_buffers = self.framebuffers.iter()
             .map(|framebuffer| {
-                let vertices = vpv::BufferlessVertices { vertices: 3, instances: 1 };
                 Arc::new(vc::AutoCommandBufferBuilder::primary_simultaneous_use(device.clone(), qf)
                          .unwrap()
                          .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
                          .unwrap()
                          .draw(pipeline.clone(), &vc::DynamicState::none(),
-                            vertices, (), ())
+                            vec![vertex_buffer.clone()], (), ())
                          .unwrap()
                          .end_render_pass()
                          .unwrap()
@@ -222,4 +229,25 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             log::debug!("validation layer: {:?}", msg.description);
         }).expect("could not create debug callback")
     }
+}
+
+#[derive(Copy, Clone)]
+struct Vertex {
+    pos: [f32; 3],
+    color: [f32; 3],
+}
+
+impl Vertex {
+    pub fn new(pos: [f32; 3], color: [f32; 3]) -> Self {
+        Self { pos, color }
+    }
+}
+vulkano::impl_vertex!(Vertex, pos, color);
+
+fn vertices() -> [Vertex; 3] {
+    [
+        Vertex::new([0.0, -0.5, 0.0], [1.0, 1.0, 1.0]),
+        Vertex::new([0.5, 0.5, 0.0], [0.0, 1.0, 0.0]),
+        Vertex::new([-0.5, 0.5, 0.0], [0.0, 0.0, 1.])
+    ]
 }
