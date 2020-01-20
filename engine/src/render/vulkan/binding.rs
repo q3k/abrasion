@@ -6,7 +6,7 @@ use vulkano::device as vd;
 use vulkano::swapchain as vs;
 
 // A Binding to a surface, resulting in concrete device information.
-pub struct Binding<WT> {
+pub struct SurfaceBinding<WT> {
     instance: Arc<vi::Instance>,
     physical_device_ix: usize,
     pub device: Arc<vd::Device>,
@@ -15,7 +15,7 @@ pub struct Binding<WT> {
     pub present_queue: Arc<vd::Queue>,
 }
 
-impl <WT> Binding<WT> {
+impl <WT> SurfaceBinding<WT> {
     pub fn physical_device(&self) -> vi::PhysicalDevice {
         vi::PhysicalDevice::from_index(&self.instance, self.physical_device_ix).unwrap()
     }

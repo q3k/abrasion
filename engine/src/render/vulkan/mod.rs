@@ -6,7 +6,6 @@ use vulkano::command_buffer as vc;
 use vulkano::buffer as vb;
 use vulkano::instance as vi;
 use vulkano::swapchain as vs;
-use vulkano::framebuffer as vf;
 use vulkano::pipeline as vp;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
@@ -28,11 +27,8 @@ pub struct Instance<WT> {
     debug_callback: vi::debug::DebugCallback,
     vulkan: Arc<vi::Instance>,
 
-    surface: Option<Arc<vs::Surface<WT>>>,
-    binding: Option<binding::Binding<WT>>,
-    swapchains: Option<swapchains::Swapchains<WT>>,
-    render_pass: Option<Arc<dyn vf::RenderPassAbstract + Send + Sync>>,
-    framebuffers: Vec<Arc<dyn vf::FramebufferAbstract + Send + Sync>>,
+    surface_binding: Option<binding::SurfaceBinding<WT>>,
+    swapchain_binding: Option<swapchains::SwapchainBinding<WT>>,
     command_buffers: Vec<Arc<vc::AutoCommandBuffer>>,
 
     armed: bool,
@@ -62,11 +58,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             debug_callback,
             vulkan,
 
-            surface: None,
-            binding: None,
-            swapchains: None,
-            render_pass: None,
-            framebuffers: vec![],
+            surface_binding: None,
+            swapchain_binding: None,
             command_buffers: vec![],
 
             previous_frame_end: None,
@@ -79,35 +72,34 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.vulkan.clone()
     }
 
-    pub fn get_swapchain(&self) -> Arc<vs::Swapchain<WT>> {
-        self.swapchains.as_ref().unwrap().chain.clone()
+    fn swapchain_binding(&self) -> &swapchains::SwapchainBinding<WT> {
+        self.swapchain_binding.as_ref().unwrap()
+    }
+
+    fn surface_binding(&self) -> &binding::SurfaceBinding<WT> {
+        self.surface_binding.as_ref().unwrap()
     }
 
     pub fn use_surface(&mut self, surface: &Arc<vs::Surface<WT>>) {
-        self.surface = Some(surface.clone());
-
-        self.binding = Some(binding::Binding::new(&self.vulkan, self.surface.as_ref().unwrap().clone()));
-        log::info!("Bound to Vulkan Device: {}", self.binding.as_ref().unwrap().physical_device().name());
+        self.surface_binding = Some(binding::SurfaceBinding::new(&self.vulkan, surface.clone()));
+        log::info!("Bound to Vulkan Device: {}", self.surface_binding().physical_device().name());
 
         self.arm();
     }
 
     fn arm(&mut self) {
-        self.swapchains = Some(swapchains::Swapchains::new(self.binding.as_ref().unwrap(), self.swapchains.as_ref()));
+        self.swapchain_binding = Some(swapchains::SwapchainBinding::new(self.surface_binding(), self.swapchain_binding.as_ref()));
 
-        let device = self.binding.as_ref().unwrap().device.clone();
-        let chain = self.get_swapchain();
+        let device = self.surface_binding().device.clone();
+        let chain = self.swapchain_binding().chain.clone();
 
-        self.create_render_pass(chain.format());
-        self.create_framebuffers();
-
-        let render_pass = self.render_pass.as_ref().unwrap().clone();
+        let render_pass = self.swapchain_binding().render_pass.clone();
         let pipeline = shaders::pipeline_forward(device.clone(), chain.dimensions(), render_pass);
 
         let (buffer, future) = vb::immutable::ImmutableBuffer::from_iter(
             data::vertices().iter().cloned(),
             vb::BufferUsage::vertex_buffer(),
-            self.binding.as_ref().unwrap().graphics_queue.clone(),
+            self.surface_binding().graphics_queue.clone(),
         ).unwrap();
         future.flush().unwrap();
 
@@ -129,7 +121,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             self.arm();
         }
 
-        let chain = self.get_swapchain();
+        let chain = self.swapchain_binding().chain.clone();
         let (image_index, acquire_future) = match vs::acquire_next_image(chain.clone(), None) {
             Ok(r) => r,
             Err(vs::AcquireError::OutOfDate) => {
@@ -141,13 +133,13 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         };
         let command_buffer = self.command_buffers[image_index].clone();
 
-        let gq = self.binding.as_ref().unwrap().graphics_queue.clone();
-        let pq = self.binding.as_ref().unwrap().present_queue.clone();
+        let gq = self.surface_binding().graphics_queue.clone();
+        let pq = self.surface_binding().present_queue.clone();
 
         let future = acquire_future
             .then_execute(gq, command_buffer)
             .unwrap()
-            .then_swapchain_present(pq, chain, image_index)
+            .then_swapchain_present(pq, chain.clone(), image_index)
             .then_signal_fence_and_flush();
 
         match future {
@@ -167,46 +159,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         }
     }
 
-    fn create_render_pass(&mut self, color_format: vulkano::format::Format) {
-        let device = self.binding.as_ref().unwrap().device.clone();
-
-        self.render_pass = Some(Arc::new(vulkano::single_pass_renderpass!(device.clone(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: color_format,
-                    samples: 1,
-                }
-            },
-            pass: {
-                color: [color],
-                depth_stencil: {}
-            }
-        ).unwrap()))
-    }
-
-    fn create_framebuffers(&mut self) {
-        let render_pass = self.render_pass.as_ref().unwrap().clone();
-
-        self.framebuffers = self.swapchains.as_ref().unwrap().images.iter()
-            .map(|image| {
-                let fba: Arc<dyn vf::FramebufferAbstract + Send + Sync> = Arc::new(vf::Framebuffer::start(render_pass.clone())
-                    .add(image.clone()).unwrap()
-                    .build().unwrap());
-                fba
-            })
-        .collect::<Vec<_>>();
-    }
-
     fn create_command_buffers(
         &mut self,
         pipeline: Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>,
         vertex_buffer: Arc<dyn vb::BufferAccess + Send + Sync>,
     ) {
-        let device = self.binding.as_ref().unwrap().device.clone();
-        let qf = self.binding.as_ref().unwrap().graphics_queue.family();
-        self.command_buffers = self.framebuffers.iter()
+        let device = self.surface_binding().device.clone();
+        let qf = self.surface_binding().graphics_queue.family();
+        self.command_buffers = self.swapchain_binding().framebuffers.iter()
             .map(|framebuffer| {
                 Arc::new(vc::AutoCommandBufferBuilder::primary_simultaneous_use(device.clone(), qf)
                          .unwrap()

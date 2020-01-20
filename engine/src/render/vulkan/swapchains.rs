@@ -3,17 +3,23 @@ use std::sync::Arc;
 use vulkano::swapchain as vs;
 use vulkano::image as vm;
 use vulkano::format as vf;
+use vulkano::framebuffer as vfb;
 use vulkano::sync as vy;
 
-pub struct Swapchains<WT> {
+pub struct SwapchainBinding<WT> {
     pub chain: Arc<vs::Swapchain<WT>>,
     pub images: Vec<Arc<vm::SwapchainImage<WT>>>,
+    pub render_pass: Arc<dyn vfb::RenderPassAbstract + Send + Sync>,
+    pub framebuffers: Vec<Arc<dyn vfb::FramebufferAbstract + Send + Sync>>,
 }
 
-impl<WT> Swapchains<WT> {
-    pub fn new(binding: &super::binding::Binding<WT>, previous: Option<&Swapchains<WT>>) -> Self {
-        let physical_device = binding.physical_device();
-        let capabilities = binding.surface.capabilities(physical_device).expect("could not get capabilities");
+impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
+    pub fn new(
+        surface_binding: &super::binding::SurfaceBinding<WT>,
+        previous: Option<&SwapchainBinding<WT>>
+    ) -> Self {
+        let physical_device = surface_binding.physical_device();
+        let capabilities = surface_binding.surface.capabilities(physical_device).expect("could not get capabilities");
 
         let surface_format = Self::choose_swap_surface_format(&capabilities.supported_formats);
         let present_mode = Self::choose_swap_present_mode(capabilities.present_modes);
@@ -31,11 +37,11 @@ impl<WT> Swapchains<WT> {
             .. vm::ImageUsage::none()
         };
 
-        let indices = super::qfi::QueueFamilyIndices::find(&binding.surface, &physical_device).unwrap();
+        let indices = super::qfi::QueueFamilyIndices::find(&surface_binding.surface, &physical_device).unwrap();
         let sharing: vy::SharingMode = if indices.graphics_family != indices.present_family {
-            vec![&binding.graphics_queue, &binding.present_queue].as_slice().into()
+            vec![&surface_binding.graphics_queue, &surface_binding.present_queue].as_slice().into()
         } else {
-            (&binding.graphics_queue).into()
+            (&surface_binding.graphics_queue).into()
         };
 
         let prev = match previous {
@@ -44,8 +50,8 @@ impl<WT> Swapchains<WT> {
         };
 
         let (chain, images) = vs::Swapchain::new(
-            binding.device.clone(),
-            binding.surface.clone(),
+            surface_binding.device.clone(),
+            surface_binding.surface.clone(),
             image_count,
             surface_format.0,
             extent,
@@ -59,11 +65,53 @@ impl<WT> Swapchains<WT> {
             prev.as_ref(),
         ).expect("could not create swap chain");
 
+        let render_pass = Self::create_render_pass(surface_binding, chain.format());
+        let framebuffers = Self::create_framebuffers(render_pass.clone(), images.clone());
+
         Self {
-            chain, images
+            chain,
+            images,
+            render_pass,
+            framebuffers,
         }
     }
 
+    fn create_render_pass(
+        surface_binding: &super::binding::SurfaceBinding<WT>,
+        color_format: vulkano::format::Format,
+    ) -> Arc<dyn vfb::RenderPassAbstract + Send + Sync> {
+        let device = surface_binding.device.clone();
+
+        Arc::new(vulkano::single_pass_renderpass!(device,
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: color_format,
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {}
+            }
+        ).unwrap())
+    }
+
+    fn create_framebuffers(
+        render_pass: Arc<dyn vfb::RenderPassAbstract + Send + Sync>,
+        images: Vec<Arc<vm::SwapchainImage<WT>>>,
+    ) -> Vec<Arc<dyn vfb::FramebufferAbstract + Send + Sync>> {
+        images.iter()
+            .map(|image| {
+                let fba: Arc<dyn vfb::FramebufferAbstract + Send + Sync> = Arc::new(vfb::Framebuffer::start(render_pass.clone())
+                    .add(image.clone()).unwrap()
+                    .build().unwrap());
+                fba
+            })
+        .collect::<Vec<_>>()
+    }
+ 
     fn choose_swap_surface_format(available_formats: &[(vf::Format, vs::ColorSpace)]) -> (vf::Format, vs::ColorSpace) {
         *available_formats.iter()
             .find(|(format, color_space)|
