@@ -9,6 +9,10 @@ licenses([
   "notice" # See individual crates for specific licenses
 ])
 alias(
+    name = "cgmath",
+    actual = "//third_party/cargo/vendor/cgmath-0.17.0:cgmath",
+)
+alias(
     name = "env_logger",
     actual = "//third_party/cargo/vendor/env_logger-0.6.2:env_logger",
 )

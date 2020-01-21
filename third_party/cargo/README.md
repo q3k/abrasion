@@ -6,5 +6,5 @@ To do Rust vendoring first run:
 After changing Rust deps in Cargo.toml do:
 
     cargo generate-lockfile
-    cargo-vendor vendor -x
-    cargo raze
+    cargo vendor --versioned-dirs
+    cargo-raze

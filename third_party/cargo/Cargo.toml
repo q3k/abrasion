@@ -12,6 +12,7 @@ log = "0.4.6"
 vulkano = "0.11.1"
 vulkano-win = "0.11.1"
 winit = "0.18.0"
+cgmath = "0.17.0"
 
 [raze]
 workspace_path = "//third_party/cargo"
@@ -37,3 +38,6 @@ additional_flags = [
 
 [raze.crates.libloading.'0.5.2']
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
+
+[raze.crates.cgmath.'0.17.0']
+gen_buildrs = true
