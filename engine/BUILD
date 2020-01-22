@@ -16,6 +16,7 @@ rust_binary(
         "src/util/counter.rs",
     ],
     deps = [
+        "//third_party/cargo:cgmath",
         "//third_party/cargo:winit",
         "//third_party/cargo:log",
         "//third_party/cargo:env_logger",

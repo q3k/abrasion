@@ -96,14 +96,21 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let render_pass = self.swapchain_binding().render_pass.clone();
         let pipeline = shaders::pipeline_forward(device.clone(), chain.dimensions(), render_pass);
 
-        let (buffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+        let (vbuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
             data::vertices().iter().cloned(),
             vb::BufferUsage::vertex_buffer(),
             self.surface_binding().graphics_queue.clone(),
         ).unwrap();
         future.flush().unwrap();
 
-        self.create_command_buffers(pipeline, buffer);
+        let (ibuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+            data::indices().iter().cloned(),
+            vb::BufferUsage::index_buffer(),
+            self.surface_binding().graphics_queue.clone(),
+        ).unwrap();
+        future.flush().unwrap();
+
+        self.create_command_buffers(pipeline, vbuffer, ibuffer);
 
         self.previous_frame_end = None;
         self.armed = true;
@@ -163,6 +170,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         &mut self,
         pipeline: Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>,
         vertex_buffer: Arc<dyn vb::BufferAccess + Send + Sync>,
+        index_buffer: Arc<vb::TypedBufferAccess<Content=[u16]> + Send + Sync>,
     ) {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
@@ -172,8 +180,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                          .unwrap()
                          .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
                          .unwrap()
-                         .draw(pipeline.clone(), &vc::DynamicState::none(),
-                            vec![vertex_buffer.clone()], (), ())
+                         .draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
+                            vec![vertex_buffer.clone()],
+                            index_buffer.clone(),
+                            (), ())
                          .unwrap()
                          .end_render_pass()
                          .unwrap()
