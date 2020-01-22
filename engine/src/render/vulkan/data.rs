@@ -25,3 +25,10 @@ pub fn vertices() -> [Vertex; 4] {
 pub fn indices() -> [u16; 6] {
     [0, 1, 2, 2, 3, 0]
 }
+
+#[derive(Copy, Clone)]
+pub struct UniformBufferObject {
+    pub model: cgm::Matrix4<f32>,
+    pub view: cgm::Matrix4<f32>,
+    pub proj: cgm::Matrix4<f32>,
+}

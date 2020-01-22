@@ -1,12 +1,15 @@
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::time;
 use log;
 
-use vulkano::command_buffer as vc;
+use cgmath as cgm;
 use vulkano::buffer as vb;
+use vulkano::command_buffer as vc;
+use vulkano::descriptor::descriptor_set as vdd;
 use vulkano::instance as vi;
-use vulkano::swapchain as vs;
 use vulkano::pipeline as vp;
+use vulkano::swapchain as vs;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
 mod binding;
@@ -30,6 +33,8 @@ pub struct Instance<WT> {
     surface_binding: Option<binding::SurfaceBinding<WT>>,
     swapchain_binding: Option<swapchains::SwapchainBinding<WT>>,
     command_buffers: Vec<Arc<vc::AutoCommandBuffer>>,
+    uniform_buffers: Vec<Arc<vb::CpuAccessibleBuffer<data::UniformBufferObject>>>,
+    descriptor_sets: Vec<Arc<vdd::FixedSizeDescriptorSet<Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>, ((), vdd::PersistentDescriptorSetBuf<Arc<vb::CpuAccessibleBuffer<data::UniformBufferObject>>>)>>>,
 
     armed: bool,
     previous_frame_end: Option<Box<FlipFuture<WT>>>,
@@ -61,6 +66,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             surface_binding: None,
             swapchain_binding: None,
             command_buffers: vec![],
+            uniform_buffers: vec![],
+            descriptor_sets: vec![],
 
             previous_frame_end: None,
             armed: false,
@@ -110,7 +117,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         ).unwrap();
         future.flush().unwrap();
 
-        self.create_command_buffers(pipeline, vbuffer, ibuffer);
+        self.create_uniform_buffers();
+        self.create_descriptor_sets(pipeline.clone());
+        self.create_command_buffers(pipeline.clone(), vbuffer, ibuffer);
 
         self.previous_frame_end = None;
         self.armed = true;
@@ -166,16 +175,85 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         }
     }
 
+    fn create_descriptor_sets(
+        &mut self,
+        pipeline: Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>
+    ) {
+        let pool = Arc::new(
+            Mutex::new(
+                vdd::FixedSizeDescriptorSetsPool::new(pipeline.clone(), 0)
+            )
+        );
+
+        self.descriptor_sets = self.uniform_buffers
+            .iter()
+            .map(|uniform_buffer|
+                Arc::new(
+                    pool
+                        .lock()
+                        .unwrap()
+                        .next()
+                        .add_buffer(uniform_buffer.clone())
+                        .unwrap()
+                        .build()
+                        .unwrap()
+                )
+            )
+            .collect();
+    }
+
+    fn dimensions(&self) -> [f32; 2] {
+        let dimensions_u32 = self.swapchain_binding().chain.dimensions();
+        [dimensions_u32[0] as f32, dimensions_u32[1] as f32]
+    }
+
+    fn build_uniform_buffer(&self) -> data::UniformBufferObject {
+        let elapsed = 400.0 as f32;
+        let dimensions = self.dimensions();
+
+        let model = cgm::Matrix4::from_angle_z(cgm::Rad::from(cgm::Deg(elapsed as f32 * 0.180)));
+        let view = cgm::Matrix4::look_at(
+            cgm::Point3::new(2.0, 2.0, 2.0),
+            cgm::Point3::new(0.0, 0.0, 0.0),
+            cgm::Vector3::new(0.0, 0.0, 1.0)
+        );
+        let mut proj = cgm::perspective(
+            cgm::Rad::from(cgm::Deg(45.0)),
+            dimensions[0] as f32 / dimensions[1] as f32,
+            0.1,
+            10.0
+        );
+        proj.y.y *= -1.0;
+        data::UniformBufferObject { model, view, proj }
+    }
+
+    fn create_uniform_buffers(&mut self) {
+        let mut buffers = Vec::new();
+
+        let uniform_buffer = self.build_uniform_buffer();
+        for _ in 0..self.swapchain_binding().images.len() {
+            let buffer = vb::CpuAccessibleBuffer::from_data(
+                self.surface_binding().device.clone(),
+                vb::BufferUsage::uniform_buffer_transfer_destination(),
+                uniform_buffer,
+            ).unwrap();
+            buffers.push(buffer);
+        }
+
+        self.uniform_buffers = buffers;
+    }
+
     fn create_command_buffers(
         &mut self,
         pipeline: Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync>,
         vertex_buffer: Arc<dyn vb::BufferAccess + Send + Sync>,
-        index_buffer: Arc<vb::TypedBufferAccess<Content=[u16]> + Send + Sync>,
+        index_buffer: Arc<dyn vb::TypedBufferAccess<Content=[u16]> + Send + Sync>,
     ) {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
         self.command_buffers = self.swapchain_binding().framebuffers.iter()
-            .map(|framebuffer| {
+            .enumerate()
+            .map(|(i, framebuffer)| {
                 Arc::new(vc::AutoCommandBufferBuilder::primary_simultaneous_use(device.clone(), qf)
                          .unwrap()
                          .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
@@ -183,7 +261,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                          .draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
                             vec![vertex_buffer.clone()],
                             index_buffer.clone(),
-                            (), ())
+                            self.descriptor_sets[i].clone(),
+                            ())
                          .unwrap()
                          .end_render_pass()
                          .unwrap()

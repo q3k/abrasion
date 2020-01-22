@@ -139,9 +139,33 @@ impl LoadedShader {
 struct ShaderLayout(vdd::ShaderStages);
 
 unsafe impl vdp::PipelineLayoutDesc for ShaderLayout {
-    fn num_sets(&self) -> usize { 0 }
-    fn num_bindings_in_set(&self, _set: usize) -> Option<usize> { None }
-    fn descriptor(&self, _set: usize, _binding: usize) -> Option<vdd::DescriptorDesc> { None }
+    fn num_sets(&self) -> usize { 1 }
+    fn num_bindings_in_set(&self, set: usize) -> Option<usize> {
+        match set {
+            0 => Some(1),
+            _ => None
+        }
+    }
+    fn descriptor(&self, set: usize, binding: usize) -> Option<vdd::DescriptorDesc> {
+        match set {
+            0 => match binding {
+                0 => Some(vdd::DescriptorDesc {
+                    ty: vdd::DescriptorDescTy::Buffer(vdd::DescriptorBufferDesc {
+                        dynamic: Some(false),
+                        storage: false,
+                    }),
+                    array_count: 1,
+                    readonly: true,
+                    stages: vdd::ShaderStages {
+                        vertex: true,
+                        ..vdd::ShaderStages::none()
+                    },
+                }),
+                _ => None,
+            },
+            _ => None
+        }
+    }
     fn num_push_constants_ranges(&self) -> usize { 0 }
     fn push_constants_range(&self, _num: usize) -> Option<vdp::PipelineLayoutDescPcRange> { None }
 }
