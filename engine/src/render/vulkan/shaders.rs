@@ -49,6 +49,13 @@ pub fn pipeline_forward(
         depth_range: 0.0 .. 1.0,
     };
 
+    // Counter-clockwise facing triangles - this is because geometry data is left-handed,
+    // and the vertex shader performs a handedness flip by doing .y *= -1 on emitted
+    // vertices. To keep geomtry-space triangles clockwise after this transformation,
+    // the pipeline must be set to treat counter-clockwise triangles as front-facing.
+    // An alternative would be to fully embrace the vulkan coordinate system, including geometry -
+    // however this goes against most existing software and practices.
+    // This might bite us in the ass at some point in the future.
     Arc::new(vp::GraphicsPipeline::start()
              .vertex_input_single_buffer::<super::data::Vertex>()
              .vertex_shader(vertex.entry_point(), ())
@@ -60,7 +67,7 @@ pub fn pipeline_forward(
              .polygon_mode_fill()
              .line_width(1.0)
              .cull_mode_back()
-             .front_face_clockwise()
+             .front_face_counter_clockwise()
              .blend_pass_through()
              .render_pass(vf::Subpass::from(render_pass.clone(), 0).unwrap())
              .build(device.clone())
@@ -78,20 +85,20 @@ struct ShaderDefinition {
 impl ShaderDefinition {
     fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
         fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
-    
+
         let r = Runfiles::create().map_err(stringify)?;
         let path = r.rlocation(format!("abrasion/engine/shaders/{}", self.name));
-    
+
         log::info!("Loading shader {}", path.to_str().unwrap_or("UNKNOWN"));
-    
+
         let mut f = File::open(path).map_err(stringify)?;
         let mut v = vec![];
         f.read_to_end(&mut v).map_err(stringify)?;
-    
-        let module = unsafe { 
+
+        let module = unsafe {
             vps::ShaderModule::new(device.clone(), &v).unwrap()
         };
-    
+
         Ok(LoadedShader {
             def: self,
             module: module,

@@ -4,6 +4,7 @@ use std::time;
 use log;
 
 use cgmath as cgm;
+use cgmath::prelude::SquareMatrix;
 use vulkano::buffer as vb;
 use vulkano::command_buffer as vc;
 use vulkano::descriptor::descriptor_set as vdd;
@@ -208,7 +209,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     }
 
     fn build_uniform_buffer(&self) -> data::UniformBufferObject {
-        let elapsed = 400.0 as f32;
+        let elapsed = 40.0 as f32;
         let dimensions = self.dimensions();
 
         let model = cgm::Matrix4::from_angle_z(cgm::Rad::from(cgm::Deg(elapsed as f32 * 0.180)));
@@ -223,7 +224,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             0.1,
             10.0
         );
-        proj.y.y *= -1.0;
+        log::info!("model: {:?}", model);
+        log::info!(" view: {:?}", view);
+        log::info!(" proj: {:?}", proj);
         data::UniformBufferObject { model, view, proj }
     }
 
