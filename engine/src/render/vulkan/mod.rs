@@ -108,7 +108,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
-        render_data: Vec<renderable::Data>,
+        render_data: &mut Vec<renderable::Data>,
     ) {
         match &self.previous_frame_end {
             None => (),
@@ -167,7 +167,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     fn make_command_buffer(
         &mut self,
         framebuffer: Arc<dyn vf::FramebufferAbstract + Send + Sync>,
-        render_data: Vec<renderable::Data>,
+        render_data: &mut Vec<renderable::Data>,
     ) -> Arc<vc::AutoCommandBuffer> {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
@@ -190,23 +190,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         );
 
         for d in render_data {
-            let (vbuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
-                d.vertices.iter().cloned(),
-                vb::BufferUsage::vertex_buffer(),
-                self.surface_binding().graphics_queue.clone(),
-            ).unwrap();
-            future.flush().unwrap();
-
-            let (ibuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
-                d.indices.iter().cloned(),
-                vb::BufferUsage::index_buffer(),
-                self.surface_binding().graphics_queue.clone(),
-            ).unwrap();
-            future.flush().unwrap();
-
-
+            let (vbuffer, ibuffer) = d.vulkan_buffers(self.surface_binding().graphics_queue.clone());
             let ubo = data::UniformBufferObject {
-                model: d.transform.clone(),
+                model: d.get_transform(),
                 view: view.clone(),
                 proj: proj.clone(),
             };
