@@ -123,14 +123,14 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
     }
 
     fn choose_swap_present_mode(available_present_modes: vs::SupportedPresentModes) -> vs::PresentMode {
-        //if available_present_modes.mailbox {
-        //    vs::PresentMode::Mailbox
-        //} else if available_present_modes.immediate {
-        //    vs::PresentMode::Immediate
-        //} else {
-        //    vs::PresentMode::Fifo
-        //}
-        vs::PresentMode::Fifo
+        if available_present_modes.mailbox {
+            vs::PresentMode::Mailbox
+        } else if available_present_modes.immediate {
+            vs::PresentMode::Immediate
+        } else {
+            vs::PresentMode::Fifo
+        }
+        //vs::PresentMode::Fifo
     }
 
     fn choose_swap_extent(capabilities: &vs::Capabilities) -> [u32; 2] {

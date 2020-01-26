@@ -1,5 +1,4 @@
 use log;
-use std::borrow::Cow;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::prelude::*;
@@ -9,81 +8,17 @@ use runfiles::Runfiles;
 use vulkano::descriptor::descriptor as vdd;
 use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
-use vulkano::format::Format;
-use vulkano::framebuffer as vf;
-use vulkano::pipeline as vp;
 use vulkano::pipeline::shader as vps;
 
-pub fn pipeline_forward(
-    device: Arc<vd::Device>,
-    swap_chain_extent: [u32; 2],
-    render_pass: Arc<dyn vf::RenderPassAbstract + Send + Sync>,
-) -> Arc<dyn vp::GraphicsPipelineAbstract + Send + Sync> {
-    let vertex = ShaderDefinition {
-        name: "forward_vert.spv".to_string(),
-        ty: vps::GraphicsShaderType::Vertex,
-        inputs: vec![
-            vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("pos")) },
-            vps::ShaderInterfaceDefEntry { location: 1..2, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("color")) },
-        ],
-        outputs: vec![
-            vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
-        ],
-    }.load_into(device.clone()).expect("could not load vertex shader");
-
-    let fragment = ShaderDefinition {
-        name: "forward_frag.spv".to_string(),
-        ty: vps::GraphicsShaderType::Fragment,
-        inputs: vec![
-            vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
-        ],
-        outputs: vec![
-            vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32A32Sfloat, name: Some(Cow::Borrowed("outColor")) }
-        ],
-    }.load_into(device.clone()).expect("could not load fragment shader");
-
-    let dimensions = [swap_chain_extent[0] as f32, swap_chain_extent[1] as f32];
-    let viewport = vp::viewport::Viewport {
-        origin: [0.0, 0.0],
-        dimensions,
-        depth_range: 0.0 .. 1.0,
-    };
-
-    // Counter-clockwise facing triangles - this is because geometry data is left-handed,
-    // and the vertex shader performs a handedness flip by doing .y *= -1 on emitted
-    // vertices. To keep geomtry-space triangles clockwise after this transformation,
-    // the pipeline must be set to treat counter-clockwise triangles as front-facing.
-    // An alternative would be to fully embrace the vulkan coordinate system, including geometry -
-    // however this goes against most existing software and practices.
-    // This might bite us in the ass at some point in the future.
-    Arc::new(vp::GraphicsPipeline::start()
-             .vertex_input_single_buffer::<super::data::Vertex>()
-             .vertex_shader(vertex.entry_point(), ())
-             .triangle_list()
-             .primitive_restart(false)
-             .viewports(vec![viewport])
-             .fragment_shader(fragment.entry_point(), ())
-             .depth_clamp(false)
-             .polygon_mode_fill()
-             .line_width(1.0)
-             .cull_mode_back()
-             .front_face_counter_clockwise()
-             .blend_pass_through()
-             .render_pass(vf::Subpass::from(render_pass.clone(), 0).unwrap())
-             .build(device.clone())
-             .unwrap()
-    )
-}
-
-struct ShaderDefinition {
-    name: String,
-    ty: vps::GraphicsShaderType,
-    inputs: Vec<vps::ShaderInterfaceDefEntry>,
-    outputs: Vec<vps::ShaderInterfaceDefEntry>,
+pub struct ShaderDefinition {
+    pub name: String,
+    pub ty: vps::GraphicsShaderType,
+    pub inputs: Vec<vps::ShaderInterfaceDefEntry>,
+    pub outputs: Vec<vps::ShaderInterfaceDefEntry>,
 }
 
 impl ShaderDefinition {
-    fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
+    pub fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
         fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
 
         let r = Runfiles::create().map_err(stringify)?;
@@ -106,7 +41,7 @@ impl ShaderDefinition {
     }
 }
 
-struct LoadedShader {
+pub struct LoadedShader {
     def: ShaderDefinition,
     module: Arc<vps::ShaderModule>,
 }
@@ -143,7 +78,7 @@ impl LoadedShader {
 }
 
 #[derive (Debug, Clone)]
-struct ShaderLayout(vdd::ShaderStages);
+pub struct ShaderLayout(vdd::ShaderStages);
 
 unsafe impl vdp::PipelineLayoutDesc for ShaderLayout {
     fn num_sets(&self) -> usize { 1 }
@@ -177,7 +112,7 @@ unsafe impl vdp::PipelineLayoutDesc for ShaderLayout {
     fn push_constants_range(&self, _num: usize) -> Option<vdp::PipelineLayoutDescPcRange> { None }
 }
 
-struct ShaderInterface {
+pub struct ShaderInterface {
     entries: Vec<vps::ShaderInterfaceDefEntry>,
 }
 

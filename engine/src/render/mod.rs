@@ -12,7 +12,8 @@ use vulkano_win::VkSurfaceBuild;
 use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 
-mod vulkan;
+pub mod vulkan;
+pub mod renderable;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -20,6 +21,8 @@ const HEIGHT: u32 = 600;
 pub struct Renderer {
     instance: vulkan::Instance<winit::Window>,
     events_loop: EventsLoop,
+
+    render_data: Vec<renderable::Data>,
 }
 
 impl Renderer {
@@ -31,7 +34,12 @@ impl Renderer {
         Self {
             instance,
             events_loop,
+            render_data: vec![],
         }
+    }
+
+    pub fn set_render_data(&mut self, render_data: Vec<renderable::Data>) {
+        self.render_data = render_data;
     }
 
     fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
@@ -45,7 +53,7 @@ impl Renderer {
     }
 
     fn draw_frame(&mut self) {
-        self.instance.flip();
+        self.instance.flip(self.render_data.clone());
     }
 
     pub fn main_loop(&mut self) {
