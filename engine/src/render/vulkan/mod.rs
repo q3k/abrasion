@@ -35,6 +35,7 @@ pub struct Instance<WT> {
     swapchain_binding: Option<swapchains::SwapchainBinding<WT>>,
 
     pipeline: Option<Box<dyn pipeline::Pipeline>>,
+    uniform_pool: Option<vb::CpuBufferPool<data::UniformBufferObject>>,
     armed: bool,
     previous_frame_end: Option<Box<FlipFuture<WT>>>,
     fps_counter: crate::util::counter::Counter,
@@ -66,6 +67,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             swapchain_binding: None,
 
             pipeline: None,
+            uniform_pool: None,
             previous_frame_end: None,
             armed: false,
             fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(1000)),
@@ -100,6 +102,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let render_pass = self.swapchain_binding().render_pass.clone();
 
         self.pipeline = Some(Box::new(pipeline::Forward::new(device.clone(), chain.dimensions(), render_pass)));
+        self.uniform_pool = Some(
+            vb::CpuBufferPool::new(device.clone(), vb::BufferUsage::uniform_buffer_transfer_destination())
+        );
         self.previous_frame_end = None;
         self.armed = true;
     }
@@ -153,9 +158,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         };
 
         self.previous_frame_end = Some(Box::new(future.unwrap()));
-        match self.fps_counter.tick() {
-            Some(rate) => log::info!("FPS: {}", rate),
-            None => ()
+        if let Some(rate) = self.fps_counter.tick() {
+            log::info!("FPS: {}", rate)
         }
     }
 
@@ -172,7 +176,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
         let dimensions = self.dimensions();
-        let mut c = vc::AutoCommandBufferBuilder::primary_simultaneous_use(device.clone(), qf)
+        let mut c = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
                  .unwrap()
                  .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
                  .unwrap();
@@ -196,7 +200,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                 view: view.clone(),
                 proj: proj.clone(),
             };
-            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(ubo);
+            let ub = self.uniform_pool.as_ref().unwrap().next(ubo).unwrap();
+            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
             let pipeline = self.pipeline.as_ref().unwrap().get_pipeline();
             c = c.draw_indexed(pipeline, &vc::DynamicState::none(),
                 vec![vbuffer.clone()],

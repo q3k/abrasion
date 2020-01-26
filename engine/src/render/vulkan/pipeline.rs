@@ -17,7 +17,7 @@ type VulkanoDescriptorSet = dyn vdd::DescriptorSet + Send + Sync;
 
 pub trait Pipeline {
     fn get_pipeline(&self) -> Arc<VulkanoPipeline>;
-    fn make_descriptor_set(&mut self, ubo: data::UniformBufferObject) -> Arc<VulkanoDescriptorSet>;
+    fn make_descriptor_set(&mut self, buffer: Box<dyn vb::BufferAccess + Send + Sync>) -> Arc<VulkanoDescriptorSet>;
 }
 
 pub struct Forward {
@@ -104,13 +104,7 @@ impl Pipeline for Forward {
         self.pipeline.clone()
     }
 
-    fn make_descriptor_set(&mut self, ubo: data::UniformBufferObject) -> Arc<VulkanoDescriptorSet> {
-        let buffer = vb::CpuAccessibleBuffer::from_data(
-            self.device.clone(),
-            vb::BufferUsage::uniform_buffer_transfer_destination(),
-            ubo,
-        ).unwrap();
-
+    fn make_descriptor_set(&mut self, buffer: Box<dyn vb::BufferAccess + Send + Sync>) -> Arc<VulkanoDescriptorSet> {
         Arc::new(self.descriptor_set_pool.next()
             .add_buffer(buffer).unwrap()
             .build().unwrap())
