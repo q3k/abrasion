@@ -113,7 +113,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
-        render_data: &mut Vec<renderable::Data>,
+        render_data: &Vec<renderable::Data>,
     ) {
         match &self.previous_frame_end {
             None => (),
@@ -171,7 +171,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     fn make_command_buffer(
         &mut self,
         framebuffer: Arc<dyn vf::FramebufferAbstract + Send + Sync>,
-        render_data: &mut Vec<renderable::Data>,
+        render_data: &Vec<renderable::Data>,
     ) -> Arc<vc::AutoCommandBuffer> {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
@@ -196,11 +196,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         for d in render_data {
             let (vbuffer, ibuffer) = d.vulkan_buffers(self.surface_binding().graphics_queue.clone());
             let ubo = data::UniformBufferObject {
-                model: d.get_transform(),
-                view: view.clone(),
-                proj: proj.clone(),
+                model: proj.clone() * view.clone() * d.get_transform(),
             };
-            let ub = self.uniform_pool.as_ref().unwrap().next(ubo).unwrap();
+            let ub = self.uniform_pool.as_ref().unwrap().next(ubo.clone()).unwrap();
             let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
             let pipeline = self.pipeline.as_ref().unwrap().get_pipeline();
             c = c.draw_indexed(pipeline, &vc::DynamicState::none(),

@@ -3,6 +3,10 @@ load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
 rust_binary(
     name = "engine",
     edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+    ],
     srcs = [
         "src/main.rs",
         "src/render/mod.rs",

@@ -54,15 +54,31 @@ impl LoadedShader {
         )
     }
 
-    fn layout(&self) -> ShaderLayout {
+    fn layout(&self) -> RuntimeShaderLayout {
+        let sets = vec![
+            vec![
+                vdd::DescriptorDesc {
+                    ty: vdd::DescriptorDescTy::Buffer(vdd::DescriptorBufferDesc {
+                        dynamic: Some(false),
+                        storage: false,
+                    }),
+                    array_count: 1,
+                    readonly: true,
+                    stages: vdd::ShaderStages {
+                        vertex: true,
+                        ..vdd::ShaderStages::none()
+                    },
+                },
+            ],
+        ];
         match self.def.ty {
-            vps::GraphicsShaderType::Vertex => ShaderLayout(vdd::ShaderStages{ vertex: true, ..vdd::ShaderStages::none() }),
-            vps::GraphicsShaderType::Fragment => ShaderLayout(vdd::ShaderStages{ fragment: true, ..vdd::ShaderStages::none() }),
+            vps::GraphicsShaderType::Vertex => RuntimeShaderLayout::vertex(sets.clone()),
+            vps::GraphicsShaderType::Fragment => RuntimeShaderLayout::fragment(sets.clone()),
             _ => panic!("unknown shader type")
         }
     }
 
-    pub fn entry_point<'a, S>(&'a self) -> vps::GraphicsEntryPoint<'a, S, ShaderInterface, ShaderInterface, ShaderLayout> {
+    pub fn entry_point<'a, S>(&'a self) -> vps::GraphicsEntryPoint<'a, S, ShaderInterface, ShaderInterface, RuntimeShaderLayout> {
         let (input, output) = self.ios();
         let layout = self.layout();
 
@@ -78,38 +94,63 @@ impl LoadedShader {
 }
 
 #[derive (Debug, Clone)]
-pub struct ShaderLayout(vdd::ShaderStages);
+pub struct RuntimeShaderLayout {
+    sets: Vec<Vec<vdd::DescriptorDesc>>,
 
-unsafe impl vdp::PipelineLayoutDesc for ShaderLayout {
-    fn num_sets(&self) -> usize { 1 }
-    fn num_bindings_in_set(&self, set: usize) -> Option<usize> {
-        match set {
-            0 => Some(1),
-            _ => None
+    vertex: bool,
+    fragment: bool,
+}
+
+impl RuntimeShaderLayout {
+    fn vertex(sets: Vec<Vec<vdd::DescriptorDesc>>) -> RuntimeShaderLayout {
+        RuntimeShaderLayout {
+            sets,
+            vertex: true,
+            fragment: false,
         }
     }
-    fn descriptor(&self, set: usize, binding: usize) -> Option<vdd::DescriptorDesc> {
-        match set {
-            0 => match binding {
-                0 => Some(vdd::DescriptorDesc {
-                    ty: vdd::DescriptorDescTy::Buffer(vdd::DescriptorBufferDesc {
-                        dynamic: Some(false),
-                        storage: false,
-                    }),
-                    array_count: 1,
-                    readonly: true,
-                    stages: vdd::ShaderStages {
-                        vertex: true,
-                        ..vdd::ShaderStages::none()
-                    },
-                }),
-                _ => None,
-            },
-            _ => None
+    fn fragment(sets: Vec<Vec<vdd::DescriptorDesc>>) -> RuntimeShaderLayout {
+        RuntimeShaderLayout {
+            sets,
+            vertex: false,
+            fragment: true,
         }
+    }
+}
+
+unsafe impl vdp::PipelineLayoutDesc for RuntimeShaderLayout {
+    fn num_sets(&self) -> usize { self.sets.len() }
+    fn num_bindings_in_set(&self, set: usize) -> Option<usize> {
+        if set >= self.sets.len() {
+            return None
+        }
+        Some(self.sets[set].len())
+    }
+    fn descriptor(&self, set: usize, binding: usize) -> Option<vdd::DescriptorDesc> {
+        if set >= self.sets.len() {
+            return None
+        }
+        if binding >= self.sets[set].len() {
+            return None
+        }
+        Some(self.sets[set][binding].clone())
     }
     fn num_push_constants_ranges(&self) -> usize { 0 }
     fn push_constants_range(&self, _num: usize) -> Option<vdp::PipelineLayoutDescPcRange> { None }
+    //fn num_push_constants_ranges(&self) -> usize { 1 }
+    //fn push_constants_range(&self, num: usize) -> Option<vdp::PipelineLayoutDescPcRange> {
+    //    match num {
+    //        0 => Some(vdp::PipelineLayoutDescPcRange {
+    //            offset: 0,
+    //            size: 64usize,
+    //            stages: vdd::ShaderStages {
+    //                vertex: true,
+    //                ..vdd::ShaderStages::none()
+    //            },
+    //        }),
+    //        _ => None,
+    //    }
+    //}
 }
 
 pub struct ShaderInterface {

@@ -16,6 +16,4 @@ vulkano::impl_vertex!(Vertex, pos, color);
 #[derive(Copy, Clone)]
 pub struct UniformBufferObject {
     pub model: cgm::Matrix4<f32>,
-    pub view: cgm::Matrix4<f32>,
-    pub proj: cgm::Matrix4<f32>,
 }

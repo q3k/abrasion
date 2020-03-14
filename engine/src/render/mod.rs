@@ -53,7 +53,7 @@ impl Renderer {
     }
 
     fn draw_frame(&mut self) {
-        self.instance.flip(&mut self.render_data);
+        self.instance.flip(&self.render_data);
     }
 
     pub fn main_loop(&mut self) {

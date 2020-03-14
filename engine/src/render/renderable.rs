@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::sync::Arc;
 use std::rc::Rc;
 
@@ -15,13 +16,18 @@ pub trait Renderable {
 }
 
 #[derive(Clone)]
+struct VulkanData {
+    vbuffer: Arc<vb::ImmutableBuffer<[data::Vertex]>>,
+    ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
+}
+
+#[derive(Clone)]
 pub struct Data {
     vertices: Rc<Vec<data::Vertex>>,
     indices: Rc<Vec<u16>>,
     transform: cgm::Matrix4<f32>,
 
-    vbuffer: Option<Arc<vb::ImmutableBuffer<[data::Vertex]>>>,
-    ibuffer: Option<Arc<vb::ImmutableBuffer<[u16]>>>,
+    vulkan: RefCell<Option<VulkanData>>,
 }
 
 impl Data {
@@ -32,48 +38,42 @@ impl Data {
     ) -> Data {
         Data {
             vertices, indices, transform,
-            vbuffer: None,
-            ibuffer: None,
+            vulkan: RefCell::new(None),
         }
     }
 
     pub fn vulkan_buffers(
-        &mut self,
+        &self,
         graphics_queue: Arc<vd::Queue>,
     ) -> (
         Arc<vb::ImmutableBuffer<[data::Vertex]>>,
         Arc<vb::ImmutableBuffer<[u16]>>,
     ) {
-
-        let vbuffer = match &mut self.vbuffer {
-            Some(v) => v.clone(),
+        let mut cache = self.vulkan.borrow_mut();
+        match &mut *cache {
+            Some(data) => (data.vbuffer.clone(), data.ibuffer.clone()),
             None => {
-                let (vbuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+                let (vbuffer, vfuture) = vb::immutable::ImmutableBuffer::from_iter(
                     self.vertices.iter().cloned(),
                     vb::BufferUsage::vertex_buffer(),
                     graphics_queue.clone(),
                 ).unwrap();
-                future.flush().unwrap();
-                self.vbuffer = Some(vbuffer.clone());
-                vbuffer.clone()
-            },
-        };
-
-        let ibuffer = match &mut self.ibuffer {
-            Some(v) => v.clone(),
-            None => {
-                let (ibuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+                let (ibuffer, ifuture) = vb::immutable::ImmutableBuffer::from_iter(
                     self.indices.iter().cloned(),
                     vb::BufferUsage::index_buffer(),
                     graphics_queue.clone(),
                 ).unwrap();
-                future.flush().unwrap();
-                self.ibuffer = Some(ibuffer.clone());
-                ibuffer.clone()
-            },
-        };
+                vfuture.flush().unwrap();
+                ifuture.flush().unwrap();
 
-        (vbuffer, ibuffer)
+                *cache = Some(VulkanData {
+                    vbuffer: vbuffer.clone(),
+                    ibuffer: ibuffer.clone(),
+                });
+
+                (vbuffer.clone(), ibuffer.clone())
+            },
+        }
     }
 
     pub fn get_transform(&self) -> cgm::Matrix4<f32> {
