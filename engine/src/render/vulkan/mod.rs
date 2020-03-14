@@ -132,12 +132,56 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.armed = true;
     }
 
+    fn make_graphics_command(
+        &mut self,
+        render_data: &Vec<renderable::Data>,
+    ) -> vc::AutoCommandBuffer {
+        let device = self.surface_binding().device.clone();
+        let rp = self.swapchain_binding().render_pass.clone();
+        let qf = self.surface_binding().graphics_queue.family();
+        let dimensions = self.dimensions();
+
+        let view = cgm::Matrix4::look_at(
+            cgm::Point3::new(2.0, 2.0, 2.0),
+            cgm::Point3::new(0.0, 0.0, 0.0),
+            cgm::Vector3::new(0.0, 0.0, 1.0)
+        );
+        let proj = cgm::perspective(
+            cgm::Rad::from(cgm::Deg(45.0)),
+            dimensions[0] / dimensions[1],
+            0.1,
+            10.0
+        );
+
+
+        let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(device.clone(), qf, vf::Subpass::from(rp, 0).unwrap()).unwrap();
+
+        for d in render_data {
+            let (vbuffer, ibuffer) = d.vulkan_buffers(self.surface_binding().graphics_queue.clone());
+            let ubo = data::UniformBufferObject {
+                model: proj.clone() * view.clone() * d.get_transform(),
+            };
+            //let ub = self.uniform_pool.as_ref().unwrap().next(ubo.clone()).unwrap();
+            //let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
+            let pipeline = self.pipeline.as_ref().unwrap().get_pipeline();
+            builder = builder.draw_indexed(pipeline, &vc::DynamicState::none(),
+                vec![vbuffer.clone()],
+                ibuffer.clone(),
+                (),
+                ubo).unwrap();
+        }
+
+        builder.build().unwrap()
+    }
 
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
         render_data: &Vec<renderable::Data>,
     ) {
+        // Build batch command buffer as early as possible.
+        let mut batch = self.make_graphics_command(render_data);
+
         match &self.previous_frame_end {
             None => (),
             Some(future) => future.wait(None).unwrap(),
@@ -145,6 +189,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         if !self.armed {
             self.arm();
+            // Rearming means the batch is invalid - rebuild it.
+            batch = self.make_graphics_command(render_data);
         }
 
         let chain = self.swapchain_binding().chain.clone();
@@ -159,7 +205,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         };
 
         let fb = self.swapchain_binding().framebuffers[image_index].clone();
-        let command_buffer = self.make_command_buffer(fb, render_data);
+        let command_buffer = self.make_command_buffer(fb, batch);
 
         let gq = self.surface_binding().graphics_queue.clone();
         let pq = self.surface_binding().present_queue.clone();
@@ -194,46 +240,21 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     fn make_command_buffer(
         &mut self,
         framebuffer: Arc<dyn vf::FramebufferAbstract + Send + Sync>,
-        render_data: &Vec<renderable::Data>,
+        batch: vc::AutoCommandBuffer,
     ) -> Arc<vc::AutoCommandBuffer> {
         let device = self.surface_binding().device.clone();
         let qf = self.surface_binding().graphics_queue.family();
-        let dimensions = self.dimensions();
-        let mut c = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
+
+        let mut primary = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
                  .unwrap()
                  .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
                  .unwrap();
 
-        let view = cgm::Matrix4::look_at(
-            cgm::Point3::new(2.0, 2.0, 2.0),
-            cgm::Point3::new(0.0, 0.0, 0.0),
-            cgm::Vector3::new(0.0, 0.0, 1.0)
-        );
-        let proj = cgm::perspective(
-            cgm::Rad::from(cgm::Deg(45.0)),
-            dimensions[0] / dimensions[1],
-            0.1,
-            10.0
-        );
-
-        for d in render_data {
-            let (vbuffer, ibuffer) = d.vulkan_buffers(self.surface_binding().graphics_queue.clone());
-            let ubo = data::UniformBufferObject {
-                model: proj.clone() * view.clone() * d.get_transform(),
-            };
-            //let ub = self.uniform_pool.as_ref().unwrap().next(ubo.clone()).unwrap();
-            //let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
-            let pipeline = self.pipeline.as_ref().unwrap().get_pipeline();
-            c = c.draw_indexed(pipeline, &vc::DynamicState::none(),
-                vec![vbuffer.clone()],
-                ibuffer.clone(),
-                (),
-                ubo).unwrap();
+        unsafe {
+            primary = primary.execute_commands(batch).unwrap();
         }
 
-
-        Arc::new(c.end_render_pass().unwrap()
-            .build().unwrap())
+        Arc::new(primary.end_render_pass().unwrap().build().unwrap())
     }
 
 
