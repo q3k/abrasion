@@ -54,8 +54,31 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         };
 
         let exts = required_instance_extensions();
-        let layers = ["VK_LAYER_LUNARG_standard_validation"];
-        let vulkan = vi::Instance::new(Some(&ai), &exts, layers.iter().cloned()).expect("could not create vulkan instance");
+
+        let layer_preferences = vec![
+            vec!["VK_LAYER_KHRONOS_validation"],
+            vec!["VK_LAYER_LUNARG_standard_validation"],
+            vec![],
+        ];
+
+
+        let mut vulkanOpt: Option<Arc<vi::Instance>> = None;
+        for pref in layer_preferences {
+            match vi::Instance::new(Some(&ai), &exts, pref.iter().cloned()) {
+                Ok(res) => {
+                    log::info!("Created vulkan instance with layers {}", pref.join(", "));
+                    if pref.len() == 0 {
+                        log::warn!("Did not load validation layers.");
+                    }
+                    vulkanOpt = Some(res);
+                }
+                Err(err) => {
+                    log::warn!("Could not create vulkan instance with layers {}: {}", pref.join(", "), err);
+                }
+            }
+        };
+
+        let vulkan = vulkanOpt.expect("could not create a vulkan instance");
         let debug_callback = Self::init_debug_callback(&vulkan);
 
 
