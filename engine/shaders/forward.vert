@@ -1,7 +1,7 @@
 // vim: set ft=glsl:
 #version 450
 
-layout(push_constant) uniform UniformBufferObject {
+layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
 } ubo;
 
