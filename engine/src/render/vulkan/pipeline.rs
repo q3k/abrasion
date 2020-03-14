@@ -4,6 +4,7 @@ use std::sync::Arc;
 use vulkano::buffer as vb;
 use vulkano::descriptor::descriptor as vdD;
 use vulkano::descriptor::descriptor_set as vdd;
+use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
 use vulkano::format::Format;
 use vulkano::framebuffer as vf;
@@ -53,14 +54,11 @@ impl Forward {
                     name: Some(Cow::Borrowed("fragColor")),
                 }
             ],
-            uniforms: vec![
-                vdD::DescriptorDesc {
-                    ty: vdD::DescriptorDescTy::Buffer(vdD::DescriptorBufferDesc {
-                        dynamic: Some(false),
-                        storage: false,
-                    }),
-                    array_count: 1,
-                    readonly: true,
+            uniforms: vec![],
+            push_constants: vec![
+                vdp::PipelineLayoutDescPcRange {
+                    offset: 0,
+                    size: 64usize,
                     stages: vdD::ShaderStages {
                         vertex: true,
                         ..vdD::ShaderStages::none()
@@ -85,6 +83,7 @@ impl Forward {
                 }
             ],
             uniforms: vec![],
+            push_constants: vec![],
         }.load_into(device.clone()).expect("could not load fragment shader");
 
         let dimensions = [viewport_dimensions[0] as f32, viewport_dimensions[1] as f32];

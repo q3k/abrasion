@@ -198,14 +198,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             let ubo = data::UniformBufferObject {
                 model: proj.clone() * view.clone() * d.get_transform(),
             };
-            let ub = self.uniform_pool.as_ref().unwrap().next(ubo.clone()).unwrap();
-            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
+            //let ub = self.uniform_pool.as_ref().unwrap().next(ubo.clone()).unwrap();
+            //let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(Box::new(ub));
             let pipeline = self.pipeline.as_ref().unwrap().get_pipeline();
             c = c.draw_indexed(pipeline, &vc::DynamicState::none(),
                 vec![vbuffer.clone()],
                 ibuffer.clone(),
-                ds,
-                ()).unwrap();
+                (),
+                ubo).unwrap();
         }
 
 

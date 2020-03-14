@@ -16,6 +16,7 @@ pub struct ShaderDefinition {
     pub inputs: Vec<vps::ShaderInterfaceDefEntry>,
     pub outputs: Vec<vps::ShaderInterfaceDefEntry>,
     pub uniforms: Vec<vdd::DescriptorDesc>,
+    pub push_constants: Vec<vdp::PipelineLayoutDescPcRange>,
 }
 
 impl ShaderDefinition {
@@ -56,7 +57,7 @@ impl LoadedShader {
     }
 
     fn layout(&self) -> RuntimeShaderLayout {
-        RuntimeShaderLayout{ descs: vec![self.def.uniforms.clone()], push_constants: vec![], }
+        RuntimeShaderLayout{ descs: vec![self.def.uniforms.clone()], push_constants: self.def.push_constants.clone(), }
     }
 
     pub fn entry_point<'a, S>(&'a self) -> vps::GraphicsEntryPoint<'a, S, ShaderInterface, ShaderInterface, RuntimeShaderLayout> {
@@ -104,20 +105,6 @@ unsafe impl vdp::PipelineLayoutDesc for RuntimeShaderLayout {
         }
         Some(self.push_constants[0].clone())
     }
-    //fn num_push_constants_ranges(&self) -> usize { 1 }
-    //fn push_constants_range(&self, num: usize) -> Option<vdp::PipelineLayoutDescPcRange> {
-    //    match num {
-    //        0 => Some(vdp::PipelineLayoutDescPcRange {
-    //            offset: 0,
-    //            size: 64usize,
-    //            stages: vdd::ShaderStages {
-    //                vertex: true,
-    //                ..vdd::ShaderStages::none()
-    //            },
-    //        }),
-    //        _ => None,
-    //    }
-    //}
 }
 
 pub struct ShaderInterface {
