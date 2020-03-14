@@ -15,6 +15,7 @@ pub struct ShaderDefinition {
     pub ty: vps::GraphicsShaderType,
     pub inputs: Vec<vps::ShaderInterfaceDefEntry>,
     pub outputs: Vec<vps::ShaderInterfaceDefEntry>,
+    pub uniforms: Vec<vdd::DescriptorDesc>,
 }
 
 impl ShaderDefinition {
@@ -55,27 +56,7 @@ impl LoadedShader {
     }
 
     fn layout(&self) -> RuntimeShaderLayout {
-        let sets = vec![
-            vec![
-                vdd::DescriptorDesc {
-                    ty: vdd::DescriptorDescTy::Buffer(vdd::DescriptorBufferDesc {
-                        dynamic: Some(false),
-                        storage: false,
-                    }),
-                    array_count: 1,
-                    readonly: true,
-                    stages: vdd::ShaderStages {
-                        vertex: true,
-                        ..vdd::ShaderStages::none()
-                    },
-                },
-            ],
-        ];
-        match self.def.ty {
-            vps::GraphicsShaderType::Vertex => RuntimeShaderLayout::vertex(sets.clone()),
-            vps::GraphicsShaderType::Fragment => RuntimeShaderLayout::fragment(sets.clone()),
-            _ => panic!("unknown shader type")
-        }
+        RuntimeShaderLayout{ descs: vec![self.def.uniforms.clone()], push_constants: vec![], }
     }
 
     pub fn entry_point<'a, S>(&'a self) -> vps::GraphicsEntryPoint<'a, S, ShaderInterface, ShaderInterface, RuntimeShaderLayout> {
@@ -95,48 +76,34 @@ impl LoadedShader {
 
 #[derive (Debug, Clone)]
 pub struct RuntimeShaderLayout {
-    sets: Vec<Vec<vdd::DescriptorDesc>>,
-
-    vertex: bool,
-    fragment: bool,
-}
-
-impl RuntimeShaderLayout {
-    fn vertex(sets: Vec<Vec<vdd::DescriptorDesc>>) -> RuntimeShaderLayout {
-        RuntimeShaderLayout {
-            sets,
-            vertex: true,
-            fragment: false,
-        }
-    }
-    fn fragment(sets: Vec<Vec<vdd::DescriptorDesc>>) -> RuntimeShaderLayout {
-        RuntimeShaderLayout {
-            sets,
-            vertex: false,
-            fragment: true,
-        }
-    }
+    descs: Vec<Vec<vdd::DescriptorDesc>>,
+    push_constants: Vec<vdp::PipelineLayoutDescPcRange>,
 }
 
 unsafe impl vdp::PipelineLayoutDesc for RuntimeShaderLayout {
-    fn num_sets(&self) -> usize { self.sets.len() }
+    fn num_sets(&self) -> usize { self.descs.len() }
     fn num_bindings_in_set(&self, set: usize) -> Option<usize> {
-        if set >= self.sets.len() {
+        if set >= self.descs.len() {
             return None
         }
-        Some(self.sets[set].len())
+        Some(self.descs[set].len())
     }
     fn descriptor(&self, set: usize, binding: usize) -> Option<vdd::DescriptorDesc> {
-        if set >= self.sets.len() {
+        if set >= self.descs.len() {
             return None
         }
-        if binding >= self.sets[set].len() {
+        if binding >= self.descs[set].len() {
             return None
         }
-        Some(self.sets[set][binding].clone())
+        Some(self.descs[set][binding].clone())
     }
-    fn num_push_constants_ranges(&self) -> usize { 0 }
-    fn push_constants_range(&self, _num: usize) -> Option<vdp::PipelineLayoutDescPcRange> { None }
+    fn num_push_constants_ranges(&self) -> usize { self.push_constants.len() }
+    fn push_constants_range(&self, num: usize) -> Option<vdp::PipelineLayoutDescPcRange> {
+        if num >= self.push_constants.len() {
+            return None
+        }
+        Some(self.push_constants[0].clone())
+    }
     //fn num_push_constants_ranges(&self) -> usize { 1 }
     //fn push_constants_range(&self, num: usize) -> Option<vdp::PipelineLayoutDescPcRange> {
     //    match num {

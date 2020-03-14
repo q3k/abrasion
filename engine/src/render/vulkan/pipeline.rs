@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use vulkano::buffer as vb;
+use vulkano::descriptor::descriptor as vdD;
 use vulkano::descriptor::descriptor_set as vdd;
 use vulkano::device as vd;
 use vulkano::format::Format;
@@ -37,11 +38,34 @@ impl Forward {
             name: "forward_vert.spv".to_string(),
             ty: vps::GraphicsShaderType::Vertex,
             inputs: vec![
-                vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("pos")) },
-                vps::ShaderInterfaceDefEntry { location: 1..2, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("color")) },
+                vps::ShaderInterfaceDefEntry {
+                    location: 0..1, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("pos")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 1..2, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("color")),
+                },
             ],
             outputs: vec![
-                vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
+                vps::ShaderInterfaceDefEntry {
+                    location: 0..1, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragColor")),
+                }
+            ],
+            uniforms: vec![
+                vdD::DescriptorDesc {
+                    ty: vdD::DescriptorDescTy::Buffer(vdD::DescriptorBufferDesc {
+                        dynamic: Some(false),
+                        storage: false,
+                    }),
+                    array_count: 1,
+                    readonly: true,
+                    stages: vdD::ShaderStages {
+                        vertex: true,
+                        ..vdD::ShaderStages::none()
+                    },
+                },
             ],
         }.load_into(device.clone()).expect("could not load vertex shader");
 
@@ -49,11 +73,18 @@ impl Forward {
             name: "forward_frag.spv".to_string(),
             ty: vps::GraphicsShaderType::Fragment,
             inputs: vec![
-                vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32Sfloat, name: Some(Cow::Borrowed("fragColor")) }
+                vps::ShaderInterfaceDefEntry {
+                    location: 0..1, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragColor")),
+                }
             ],
             outputs: vec![
-                vps::ShaderInterfaceDefEntry { location: 0..1, format: Format::R32G32B32A32Sfloat, name: Some(Cow::Borrowed("outColor")) }
+                vps::ShaderInterfaceDefEntry {
+                    location: 0..1, format: Format::R32G32B32A32Sfloat,
+                    name: Some(Cow::Borrowed("outColor")),
+                }
             ],
+            uniforms: vec![],
         }.load_into(device.clone()).expect("could not load fragment shader");
 
         let dimensions = [viewport_dimensions[0] as f32, viewport_dimensions[1] as f32];
