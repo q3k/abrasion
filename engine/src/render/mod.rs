@@ -22,7 +22,7 @@ pub struct Renderer {
     instance: vulkan::Instance<winit::Window>,
     events_loop: EventsLoop,
 
-    render_data: Vec<Arc<renderable::Data>>,
+    renderables: Vec<Arc<dyn renderable::Renderable>>,
 }
 
 impl Renderer {
@@ -34,12 +34,12 @@ impl Renderer {
         Self {
             instance,
             events_loop,
-            render_data: vec![],
+            renderables: vec![],
         }
     }
 
-    pub fn set_render_data(&mut self, render_data: Vec<Arc<renderable::Data>>) {
-        self.render_data = render_data;
+    pub fn set_renderables(&mut self, renderables: Vec<Arc<dyn renderable::Renderable>>) {
+        self.renderables = renderables;
     }
 
     fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
@@ -53,7 +53,7 @@ impl Renderer {
     }
 
     fn draw_frame(&mut self) {
-        self.instance.flip(self.render_data.clone());
+        self.instance.flip(self.renderables.clone());
     }
 
     pub fn main_loop(&mut self) {

@@ -10,6 +10,7 @@ use vulkano::format::Format;
 use vulkano::framebuffer as vf;
 use vulkano::pipeline as vp;
 use vulkano::pipeline::shader as vps;
+use vulkano::pipeline::vertex as vpv;
 
 use crate::render::vulkan::data;
 use crate::render::vulkan::shaders;
@@ -44,6 +45,10 @@ impl Forward {
                 vps::ShaderInterfaceDefEntry {
                     location: 1..2, format: Format::R32G32B32Sfloat,
                     name: Some(Cow::Borrowed("color")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 2..6, format: Format::R32G32B32A32Sfloat,
+                    name: Some(Cow::Borrowed("model")),
                 },
             ],
             outputs: vec![
@@ -99,7 +104,7 @@ impl Forward {
         // against most existing software and practices.  This might bite us in the ass at some
         // point in the future.
         let pipeline = Arc::new(vp::GraphicsPipeline::start()
-                 .vertex_input_single_buffer::<data::Vertex>()
+                 .vertex_input(vpv::OneVertexOneInstanceDefinition::<data::Vertex, data::Instance>::new())
                  .vertex_shader(vertex_shader.entry_point(), ())
                  .triangle_list()
                  .primitive_restart(false)

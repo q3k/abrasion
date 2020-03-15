@@ -1,5 +1,7 @@
+use std::hash;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time;
 
 use cgmath as cgm;
 use vulkano::device as vd;
@@ -9,7 +11,7 @@ use vulkano::sync::GpuFuture;
 use crate::render::vulkan::data;
 
 pub trait Renderable {
-    fn data(&self) -> Option<Data> {
+    fn render_data(&self) -> Option<(Arc<Mesh>, cgm::Matrix4<f32>)> {
         None
     }
 }
@@ -19,25 +21,29 @@ struct VulkanData {
     ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
 }
 
-pub struct Data {
+pub struct Mesh {
     vertices: Arc<Vec<data::Vertex>>,
     indices: Arc<Vec<u16>>,
-    transform: cgm::Matrix4<f32>,
 
+    id: u64,
+    // vulkan buffers cache
     vulkan: Mutex<Option<VulkanData>>,
 }
 
-impl Data {
+impl Mesh {
     pub fn new(
         vertices: Arc<Vec<data::Vertex>>,
         indices: Arc<Vec<u16>>,
-        transform: cgm::Matrix4<f32>,
-    ) -> Data {
-        Data {
-            vertices, indices, transform,
+    ) -> Self {
+        Self {
+            vertices, indices,
+            // TODO: use a better method
+            id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
             vulkan: Mutex::new(None),
         }
     }
+
+    pub fn get_id(&self) -> u64 { self.id }
 
     pub fn vulkan_buffers(
         &self,
@@ -72,20 +78,29 @@ impl Data {
             },
         }
     }
+}
 
-    pub fn get_transform(&self) -> cgm::Matrix4<f32> {
-        self.transform.clone()
+impl hash::Hash for Mesh {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 
-pub struct Mesh {
-    pub vertices: Arc<Vec<data::Vertex>>,
-    pub indices: Arc<Vec<u16>>,
+impl PartialEq for Mesh {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Mesh {}
+
+pub struct Object {
+    pub mesh: Arc<Mesh>,
     pub transform: cgm::Matrix4<f32>,
 }
 
-impl Renderable for Mesh {
-    fn data(&self) -> Option<Data> {
-        Some(Data::new(self.vertices.clone(), self.indices.clone(), self.transform.clone()))
+impl Renderable for Object {
+    fn render_data(&self) -> Option<(Arc<Mesh>, cgm::Matrix4<f32>)> {
+        Some((self.mesh.clone(), self.transform.clone()))
     }
 }

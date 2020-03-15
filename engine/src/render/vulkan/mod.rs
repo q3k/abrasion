@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time;
 use log;
@@ -142,12 +143,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     fn make_graphics_commands(
         &mut self,
-        render_data: &Vec<Arc<renderable::Data>>,
+        renderables: &Vec<Arc<dyn renderable::Renderable>>,
     ) -> Vec<Box<vc::AutoCommandBuffer>> {
-        let device = self.surface_binding().device.clone();
-        let rp = self.swapchain_binding().render_pass.clone();
-        let queue = self.surface_binding().graphics_queue.clone();
-        let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
+
         let dimensions = self.dimensions();
 
         let view = cgm::Matrix4::look_at(
@@ -162,27 +160,78 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             10.0
         );
 
-        // Split work into N vectors (one per worker)
-        // This is not fair to workers, but good enough for now.
-        let nworkers = self.workers.len();
-        let nwork = render_data.len();
-        let nperworker = (nwork / nworkers) + 1; // last worker will be underloaded
+        let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
 
-        let work = render_data.chunks(nperworker);
-        let futures = self.workers.iter().zip(work).map(|(w, c)| {
-            w.render(device.clone(), queue.clone(), rp.clone(), pipeline.clone(), view.clone(), proj.clone(), c.to_vec())
-        });
+        // Sort renderables by mesh.
+        let mut meshes: HashMap<Arc<renderable::Mesh>, Vec<cgm::Matrix4<f32>>> = HashMap::new();
+        for r in renderables {
+            if let Some((mesh, transform)) = r.render_data() {
+                let entry = meshes.entry(mesh.clone()).or_insert(vec![]);
+                entry.push(transform);
+            }
+        }
 
-        futures.map(|r| { r.recv().unwrap() }).collect()
+        let device = self.surface_binding().device.clone();
+        let queue = self.surface_binding().graphics_queue.clone();
+        let rp = self.swapchain_binding().render_pass.clone();
+        let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
+
+        for (mesh, transforms) in meshes {
+            let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
+                device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
+
+            let ubo = data::UniformBufferObject {
+                view: proj * view,
+            };
+
+            let (instancebuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
+                transforms.iter().map(|t| { data::Instance::new(t) }),
+                vb::BufferUsage::vertex_buffer(),
+                queue.clone(),
+            ).unwrap();
+            future.flush().unwrap();
+
+            let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());
+            builder = builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
+                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), (), ubo).unwrap();
+
+            buffers.push(Box::new(builder.build().unwrap()));
+        }
+
+        return buffers;
+    }
+
+    fn make_command_buffer(
+        &mut self,
+        framebuffer: Arc<dyn vf::FramebufferAbstract + Send + Sync>,
+        batches: Vec<Box<vc::AutoCommandBuffer>>,
+    ) -> Arc<vc::AutoCommandBuffer> {
+
+        let device = self.surface_binding().device.clone();
+        let qf = self.surface_binding().graphics_queue.family();
+
+        let mut primary = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
+                 .unwrap()
+                 .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
+                 .unwrap();
+
+
+        for batch in batches {
+            unsafe {
+                primary = primary.execute_commands(batch).unwrap();
+            }
+        }
+
+        Arc::new(primary.end_render_pass().unwrap().build().unwrap())
     }
 
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
-        render_data: Vec<Arc<renderable::Data>>,
+        renderables: Vec<Arc<dyn renderable::Renderable>>,
     ) {
         // Build batch command buffer as early as possible.
-        let mut batches = self.make_graphics_commands(&render_data);
+        let mut batches = self.make_graphics_commands(&renderables);
 
         match &self.previous_frame_end {
             None => (),
@@ -192,7 +241,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         if !self.armed {
             self.arm();
             // Rearming means the batch is invalid - rebuild it.
-            batches = self.make_graphics_commands(&render_data);
+            batches = self.make_graphics_commands(&renderables);
         }
 
         let chain = self.swapchain_binding().chain.clone();
@@ -238,30 +287,6 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let dimensions_u32 = self.swapchain_binding().chain.dimensions();
         [dimensions_u32[0] as f32, dimensions_u32[1] as f32]
     }
-
-    fn make_command_buffer(
-        &mut self,
-        framebuffer: Arc<dyn vf::FramebufferAbstract + Send + Sync>,
-        batches: Vec<Box<vc::AutoCommandBuffer>>,
-    ) -> Arc<vc::AutoCommandBuffer> {
-        let device = self.surface_binding().device.clone();
-        let qf = self.surface_binding().graphics_queue.family();
-
-        let mut primary = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
-                 .unwrap()
-                 .begin_render_pass(framebuffer.clone(), false, vec![[0.0, 0.0, 0.0, 1.0].into()])
-                 .unwrap();
-
-
-        for batch in batches {
-            unsafe {
-                primary = primary.execute_commands(batch).unwrap();
-            }
-        }
-
-        Arc::new(primary.end_render_pass().unwrap().build().unwrap())
-    }
-
 
     fn init_debug_callback(instance: &Arc<vi::Instance>) -> vi::debug::DebugCallback {
         let mt = vi::debug::MessageTypes {
