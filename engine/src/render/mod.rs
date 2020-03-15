@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use cgmath as cgm;
+
 use winit::{
     dpi::LogicalSize,
     Window,
@@ -21,8 +23,6 @@ const HEIGHT: u32 = 600;
 pub struct Renderer {
     instance: vulkan::Instance<winit::Window>,
     events_loop: EventsLoop,
-
-    renderables: Vec<Arc<dyn renderable::Renderable>>,
 }
 
 impl Renderer {
@@ -34,12 +34,7 @@ impl Renderer {
         Self {
             instance,
             events_loop,
-            renderables: vec![],
         }
-    }
-
-    pub fn set_renderables(&mut self, renderables: Vec<Arc<dyn renderable::Renderable>>) {
-        self.renderables = renderables;
     }
 
     fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
@@ -52,23 +47,17 @@ impl Renderer {
         (events_loop, surface)
     }
 
-    fn draw_frame(&mut self) {
-        self.instance.flip(self.renderables.clone());
+    pub fn draw_frame(&mut self, view: &cgm::Matrix4<f32>, renderables: &Vec<Arc<dyn renderable::Renderable>>) {
+        self.instance.flip(view, renderables);
     }
 
-    pub fn main_loop(&mut self) {
-        loop {
-            self.draw_frame();
-
-            let mut done = false;
-            self.events_loop.poll_events(|ev| {
-                if let Event::WindowEvent { event: WindowEvent::CloseRequested, .. } = ev {
-                    done = true
-                }
-            });
-            if done {
-                return;
+    pub fn poll_close(&mut self) -> bool {
+        let mut close = false;
+        self.events_loop.poll_events(|ev| {
+            if let Event::WindowEvent { event: WindowEvent::CloseRequested, .. } = ev {
+                close = true;
             }
-        }
+        });
+        return close;
     }
 }

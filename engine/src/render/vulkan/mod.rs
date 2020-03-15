@@ -143,16 +143,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     fn make_graphics_commands(
         &mut self,
+        view: &cgm::Matrix4<f32>,
         renderables: &Vec<Arc<dyn renderable::Renderable>>,
     ) -> Vec<Box<vc::AutoCommandBuffer>> {
 
         let dimensions = self.dimensions();
-
-        let view = cgm::Matrix4::look_at(
-            cgm::Point3::new(2.0, 2.0, 2.0),
-            cgm::Point3::new(0.0, 0.0, 0.0),
-            cgm::Vector3::new(0.0, 0.0, 1.0)
-        );
         let proj = cgm::perspective(
             cgm::Rad::from(cgm::Deg(45.0)),
             dimensions[0] / dimensions[1],
@@ -228,10 +223,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
-        renderables: Vec<Arc<dyn renderable::Renderable>>,
+        view: &cgm::Matrix4<f32>,
+        renderables: &Vec<Arc<dyn renderable::Renderable>>,
     ) {
         // Build batch command buffer as early as possible.
-        let mut batches = self.make_graphics_commands(&renderables);
+        let mut batches = self.make_graphics_commands(view, renderables);
 
         match &self.previous_frame_end {
             None => (),
@@ -241,7 +237,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         if !self.armed {
             self.arm();
             // Rearming means the batch is invalid - rebuild it.
-            batches = self.make_graphics_commands(&renderables);
+            batches = self.make_graphics_commands(view, renderables);
         }
 
         let chain = self.swapchain_binding().chain.clone();
