@@ -18,6 +18,7 @@ rust_binary(
         "src/render/vulkan/qfi.rs",
         "src/render/vulkan/shaders.rs",
         "src/render/vulkan/swapchains.rs",
+        "src/render/vulkan/worker.rs",
         "src/util/mod.rs",
         "src/util/counter.rs",
     ],

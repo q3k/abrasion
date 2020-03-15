@@ -14,7 +14,7 @@ use vulkano::pipeline::shader as vps;
 use crate::render::vulkan::data;
 use crate::render::vulkan::shaders;
 
-type VulkanoPipeline = dyn vp::GraphicsPipelineAbstract + Send + Sync;
+pub type VulkanoPipeline = dyn vp::GraphicsPipelineAbstract + Send + Sync;
 type VulkanoDescriptorSet = dyn vdd::DescriptorSet + Send + Sync;
 
 pub trait Pipeline {
@@ -23,8 +23,6 @@ pub trait Pipeline {
 }
 
 pub struct Forward {
-    device: Arc<vd::Device>,
-
     pipeline: Arc<VulkanoPipeline>,
     descriptor_set_pool: vdd::FixedSizeDescriptorSetsPool<Arc<VulkanoPipeline>>,
 }
@@ -121,8 +119,6 @@ impl Forward {
         let descriptor_set_pool = vdd::FixedSizeDescriptorSetsPool::new(pipeline.clone(), 0);
 
         Forward {
-            device,
-
             pipeline,
             descriptor_set_pool
         }
