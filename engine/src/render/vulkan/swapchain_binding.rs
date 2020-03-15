@@ -15,7 +15,7 @@ pub struct SwapchainBinding<WT> {
 
 impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
     pub fn new(
-        surface_binding: &super::binding::SurfaceBinding<WT>,
+        surface_binding: &super::surface_binding::SurfaceBinding<WT>,
         previous: Option<&SwapchainBinding<WT>>
     ) -> Self {
         let physical_device = surface_binding.physical_device();
@@ -79,7 +79,7 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
     }
 
     fn create_render_pass(
-        surface_binding: &super::binding::SurfaceBinding<WT>,
+        surface_binding: &super::surface_binding::SurfaceBinding<WT>,
         color_format: vulkano::format::Format,
     ) -> Arc<dyn vfb::RenderPassAbstract + Send + Sync> {
         let device = surface_binding.device.clone();

@@ -10,12 +10,12 @@ use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
-mod binding;
 pub mod data;
+mod surface_binding;
 mod pipeline;
 mod qfi;
 mod shaders;
-mod swapchains;
+mod swapchain_binding;
 mod worker;
 
 use crate::render::renderable;
@@ -34,8 +34,8 @@ pub struct Instance<WT> {
 
     workers: Vec<worker::Worker>,
 
-    surface_binding: Option<binding::SurfaceBinding<WT>>,
-    swapchain_binding: Option<swapchains::SwapchainBinding<WT>>,
+    surface_binding: Option<surface_binding::SurfaceBinding<WT>>,
+    swapchain_binding: Option<swapchain_binding::SwapchainBinding<WT>>,
 
     pipeline: Option<Box<dyn pipeline::Pipeline>>,
     uniform_pool: Option<vb::CpuBufferPool<data::UniformBufferObject>>,
@@ -109,23 +109,23 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.vulkan.clone()
     }
 
-    fn swapchain_binding(&self) -> &swapchains::SwapchainBinding<WT> {
+    fn swapchain_binding(&self) -> &swapchain_binding::SwapchainBinding<WT> {
         self.swapchain_binding.as_ref().unwrap()
     }
 
-    fn surface_binding(&self) -> &binding::SurfaceBinding<WT> {
+    fn surface_binding(&self) -> &surface_binding::SurfaceBinding<WT> {
         self.surface_binding.as_ref().unwrap()
     }
 
     pub fn use_surface(&mut self, surface: &Arc<vs::Surface<WT>>) {
-        self.surface_binding = Some(binding::SurfaceBinding::new(&self.vulkan, surface.clone()));
+        self.surface_binding = Some(surface_binding::SurfaceBinding::new(&self.vulkan, surface.clone()));
         log::info!("Bound to Vulkan Device: {}", self.surface_binding().physical_device().name());
 
         self.arm();
     }
 
     fn arm(&mut self) {
-        self.swapchain_binding = Some(swapchains::SwapchainBinding::new(self.surface_binding(), self.swapchain_binding.as_ref()));
+        self.swapchain_binding = Some(swapchain_binding::SwapchainBinding::new(self.surface_binding(), self.swapchain_binding.as_ref()));
 
         let device = self.surface_binding().device.clone();
         let chain = self.swapchain_binding().chain.clone();
