@@ -3,7 +3,6 @@ use log;
 use std::sync::Arc;
 use std::sync::mpsc;
 use std::thread;
-use std::time;
 
 use cgmath as cgm;
 use vulkano::command_buffer as vc;
@@ -33,7 +32,7 @@ struct CommandRender {
 }
 
 pub struct Worker {
-    handle: thread::JoinHandle<()>,
+    handle: Option<thread::JoinHandle<()>>,
     control: mpsc::Sender<Command>,
 }
 
@@ -71,7 +70,8 @@ impl Worker {
         });
 
         Worker {
-            handle, control
+            handle: Some(handle),
+            control
         }
     }
 
@@ -81,7 +81,6 @@ impl Worker {
         let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
             r.device, qf, vf::Subpass::from(r.render_pass, 0).unwrap()).unwrap();
 
-        let start = time::Instant::now();
         for d in r.data {
             let ubo = data::UniformBufferObject {
                 model: r.matrix_p.clone() * r.matrix_v.clone() * d.get_transform(),
@@ -93,8 +92,6 @@ impl Worker {
                 (),
                 ubo).unwrap();
         }
-        let took = time::Instant::now().duration_since(start);
-        //log::info!("worker loop took {:?}", took);
 
         let buffer = builder.build().unwrap();
         r.result.send(Box::new(buffer)).unwrap();
@@ -129,6 +126,6 @@ impl Worker {
 impl Drop for Worker {
     fn drop(&mut self) {
         self.control.send(Command::Exit).unwrap();
-        //self.handle.join().unwrap();
+        self.handle.take().unwrap().join().unwrap();
     }
 }

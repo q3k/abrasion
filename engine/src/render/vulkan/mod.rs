@@ -65,7 +65,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         ];
 
 
-        let mut vulkanOpt: Option<Arc<vi::Instance>> = None;
+        let mut vulkan_opt: Option<Arc<vi::Instance>> = None;
         for pref in layer_preferences {
             match vi::Instance::new(Some(&ai), &exts, pref.iter().cloned()) {
                 Ok(res) => {
@@ -73,7 +73,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                     if pref.len() == 0 {
                         log::warn!("Did not load validation layers.");
                     }
-                    vulkanOpt = Some(res);
+                    vulkan_opt = Some(res);
                 }
                 Err(err) => {
                     log::warn!("Could not create vulkan instance with layers {}: {}", pref.join(", "), err);
@@ -81,7 +81,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             }
         };
 
-        let vulkan = vulkanOpt.expect("could not create a vulkan instance");
+        let vulkan = vulkan_opt.expect("could not create a vulkan instance");
         let debug_callback = Self::init_debug_callback(&vulkan);
 
         let workers = (0..4).map(|n| {
@@ -173,12 +173,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             w.render(device.clone(), queue.clone(), rp.clone(), pipeline.clone(), view.clone(), proj.clone(), c.to_vec())
         });
 
-        let start = time::Instant::now();
-        let res = futures.map(|r| { r.recv().unwrap() }).collect();
-        let took = time::Instant::now().duration_since(start);
-        //log::info!("took {:?}", took);
-
-        res
+        futures.map(|r| { r.recv().unwrap() }).collect()
     }
 
     // (╯°□°)╯︵ ┻━┻
