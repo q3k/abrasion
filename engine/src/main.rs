@@ -73,7 +73,11 @@ fn main() {
         let position = (instant / 10.0) * 3.14 * 2.0;
 
         let view = cgm::Matrix4::look_at(
-            cgm::Point3::new(position.cos() * 5.0, position.sin() * 5.0, 2.0),
+            cgm::Point3::new(
+                position.cos() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
+                position.sin() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
+                2.0
+            ),
             cgm::Point3::new(0.0, 0.0, 0.0),
             cgm::Vector3::new(0.0, 0.0, 1.0)
         );

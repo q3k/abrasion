@@ -152,7 +152,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             cgm::Rad::from(cgm::Deg(45.0)),
             dimensions[0] / dimensions[1],
             0.1,
-            10.0
+            1000.0
         );
 
         let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
