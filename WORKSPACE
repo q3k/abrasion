@@ -4,11 +4,11 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_rust",
-    # master HEAD as of 2020/01/19
-    sha256 = "66ea4cb3296016234143511e8ce3435b5f186a217a84c251c31d04dc10ca1807",
-    strip_prefix = "rules_rust-a9103cd6260433fb04b36d9a3e1dc4d3ddceaa22",
+    # master HEAD as of 2020/03/16
+    sha256 = "3f6db529492d821a91560c230e2634e34b3e0a3147fc5c4c41ac5bc6ccd45d3f",
+    strip_prefix = "rules_rust-fe50d3b54aecbaeac48abdc2ca7cd00a94969e15",
     urls = [
-        "https://github.com/bazelbuild/rules_rust/archive/a9103cd6260433fb04b36d9a3e1dc4d3ddceaa22.tar.gz",
+        "https://github.com/bazelbuild/rules_rust/archive/fe50d3b54aecbaeac48abdc2ca7cd00a94969e15.tar.gz",
     ],
 )
 
@@ -25,7 +25,9 @@ rust_repository_set(
     exec_triple = "x86_64-unknown-linux-gnu",
     extra_target_triples = [],
     version = "nightly",
-    iso_date = "2020-01-17",
+    # Any newer and you get::
+    # thread 'main' panicked at 'attempted to leave type `std::mem::ManuallyDrop<xlib_xcb::Xlib_xcb>` uninitialized, which is invalid'
+    iso_date = "2020-03-11",
 )
 
 load("@io_bazel_rules_rust//:workspace.bzl", "bazel_version")
