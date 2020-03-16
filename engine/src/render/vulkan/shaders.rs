@@ -3,6 +3,7 @@ use std::ffi::CStr;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
+use std::path;
 
 use runfiles::Runfiles;
 use vulkano::descriptor::descriptor as vdd;
@@ -23,8 +24,10 @@ impl ShaderDefinition {
     pub fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
         fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
 
-        let r = Runfiles::create().map_err(stringify)?;
-        let path = r.rlocation(format!("abrasion/engine/shaders/{}", self.name));
+        let path = match Runfiles::create().map_err(stringify) {
+            Err(_) => path::Path::new(".").join("shaders").join(self.name.clone()),
+            Ok(r) => r.rlocation(format!("abrasion/engine/shaders/{}", self.name))
+        };
 
         log::info!("Loading shader {}", path.to_str().unwrap_or("UNKNOWN"));
 

@@ -47,9 +47,9 @@ fn main() {
     let mut renderer = render::Renderer::initialize();
 
     let mut cubes: Vec<Arc<Object>> = Vec::new();
-    for x in -10..10 {
-        for y in -10..10 {
-            for z in -10..10 {
+    for x in -20..20 {
+        for y in -20..20 {
+            for z in -20..20 {
                 let transform = cgm::Matrix4::from_translation(cgm::Vector3::new((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0));
                 let cube = render::renderable::Object {
                     mesh: mesh_cube.clone(),

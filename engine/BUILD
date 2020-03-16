@@ -1,4 +1,5 @@
 load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 rust_binary(
     name = "engine",
@@ -35,4 +36,14 @@ rust_binary(
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
     ],
+)
+
+pkg_tar(
+    name = "demo",
+    srcs = [
+        ":engine",
+        "//engine/shaders:forward_vert",
+        "//engine/shaders:forward_frag",
+    ],
+    strip_prefix = '/engine',
 )
