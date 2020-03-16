@@ -21,6 +21,10 @@ alias(
     actual = "//third_party/cargo/vendor/log-0.4.8:log",
 )
 alias(
+    name = "openvr",
+    actual = "//third_party/cargo/vendor/openvr-0.6.0:openvr",
+)
+alias(
     name = "vulkano",
     actual = "//third_party/cargo/vendor/vulkano-0.11.1:vulkano",
 )

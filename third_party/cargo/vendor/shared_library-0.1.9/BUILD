@@ -32,7 +32,7 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-        "//third_party/cargo/vendor/libc-0.2.66:libc",
+        "//third_party/cargo/vendor/libc-0.2.67:libc",
     ],
     rustc_flags = [
         "--cap-lints=allow",

@@ -39,7 +39,6 @@ rust_library(
     version = "0.3.1",
     crate_features = [
         "alloc",
-        "rand_core",
         "std",
     ],
 )

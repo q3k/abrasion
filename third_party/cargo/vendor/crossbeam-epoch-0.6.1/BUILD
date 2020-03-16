@@ -43,7 +43,6 @@ rust_library(
     ],
     version = "0.6.1",
     crate_features = [
-        "crossbeam-utils",
         "default",
         "lazy_static",
         "std",

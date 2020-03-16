@@ -40,7 +40,6 @@ rust_library(
     version = "0.6.4",
     crate_features = [
         "default",
-        "lock_api",
         "owning_ref",
     ],
 )

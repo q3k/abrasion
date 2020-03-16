@@ -35,15 +35,14 @@ rust_library(
         "//third_party/cargo/vendor/cfg-if-0.1.10:cfg_if",
         "//third_party/cargo/vendor/crossbeam-utils-0.6.6:crossbeam_utils",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-        "//third_party/cargo/vendor/memoffset-0.5.3:memoffset",
-        "//third_party/cargo/vendor/scopeguard-1.0.0:scopeguard",
+        "//third_party/cargo/vendor/memoffset-0.5.4:memoffset",
+        "//third_party/cargo/vendor/scopeguard-1.1.0:scopeguard",
     ],
     rustc_flags = [
         "--cap-lints=allow",
     ],
     version = "0.7.2",
     crate_features = [
-        "crossbeam-utils",
         "default",
         "lazy_static",
         "std",

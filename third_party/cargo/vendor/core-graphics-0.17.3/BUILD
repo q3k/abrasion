@@ -34,7 +34,7 @@ rust_library(
         "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
         "//third_party/cargo/vendor/core-foundation-0.6.4:core_foundation",
         "//third_party/cargo/vendor/foreign-types-0.3.2:foreign_types",
-        "//third_party/cargo/vendor/libc-0.2.66:libc",
+        "//third_party/cargo/vendor/libc-0.2.67:libc",
     ],
     rustc_flags = [
         "--cap-lints=allow",

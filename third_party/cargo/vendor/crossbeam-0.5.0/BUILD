@@ -46,8 +46,6 @@ rust_library(
     ],
     version = "0.5.0",
     crate_features = [
-        "crossbeam-epoch",
-        "crossbeam-utils",
         "default",
         "std",
     ],

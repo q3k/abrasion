@@ -31,7 +31,7 @@ rust_library(
     edition = "2015",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/owning_ref-0.4.0:owning_ref",
+        "//third_party/cargo/vendor/owning_ref-0.4.1:owning_ref",
         "//third_party/cargo/vendor/scopeguard-0.3.3:scopeguard",
     ],
     rustc_flags = [

@@ -40,7 +40,6 @@ rust_library(
     ],
     version = "0.1.4",
     crate_features = [
-        "rand_core",
         "std",
     ],
 )

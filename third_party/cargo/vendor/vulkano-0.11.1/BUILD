@@ -34,7 +34,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/crossbeam-0.5.0:crossbeam",
         "//third_party/cargo/vendor/fnv-1.0.6:fnv",
-        "//third_party/cargo/vendor/half-1.4.0:half",
+        "//third_party/cargo/vendor/half-1.5.0:half",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/shared_library-0.1.9:shared_library",
         "//third_party/cargo/vendor/smallvec-0.6.13:smallvec",

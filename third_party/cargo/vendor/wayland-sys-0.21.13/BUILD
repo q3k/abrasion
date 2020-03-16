@@ -41,7 +41,6 @@ rust_library(
     crate_features = [
         "client",
         "cursor",
-        "dlib",
         "dlopen",
         "egl",
         "lazy_static",

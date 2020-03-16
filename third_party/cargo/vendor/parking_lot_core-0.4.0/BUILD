@@ -32,7 +32,7 @@ rust_library(
     edition = "2015",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/libc-0.2.66:libc",
+        "//third_party/cargo/vendor/libc-0.2.67:libc",
         "//third_party/cargo/vendor/rand-0.6.5:rand",
         "//third_party/cargo/vendor/smallvec-0.6.13:smallvec",
     ],

@@ -47,13 +47,13 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-        "//third_party/cargo/vendor/libc-0.2.66:libc",
+        "//third_party/cargo/vendor/libc-0.2.67:libc",
         "//third_party/cargo/vendor/log-0.4.8:log",
         "//third_party/cargo/vendor/parking_lot-0.7.1:parking_lot",
         "//third_party/cargo/vendor/percent-encoding-1.0.1:percent_encoding",
         "//third_party/cargo/vendor/smithay-client-toolkit-0.4.6:smithay_client_toolkit",
         "//third_party/cargo/vendor/wayland-client-0.21.13:wayland_client",
-        "//third_party/cargo/vendor/x11-dl-2.18.4:x11_dl",
+        "//third_party/cargo/vendor/x11-dl-2.18.5:x11_dl",
     ],
     rustc_flags = [
         "--cap-lints=allow",

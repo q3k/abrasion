@@ -43,7 +43,6 @@ rust_library(
     crate_features = [
         "default",
         "has-atomics",
-        "stb_truetype",
         "std",
     ],
 )

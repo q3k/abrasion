@@ -35,7 +35,7 @@ rust_library(
     edition = "2018",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/byteorder-1.3.2:byteorder",
+        "//third_party/cargo/vendor/byteorder-1.3.4:byteorder",
     ],
     rustc_flags = [
         "--cap-lints=allow",

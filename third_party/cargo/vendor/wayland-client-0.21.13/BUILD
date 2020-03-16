@@ -38,7 +38,6 @@ rust_binary(
       "dlopen",
       "egl",
       "native_lib",
-      "wayland-commons",
       "wayland-sys",
     ],
     data = glob(["*"]),
@@ -64,7 +63,6 @@ genrule(
         + " export CARGO_FEATURE_DLOPEN=1;"
         + " export CARGO_FEATURE_EGL=1;"
         + " export CARGO_FEATURE_NATIVE_LIB=1;"
-        + " export CARGO_FEATURE_WAYLAND_COMMONS=1;"
         + " export CARGO_FEATURE_WAYLAND_SYS=1;"
         + " export OUT_DIR=$$PWD/$$(dirname $@)/wayland_client_out_dir_outputs;"
         + " export BINARY_PATH=\"$$PWD/$(location :wayland_client_build_script)\";"
@@ -85,7 +83,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
         "//third_party/cargo/vendor/downcast-rs-1.1.1:downcast_rs",
-        "//third_party/cargo/vendor/libc-0.2.66:libc",
+        "//third_party/cargo/vendor/libc-0.2.67:libc",
         "//third_party/cargo/vendor/nix-0.14.1:nix",
         "//third_party/cargo/vendor/wayland-commons-0.21.13:wayland_commons",
         "//third_party/cargo/vendor/wayland-sys-0.21.13:wayland_sys",
@@ -100,7 +98,6 @@ rust_library(
         "dlopen",
         "egl",
         "native_lib",
-        "wayland-commons",
         "wayland-sys",
     ],
 )

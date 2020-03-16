@@ -13,6 +13,7 @@ vulkano = "0.11.1"
 vulkano-win = "0.11.1"
 winit = "0.18.0"
 cgmath = "0.17.0"
+openvr = "0.6.0"
 
 [raze]
 workspace_path = "//third_party/cargo"

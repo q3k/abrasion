@@ -40,7 +40,6 @@ rust_library(
     crate_features = [
         "default",
         "proc-macro",
-        "proc-macro2",
     ],
 )
 
