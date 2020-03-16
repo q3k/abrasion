@@ -9,9 +9,9 @@ path = "fake_lib.rs"
 [dependencies]
 env_logger = "0.6.1"
 log = "0.4.6"
-vulkano = "0.11.1"
-vulkano-win = "0.11.1"
-winit = "0.18.0"
+vulkano = "0.18.0"
+vulkano-win = "0.18.0"
+winit = "0.22.0"
 cgmath = "0.17.0"
 openvr = "0.6.0"
 
@@ -23,13 +23,13 @@ target = "x86_64-unknown-linux-gnu"
 skipped_deps = ['rusttype-0.7.9']
 additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.2:rusttype']
 
-[raze.crates.x11-dl.'2.18.4']
+[raze.crates.x11-dl.'2.18.5']
 gen_buildrs = true
 
-[raze.crates.wayland-client.'0.21.13']
+[raze.crates.wayland-client.'0.23.6']
 gen_buildrs = true
 
-[raze.crates.wayland-protocols.'0.21.13']
+[raze.crates.wayland-protocols.'0.23.6']
 gen_buildrs = true
 
 [raze.crates.log.'0.4.8']

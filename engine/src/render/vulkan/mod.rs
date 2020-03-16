@@ -25,7 +25,7 @@ const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
 
 fn required_instance_extensions() -> vi::InstanceExtensions {
     let mut exts = vulkano_win::required_extensions();
-    exts.ext_debug_report = true;
+    exts.ext_debug_utils = true;
     exts
 }
 
@@ -242,7 +242,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         }
 
         let chain = self.swapchain_binding().chain.clone();
-        let (image_index, acquire_future) = match vs::acquire_next_image(chain.clone(), None) {
+        // TODO(q3k): check the 'suboptimal' (second) bool
+        let (image_index, _, acquire_future) = match vs::acquire_next_image(chain.clone(), None) {
             Ok(r) => r,
             Err(vs::AcquireError::OutOfDate) => {
                 self.armed = false;
@@ -286,14 +287,12 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     }
 
     fn init_debug_callback(instance: &Arc<vi::Instance>) -> vi::debug::DebugCallback {
-        let mt = vi::debug::MessageTypes {
-            error: true,
-            warning: true,
-            performance_warning: true,
-            information: true,
-            debug: true,
+        let mt = vi::debug::MessageType {
+            general: true,
+            validation: true,
+            performance: true,
         };
-        vi::debug::DebugCallback::new(&instance, mt, |msg| {
+        vi::debug::DebugCallback::new(&instance, vi::debug::MessageSeverity::errors_and_warnings(), mt, |msg| {
             log::debug!("validation layer: {:?}", msg.description);
         }).expect("could not create debug callback")
     }

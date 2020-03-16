@@ -49,21 +49,41 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
             Some(p) => Some(p.chain.clone()),
         };
 
-        let (chain, images) = vs::Swapchain::new(
-            surface_binding.device.clone(),
-            surface_binding.surface.clone(),
-            image_count,
-            surface_format.0,
-            extent,
-            1,
-            image_usage,
-            sharing,
-            capabilities.current_transform,
-            vs::CompositeAlpha::Opaque,
-            present_mode,
-            true,
-            prev.as_ref(),
-        ).expect("could not create swap chain");
+        let (chain, images) = match prev.as_ref() {
+            None => vs::Swapchain::new(
+                surface_binding.device.clone(),
+                surface_binding.surface.clone(),
+                image_count,
+                surface_format.0,
+                extent,
+                1,
+                image_usage,
+                sharing,
+                capabilities.current_transform,
+                vs::CompositeAlpha::Opaque,
+                present_mode,
+                vs::FullscreenExclusive::Default,
+                true,
+                vs::ColorSpace::SrgbNonLinear,
+            ),
+            Some(p) => vs::Swapchain::with_old_swapchain(
+                surface_binding.device.clone(),
+                surface_binding.surface.clone(),
+                image_count,
+                surface_format.0,
+                extent,
+                1,
+                image_usage,
+                sharing,
+                capabilities.current_transform,
+                vs::CompositeAlpha::Opaque,
+                present_mode,
+                vs::FullscreenExclusive::Default,
+                true,
+                vs::ColorSpace::SrgbNonLinear,
+                p.clone(),
+            ),
+        }.expect("could not create swap chain");
 
         log::info!("Swap chain: present mode {:?}, {} images", present_mode, images.len());
 

@@ -22,8 +22,44 @@ load(
     "rust_test",
 )
 
+rust_binary(
+    name = "x11_dl_build_script",
+    srcs = glob(["**/*.rs"]),
+    crate_root = "build.rs",
+    edition = "2015",
+    deps = [
+        "//third_party/cargo/vendor/pkg-config-0.3.17:pkg_config",
+    ],
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    crate_features = [
+    ],
+    data = glob(["*"]),
+    version = "2.18.5",
+    visibility = ["//visibility:private"],
+)
 
-# Unsupported target "build-script-build" with type "custom-build" omitted
+genrule(
+    name = "x11_dl_build_script_executor",
+    srcs = glob(["*", "**/*.rs"]),
+    outs = ["x11_dl_out_dir_outputs.tar.gz"],
+    tools = [
+      ":x11_dl_build_script",
+    ],
+    tags = ["no-sandbox"],
+    cmd = "mkdir -p $$(dirname $@)/x11_dl_out_dir_outputs/;"
+        + " (export CARGO_MANIFEST_DIR=\"$$PWD/$$(dirname $(location :Cargo.toml))\";"
+        # TODO(acmcarther): This needs to be revisited as part of the cross compilation story.
+        #                   See also: https://github.com/google/cargo-raze/pull/54
+        + " export TARGET='x86_64-unknown-linux-gnu';"
+        + " export RUST_BACKTRACE=1;"
+        + " export OUT_DIR=$$PWD/$$(dirname $@)/x11_dl_out_dir_outputs;"
+        + " export BINARY_PATH=\"$$PWD/$(location :x11_dl_build_script)\";"
+        + " export OUT_TAR=$$PWD/$@;"
+        + " cd $$(dirname $(location :Cargo.toml)) && $$BINARY_PATH && tar -czf $$OUT_TAR -C $$OUT_DIR .)"
+)
+
 # Unsupported target "hello-world-dl" with type "example" omitted
 
 rust_library(
@@ -40,6 +76,7 @@ rust_library(
     rustc_flags = [
         "--cap-lints=allow",
     ],
+    out_dir_tar = ":x11_dl_build_script_executor",
     version = "2.18.5",
     crate_features = [
     ],

@@ -1,6 +1,6 @@
 use cgmath as cgm;
 
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub struct Vertex {
     pos: [f32; 3],
     color: [f32; 3],
@@ -15,6 +15,7 @@ impl Vertex {
 }
 vulkano::impl_vertex!(Vertex, pos, color);
 
+#[derive(Default, Copy, Clone)]
 pub struct Instance {
     model: [f32; 16],
 }

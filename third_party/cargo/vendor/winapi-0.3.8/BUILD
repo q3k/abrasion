@@ -40,6 +40,7 @@ rust_library(
     crate_features = [
         "basetsd",
         "combaseapi",
+        "commctrl",
         "consoleapi",
         "dwmapi",
         "errhandlingapi",
@@ -69,7 +70,11 @@ rust_library(
         "winerror",
         "wingdi",
         "winnt",
+        "winsock2",
         "winuser",
+        "ws2def",
+        "ws2ipdef",
+        "ws2tcpip",
     ],
 )
 

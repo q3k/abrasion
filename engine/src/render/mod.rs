@@ -4,11 +4,12 @@ use cgmath as cgm;
 
 use winit::{
     dpi::LogicalSize,
-    Window,
-    WindowEvent,
-    WindowBuilder,
-    EventsLoop,
-    Event,
+    window::Window,
+    window::WindowBuilder,
+    event_loop::EventLoop,
+    event::Event,
+    event::WindowEvent,
+    platform::desktop::EventLoopExtDesktop,
 };
 use vulkano_win::VkSurfaceBuild;
 use vulkano::instance as vi;
@@ -21,8 +22,8 @@ const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
 pub struct Renderer {
-    instance: vulkan::Instance<winit::Window>,
-    events_loop: EventsLoop,
+    instance: vulkan::Instance<Window>,
+    events_loop: EventLoop<()>,
 }
 
 impl Renderer {
@@ -37,11 +38,11 @@ impl Renderer {
         }
     }
 
-    fn init_window(instance: Arc<vi::Instance>) -> (EventsLoop, Arc<vs::Surface<Window>>) {
-        let events_loop = EventsLoop::new();
+    fn init_window(instance: Arc<vi::Instance>) -> (EventLoop<()>, Arc<vs::Surface<Window>>) {
+        let events_loop = EventLoop::new();
         let surface = WindowBuilder::new()
             .with_title("abrasion")
-            .with_dimensions(LogicalSize::new(f64::from(WIDTH), f64::from(HEIGHT)))
+            .with_inner_size(LogicalSize::new(f64::from(WIDTH), f64::from(HEIGHT)))
             .build_vk_surface(&events_loop, instance.clone())
             .expect("could not create surface");
         (events_loop, surface)
@@ -53,10 +54,12 @@ impl Renderer {
 
     pub fn poll_close(&mut self) -> bool {
         let mut close = false;
-        self.events_loop.poll_events(|ev| {
+        // TODO(q3k): migrate to EventLoop::run
+        self.events_loop.run_return(|ev, _, control_flow| {
             if let Event::WindowEvent { event: WindowEvent::CloseRequested, .. } = ev {
                 close = true;
             }
+            *control_flow = winit::event_loop::ControlFlow::Exit;
         });
         return close;
     }

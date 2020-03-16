@@ -25,7 +25,7 @@ pub trait Pipeline {
 
 pub struct Forward {
     pipeline: Arc<VulkanoPipeline>,
-    descriptor_set_pool: vdd::FixedSizeDescriptorSetsPool<Arc<VulkanoPipeline>>,
+    descriptor_set_pool: vdd::FixedSizeDescriptorSetsPool,
 }
 
 impl Forward {
@@ -122,7 +122,8 @@ impl Forward {
                  .unwrap())
             as Arc<VulkanoPipeline>;
 
-        let descriptor_set_pool = vdd::FixedSizeDescriptorSetsPool::new(pipeline.clone(), 0);
+        let layout = pipeline.descriptor_set_layout(0).unwrap();
+        let descriptor_set_pool = vdd::FixedSizeDescriptorSetsPool::new(layout.clone());
 
         Forward {
             pipeline,

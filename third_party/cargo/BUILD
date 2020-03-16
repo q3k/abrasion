@@ -26,13 +26,13 @@ alias(
 )
 alias(
     name = "vulkano",
-    actual = "//third_party/cargo/vendor/vulkano-0.11.1:vulkano",
+    actual = "//third_party/cargo/vendor/vulkano-0.18.0:vulkano",
 )
 alias(
     name = "vulkano_win",
-    actual = "//third_party/cargo/vendor/vulkano-win-0.11.1:vulkano_win",
+    actual = "//third_party/cargo/vendor/vulkano-win-0.18.0:vulkano_win",
 )
 alias(
     name = "winit",
-    actual = "//third_party/cargo/vendor/winit-0.18.1:winit",
+    actual = "//third_party/cargo/vendor/winit-0.22.0:winit",
 )
