@@ -50,7 +50,7 @@ fn main() {
     for x in -10..10 {
         for y in -10..10 {
             for z in -10..10 {
-                let transform = cgm::Matrix4::from_translation(cgm::Vector3::new((x as f32)*4.0, (y as f32)*2.0, (z as f32)*4.0));
+                let transform = cgm::Matrix4::from_translation(cgm::Vector3::new((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0));
                 let cube = render::renderable::Object {
                     mesh: mesh_cube.clone(),
                     transform
@@ -76,7 +76,7 @@ fn main() {
             cgm::Point3::new(
                 position.cos() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
                 position.sin() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
-                2.0
+                3.0
             ),
             cgm::Point3::new(0.0, 0.0, 0.0),
             cgm::Vector3::new(0.0, 0.0, 1.0)

@@ -67,8 +67,15 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
 
         log::info!("Swap chain: present mode {:?}, {} images", present_mode, images.len());
 
-        let render_pass = Self::create_render_pass(surface_binding, chain.format());
-        let framebuffers = Self::create_framebuffers(render_pass.clone(), images.clone());
+        let depth_format = Self::find_depth_format();
+        let depth_image = vm::AttachmentImage::with_usage(
+            surface_binding.device.clone(),
+            chain.dimensions(),
+            depth_format,
+            vm::ImageUsage { depth_stencil_attachment: true, ..vm::ImageUsage::none() },
+        ).unwrap();
+        let render_pass = Self::create_render_pass(surface_binding, chain.format(), depth_format);
+        let framebuffers = Self::create_framebuffers(render_pass.clone(), images.clone(), depth_image);
 
         Self {
             chain,
@@ -80,7 +87,8 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
 
     fn create_render_pass(
         surface_binding: &super::surface_binding::SurfaceBinding<WT>,
-        color_format: vulkano::format::Format,
+        color_format: vf::Format,
+        depth_format: vf::Format,
     ) -> Arc<dyn vfb::RenderPassAbstract + Send + Sync> {
         let device = surface_binding.device.clone();
 
@@ -91,11 +99,19 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
                     store: Store,
                     format: color_format,
                     samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: depth_format,
+                    samples: 1,
+                    initial_layout: ImageLayout::Undefined,
+                    final_layout: ImageLayout::DepthStencilAttachmentOptimal,
                 }
             },
             pass: {
                 color: [color],
-                depth_stencil: {}
+                depth_stencil: {depth}
             }
         ).unwrap())
     }
@@ -103,11 +119,13 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
     fn create_framebuffers(
         render_pass: Arc<dyn vfb::RenderPassAbstract + Send + Sync>,
         images: Vec<Arc<vm::SwapchainImage<WT>>>,
+        depth_image: Arc<vm::AttachmentImage<vf::Format>>,
     ) -> Vec<Arc<dyn vfb::FramebufferAbstract + Send + Sync>> {
         images.iter()
             .map(|image| {
                 let fba: Arc<dyn vfb::FramebufferAbstract + Send + Sync> = Arc::new(vfb::Framebuffer::start(render_pass.clone())
                     .add(image.clone()).unwrap()
+                    .add(depth_image.clone()).unwrap()
                     .build().unwrap());
                 fba
             })
@@ -137,5 +155,9 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
         capabilities.current_extent.expect("could not get current extent")
     }
 
+    fn find_depth_format() -> vf::Format {
+        // TODO: actually do it
+        vf::Format::D16Unorm
+    }
 }
 

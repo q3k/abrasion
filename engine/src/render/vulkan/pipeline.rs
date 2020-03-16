@@ -116,6 +116,7 @@ impl Forward {
                  .cull_mode_back()
                  .front_face_counter_clockwise()
                  .blend_pass_through()
+                 .depth_stencil(vulkano::pipeline::depth_stencil::DepthStencil::simple_depth_test())
                  .render_pass(vf::Subpass::from(render_pass.clone(), 0).unwrap())
                  .build(device.clone())
                  .unwrap())
