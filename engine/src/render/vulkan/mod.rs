@@ -75,6 +75,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                         log::warn!("Did not load validation layers.");
                     }
                     vulkan_opt = Some(res);
+                    break
                 }
                 Err(err) => {
                     log::warn!("Could not create vulkan instance with layers {}: {}", pref.join(", "), err);
