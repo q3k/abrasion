@@ -1,0 +1,71 @@
+diff --git a/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs b/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
+index 0abe266..1fcd2f2 100644
+--- a/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
++++ b/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
+@@ -11,21 +11,21 @@ use crate::image::{ImageDecoder, ImageFormat};
+ 
+ /// JPEG decoder
+ pub struct JpegDecoder<R> {
+-    decoder: jpeg::Decoder<R>,
+-    metadata: jpeg::ImageInfo,
++    decoder: jpeg_decoder::Decoder<R>,
++    metadata: jpeg_decoder::ImageInfo,
+ }
+ 
+ impl<R: Read> JpegDecoder<R> {
+     /// Create a new decoder that decodes from the stream ```r```
+     pub fn new(r: R) -> ImageResult<JpegDecoder<R>> {
+-        let mut decoder = jpeg::Decoder::new(r);
++        let mut decoder = jpeg_decoder::Decoder::new(r);
+ 
+         decoder.read_info().map_err(ImageError::from_jpeg)?;
+         let mut metadata = decoder.info().unwrap();
+ 
+         // We convert CMYK data to RGB before returning it to the user.
+-        if metadata.pixel_format == jpeg::PixelFormat::CMYK32 {
+-            metadata.pixel_format = jpeg::PixelFormat::RGB24;
++        if metadata.pixel_format == jpeg_decoder::PixelFormat::CMYK32 {
++            metadata.pixel_format = jpeg_decoder::PixelFormat::RGB24;
+         }
+ 
+         Ok(JpegDecoder {
+@@ -65,7 +65,7 @@ impl<'a, R: 'a + Read> ImageDecoder<'a> for JpegDecoder<R> {
+     fn into_reader(mut self) -> ImageResult<Self::Reader> {
+         let mut data = self.decoder.decode().map_err(ImageError::from_jpeg)?;
+         data = match self.decoder.info().unwrap().pixel_format {
+-            jpeg::PixelFormat::CMYK32 => cmyk_to_rgb(&data),
++            jpeg_decoder::PixelFormat::CMYK32 => cmyk_to_rgb(&data),
+             _ => data,
+         };
+ 
+@@ -77,7 +77,7 @@ impl<'a, R: 'a + Read> ImageDecoder<'a> for JpegDecoder<R> {
+ 
+         let mut data = self.decoder.decode().map_err(ImageError::from_jpeg)?;
+         data = match self.decoder.info().unwrap().pixel_format {
+-            jpeg::PixelFormat::CMYK32 => cmyk_to_rgb(&data),
++            jpeg_decoder::PixelFormat::CMYK32 => cmyk_to_rgb(&data),
+             _ => data,
+         };
+ 
+@@ -112,8 +112,8 @@ fn cmyk_to_rgb(input: &[u8]) -> Vec<u8> {
+ }
+ 
+ impl ColorType {
+-    fn from_jpeg(pixel_format: jpeg::PixelFormat) -> ColorType {
+-        use jpeg::PixelFormat::*;
++    fn from_jpeg(pixel_format: jpeg_decoder::PixelFormat) -> ColorType {
++        use jpeg_decoder::PixelFormat::*;
+         match pixel_format {
+             L8 => ColorType::L8,
+             RGB24 => ColorType::Rgb8,
+@@ -123,8 +123,8 @@ impl ColorType {
+ }
+ 
+ impl ImageError {
+-    fn from_jpeg(err: jpeg::Error) -> ImageError {
+-        use jpeg::Error::*;
++    fn from_jpeg(err: jpeg_decoder::Error) -> ImageError {
++        use jpeg_decoder::Error::*;
+         match err {
+             Format(desc) => {
+                 ImageError::Decoding(DecodingError::with_message(ImageFormat::Jpeg.into(), desc))

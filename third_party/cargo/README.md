@@ -8,3 +8,4 @@ After changing Rust deps in Cargo.toml do:
     cargo generate-lockfile
     cargo vendor --versioned-dirs
     cargo-raze
+    patch -p3 < patches/images-fix-alias.patch
