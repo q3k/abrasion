@@ -18,6 +18,7 @@ mod qfi;
 mod shaders;
 mod swapchain_binding;
 mod worker;
+pub mod images;
 
 use crate::render::renderable;
 
