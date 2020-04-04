@@ -5,7 +5,6 @@ use std::io::prelude::*;
 use std::sync::Arc;
 use std::path;
 
-use runfiles::Runfiles;
 use vulkano::descriptor::descriptor as vdd;
 use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
@@ -24,11 +23,7 @@ impl ShaderDefinition {
     pub fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
         fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
 
-        let path = match Runfiles::create().map_err(stringify) {
-            Err(_) => path::Path::new(".").join("shaders").join(self.name.clone()),
-            Ok(r) => r.rlocation(format!("abrasion/engine/shaders/{}", self.name))
-        };
-
+        let path = &crate::util::file::resource_path(self.name.clone());
         log::info!("Loading shader {}", path.to_str().unwrap_or("UNKNOWN"));
 
         let mut f = File::open(path).map_err(stringify)?;
