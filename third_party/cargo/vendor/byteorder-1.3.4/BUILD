@@ -39,6 +39,8 @@ rust_library(
     ],
     version = "1.3.4",
     crate_features = [
+        "default",
+        "std",
     ],
 )
 

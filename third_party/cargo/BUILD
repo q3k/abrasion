@@ -17,6 +17,10 @@ alias(
     actual = "//third_party/cargo/vendor/env_logger-0.6.2:env_logger",
 )
 alias(
+    name = "image",
+    actual = "//third_party/cargo/vendor/image-0.23.1:image",
+)
+alias(
     name = "log",
     actual = "//third_party/cargo/vendor/log-0.4.8:log",
 )

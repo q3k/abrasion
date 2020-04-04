@@ -8,6 +8,7 @@ path = "fake_lib.rs"
 
 [dependencies]
 env_logger = "0.6.1"
+image = "0.23.1"
 log = "0.4.6"
 vulkano = "0.18.0"
 vulkano-win = "0.18.0"
@@ -41,4 +42,7 @@ additional_flags = [
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
 
 [raze.crates.cgmath.'0.17.0']
+gen_buildrs = true
+
+[raze.crates.image.'0.23.1']
 gen_buildrs = true
