@@ -13,7 +13,6 @@ rust_binary(
         "src/render/mod.rs",
         "src/render/renderable.rs",
         "src/render/vulkan/data.rs",
-        "src/render/vulkan/images.rs",
         "src/render/vulkan/mod.rs",
         "src/render/vulkan/pipeline.rs",
         "src/render/vulkan/qfi.rs",
