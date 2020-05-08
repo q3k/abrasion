@@ -4,16 +4,17 @@ use cgmath as cgm;
 pub struct Vertex {
     pos: [f32; 3],
     color: [f32; 3],
+    tex: [f32; 2],
 }
 
 impl Vertex {
-    pub fn new(pos: [f32; 3], color: [f32; 3]) -> Self {
+    pub fn new(pos: [f32; 3], color: [f32; 3], tex: [f32; 2]) -> Self {
         Self {
-            pos, color,
+            pos, color, tex,
         }
     }
 }
-vulkano::impl_vertex!(Vertex, pos, color);
+vulkano::impl_vertex!(Vertex, pos, color, tex);
 
 #[derive(Default, Copy, Clone)]
 pub struct Instance {

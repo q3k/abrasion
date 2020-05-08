@@ -38,6 +38,7 @@ rust_binary(
     data = [
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
+        "//assets:test-128px.png",
     ],
 )
 

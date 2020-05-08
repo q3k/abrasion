@@ -17,32 +17,54 @@ fn main() {
 
     let mesh_cube = {
         let vertices = Arc::new(vec![
-            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 0.0, 0.0]),
-            data::Vertex::new([0.5, -0.5, -0.5], [0.0, 1.0, 0.0]),
-            data::Vertex::new([0.5, 0.5, -0.5], [0.0, 0.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 1.0, 1.0]),
-            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 1.0, 1.0]),
-            data::Vertex::new([0.5, -0.5, 0.5], [1.0, 1.0, 0.0]),
-            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, 0.5], [1.0, 0.0, 1.0]),
+            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 1.0, 1.0], [1.0, 0.0]),
+            data::Vertex::new([0.5, -0.5, 0.5], [1.0, 1.0, 0.0], [0.0, 0.0]),
+            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 1.0]),
+            data::Vertex::new([-0.5, 0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 1.0]),
+
+            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 1.0]),
+            data::Vertex::new([0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 1.0]),
+            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [1.0, 0.0]),
+            data::Vertex::new([0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [0.0, 0.0]),
+
+            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [1.0, 1.0]),
+            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [0.0, 1.0]),
+            data::Vertex::new([-0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 0.0]),
+
+            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 1.0]),
+            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 1.0]),
+            data::Vertex::new([0.5, -0.5, 0.5], [0.0, 1.0, 1.0], [1.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [0.0, 0.0]),
+
+            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 1.0, 1.0], [1.0, 1.0]),
+            data::Vertex::new([0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [0.0, 1.0]),
+            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 0.0]),
+            data::Vertex::new([-0.5, 0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 0.0]),
+
+            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 0.0]),
+            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 0.0]),
+            data::Vertex::new([0.5, 0.5, -0.5], [0.0, 1.0, 1.0], [1.0, 1.0]),
+            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 0.0, 1.0], [0.0, 1.0]),
         ]);
         let indices = Arc::new(vec![
-            // bottom
-            2, 1, 0, 0, 3, 2,
-            // top
-            4, 5, 6, 6, 7, 4,
+            0, 1, 2, 2, 3, 0,
 
-            // left
-            4, 7, 0, 0, 7, 3,
-            // right
-            5, 1, 6, 6, 1, 2,
-            // front
-            7, 6, 3, 3, 6, 2,
-            // back
-            5, 4, 1, 1, 4, 0,
+            4, 5, 6, 6, 7, 4,
+            8, 10, 9, 10, 8, 11,
+
+            12, 13, 14, 14, 15, 12,
+            16, 18, 17, 18, 16, 19,
+
+            20, 22, 21, 22, 20, 23,
+
         ]);
         Arc::new(render::renderable::Mesh::new(vertices, indices))
     };
+
+    let path = &crate::util::file::resource_path(String::from("assets/test-128px.png"));
+    let image = Arc::new(image::open(path).unwrap());
+    let texture_cube = Arc::new(render::renderable::Texture::new(image));
 
     let mut renderer = render::Renderer::initialize();
 
@@ -53,7 +75,8 @@ fn main() {
                 let transform = cgm::Matrix4::from_translation(cgm::Vector3::new((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0));
                 let cube = render::renderable::Object {
                     mesh: mesh_cube.clone(),
-                    transform
+                    transform,
+                    texture: texture_cube.clone(),
                 };
                 cubes.push(Arc::new(cube));
             }

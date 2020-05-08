@@ -161,8 +161,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         // Sort renderables by mesh.
         let mut meshes: HashMap<Arc<renderable::Mesh>, Vec<cgm::Matrix4<f32>>> = HashMap::new();
+        let mut textures: HashMap<Arc<renderable::Mesh>, Arc<renderable::Texture>> = HashMap::new();
         for r in renderables {
-            if let Some((mesh, transform)) = r.render_data() {
+            if let Some((mesh, texture, transform)) = r.render_data() {
+                textures.entry(mesh.clone()).or_insert(texture);
                 let entry = meshes.entry(mesh.clone()).or_insert(vec![]);
                 entry.push(transform);
             }
@@ -171,6 +173,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let device = self.surface_binding().device.clone();
         let queue = self.surface_binding().graphics_queue.clone();
         let rp = self.swapchain_binding().render_pass.clone();
+
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
         for (mesh, transforms) in meshes {
@@ -188,9 +191,13 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             ).unwrap();
             future.flush().unwrap();
 
+            let texture = textures.get(&mesh).unwrap().clone();
+            let image = texture.vulkan_texture(queue.clone());
+            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(image);
+
             let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());
             builder = builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
-                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), (), ubo).unwrap();
+                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), ds, ubo).unwrap();
 
             buffers.push(Box::new(builder.build().unwrap()));
         }

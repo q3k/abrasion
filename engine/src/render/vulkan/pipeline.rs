@@ -11,6 +11,8 @@ use vulkano::framebuffer as vf;
 use vulkano::pipeline as vp;
 use vulkano::pipeline::shader as vps;
 use vulkano::pipeline::vertex as vpv;
+use vulkano::sampler as vs;
+use vulkano::image as vm;
 
 use crate::render::vulkan::data;
 use crate::render::vulkan::shaders;
@@ -20,12 +22,13 @@ type VulkanoDescriptorSet = dyn vdd::DescriptorSet + Send + Sync;
 
 pub trait Pipeline {
     fn get_pipeline(&self) -> Arc<VulkanoPipeline>;
-    fn make_descriptor_set(&mut self, buffer: Box<dyn vb::BufferAccess + Send + Sync>) -> Arc<VulkanoDescriptorSet>;
+    fn make_descriptor_set(&mut self, texture_image: Arc<vm::ImmutableImage<Format>>) -> Arc<VulkanoDescriptorSet>;
 }
 
 pub struct Forward {
     pipeline: Arc<VulkanoPipeline>,
     descriptor_set_pool: vdd::FixedSizeDescriptorSetsPool,
+    device: Arc<vd::Device>,
 }
 
 impl Forward {
@@ -35,7 +38,7 @@ impl Forward {
         render_pass: Arc<dyn vf::RenderPassAbstract + Send + Sync>,
     ) -> Forward {
         let vertex_shader = shaders::ShaderDefinition {
-            name: "forward_vert.spv".to_string(),
+            name: "engine/shaders/forward_vert.spv".to_string(),
             ty: vps::GraphicsShaderType::Vertex,
             inputs: vec![
                 vps::ShaderInterfaceDefEntry {
@@ -50,12 +53,20 @@ impl Forward {
                     location: 2..6, format: Format::R32G32B32A32Sfloat,
                     name: Some(Cow::Borrowed("model")),
                 },
+                vps::ShaderInterfaceDefEntry {
+                    location: 6..7, format: Format::R32G32Sfloat,
+                    name: Some(Cow::Borrowed("tex")),
+                },
             ],
             outputs: vec![
                 vps::ShaderInterfaceDefEntry {
                     location: 0..1, format: Format::R32G32B32Sfloat,
                     name: Some(Cow::Borrowed("fragColor")),
-                }
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 1..2, format: Format::R32G32Sfloat,
+                    name: Some(Cow::Borrowed("fragTexCoord")),
+                },
             ],
             uniforms: vec![],
             push_constants: vec![
@@ -71,13 +82,17 @@ impl Forward {
         }.load_into(device.clone()).expect("could not load vertex shader");
 
         let fragment_shader = shaders::ShaderDefinition {
-            name: "forward_frag.spv".to_string(),
+            name: "engine/shaders/forward_frag.spv".to_string(),
             ty: vps::GraphicsShaderType::Fragment,
             inputs: vec![
                 vps::ShaderInterfaceDefEntry {
                     location: 0..1, format: Format::R32G32B32Sfloat,
                     name: Some(Cow::Borrowed("fragColor")),
-                }
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 1..2, format: Format::R32G32Sfloat,
+                    name: Some(Cow::Borrowed("fragTexCoord")),
+                },
             ],
             outputs: vec![
                 vps::ShaderInterfaceDefEntry {
@@ -85,7 +100,23 @@ impl Forward {
                     name: Some(Cow::Borrowed("outColor")),
                 }
             ],
-            uniforms: vec![],
+            uniforms: vec![
+                vdD::DescriptorDesc {
+                    ty: vdD::DescriptorDescTy::CombinedImageSampler(vdD::DescriptorImageDesc {
+                        sampled: true,
+                        dimensions: vdD::DescriptorImageDescDimensions::TwoDimensional,
+                        format: None,
+                        multisampled: false,
+                        array_layers: vdD::DescriptorImageDescArray::NonArrayed,
+                    }),
+                    array_count: 1,
+                    readonly: true,
+                    stages: vdD::ShaderStages {
+                        fragment: true,
+                        ..vdD::ShaderStages::none()
+                    },
+                },
+            ],
             push_constants: vec![],
         }.load_into(device.clone()).expect("could not load fragment shader");
 
@@ -127,7 +158,8 @@ impl Forward {
 
         Forward {
             pipeline,
-            descriptor_set_pool
+            descriptor_set_pool,
+            device
         }
     }
 }
@@ -137,9 +169,10 @@ impl Pipeline for Forward {
         self.pipeline.clone()
     }
 
-    fn make_descriptor_set(&mut self, buffer: Box<dyn vb::BufferAccess + Send + Sync>) -> Arc<VulkanoDescriptorSet> {
+    fn make_descriptor_set(&mut self, texture_image: Arc<vm::ImmutableImage<Format>>) -> Arc<VulkanoDescriptorSet> {
+        let image_sampler = vs::Sampler::simple_repeat_linear(self.device.clone());
         Arc::new(self.descriptor_set_pool.next()
-            .add_buffer(buffer).unwrap()
+            .add_sampled_image(texture_image.clone(), image_sampler).unwrap()
             .build().unwrap())
     }
 }
