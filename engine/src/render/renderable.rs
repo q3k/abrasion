@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::hash;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -15,24 +16,60 @@ use vulkano::image as vm;
 use crate::render::vulkan::data;
 
 pub trait Renderable {
-    fn render_data(&self) -> Option<(Arc<Mesh>, Arc<Texture>, cgm::Matrix4<f32>)> {
+    fn render_data(&self) -> Option<(u64, u64, &cgm::Matrix4<f32>)> {
         None
+    }
+}
+
+pub struct ResourceManager {
+    meshes: HashMap<u64, Mesh>,
+    textures: HashMap<u64, Texture>,
+}
+
+impl<'a> ResourceManager {
+    pub fn new() -> Self {
+        Self {
+            meshes: HashMap::new(),
+            textures: HashMap::new(),
+        }
+    }
+
+    pub fn add_mesh(&mut self, m: Mesh) -> u64 {
+        let id = m.id;
+        self.meshes.insert(id, m);
+        id
+    }
+
+    pub fn add_texture(&mut self, t: Texture) -> u64 {
+        let id = t.id;
+        self.textures.insert(id, t);
+        id
+    }
+
+    pub fn get_mesh(&'a self, id: u64) -> Option<&'a Mesh> {
+        self.meshes.get(&id)
+    }
+
+    pub fn get_texture(&'a self, id: u64) -> Option<&'a Texture> {
+        self.textures.get(&id)
     }
 }
 
 pub struct Texture {
     image: Arc<image::DynamicImage>,
 
+    id: u64,
     // vulkan cache
     vulkan: Mutex<Option<Arc<vm::ImmutableImage<vf::Format>>>>,
 }
-
 impl Texture {
     pub fn new(
         image: Arc<image::DynamicImage>,
     ) -> Self {
         Self {
             image,
+            // TODO: use a better method
+            id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
             vulkan: Mutex::new(None),
         }
     }
@@ -143,13 +180,13 @@ impl PartialEq for Mesh {
 impl Eq for Mesh {}
 
 pub struct Object {
-    pub mesh: Arc<Mesh>,
-    pub texture: Arc<Texture>,
+    pub mesh: u64,
+    pub texture: u64,
     pub transform: cgm::Matrix4<f32>,
 }
 
 impl Renderable for Object {
-    fn render_data(&self) -> Option<(Arc<Mesh>, Arc<Texture>, cgm::Matrix4<f32>)> {
-        Some((self.mesh.clone(), self.texture.clone(), self.transform.clone()))
+    fn render_data(&self) -> Option<(u64, u64, &cgm::Matrix4<f32>)> {
+        Some((self.mesh, self.texture, &self.transform))
     }
 }

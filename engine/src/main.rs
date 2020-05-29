@@ -9,11 +9,13 @@ mod render;
 mod util;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable};
+use render::renderable::{Object, Renderable, ResourceManager, Texture, Mesh};
 
 fn main() {
     env_logger::init();
     log::info!("Starting...");
+
+    let mut rm = ResourceManager::new();
 
     let mesh_cube = {
         let vertices = Arc::new(vec![
@@ -59,34 +61,31 @@ fn main() {
             20, 22, 21, 22, 20, 23,
 
         ]);
-        Arc::new(render::renderable::Mesh::new(vertices, indices))
+        rm.add_mesh(Mesh::new(vertices, indices))
     };
 
     let path = &crate::util::file::resource_path(String::from("assets/test-128px.png"));
     let image = Arc::new(image::open(path).unwrap());
-    let texture_cube = Arc::new(render::renderable::Texture::new(image));
+    let texture_cube = rm.add_texture(Texture::new(image));
 
     let mut renderer = render::Renderer::initialize();
 
-    let mut cubes: Vec<Arc<Object>> = Vec::new();
+    let mut cubes: Vec<Box<Object>> = vec![];
     for x in -20..20 {
         for y in -20..20 {
             for z in -20..20 {
                 let transform = cgm::Matrix4::from_translation(cgm::Vector3::new((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0));
                 let cube = render::renderable::Object {
-                    mesh: mesh_cube.clone(),
-                    transform,
-                    texture: texture_cube.clone(),
+                    mesh: mesh_cube,
+                    transform: transform,
+                    texture: texture_cube,
                 };
-                cubes.push(Arc::new(cube));
+                cubes.push(Box::new(cube));
             }
         }
     }
 
-    let mut renderables: Vec<Arc<dyn Renderable>> = Vec::with_capacity(2000);
-    for c in cubes.iter() {
-        renderables.push(c.clone());
-    }
+    let renderables: Vec<Box<dyn Renderable>> = cubes.into_iter().map(|e| e as Box<dyn Renderable>).collect();
 
     let start = time::Instant::now();
     loop {
@@ -105,7 +104,7 @@ fn main() {
             cgm::Vector3::new(0.0, 0.0, 1.0)
         );
 
-        renderer.draw_frame(&view, &renderables);
+        renderer.draw_frame(&view, &rm, &renderables);
         if renderer.poll_close() {
             return;
         }

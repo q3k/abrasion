@@ -7,6 +7,7 @@ rust_binary(
     rustc_flags = [
         "-C", "opt-level=3",
         "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
     ],
     srcs = [
         "src/main.rs",
@@ -23,6 +24,7 @@ rust_binary(
         "src/util/counter.rs",
         "src/util/file.rs",
         "src/util/mod.rs",
+        "src/util/profiler.rs",
     ],
     deps = [
         "//third_party/cargo:cgmath",

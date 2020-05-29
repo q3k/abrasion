@@ -144,8 +144,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     fn make_graphics_commands(
         &mut self,
+        profiler: &mut crate::util::profiler::Profiler,
         view: &cgm::Matrix4<f32>,
-        renderables: &Vec<Arc<dyn renderable::Renderable>>,
+        rm: &renderable::ResourceManager,
+        renderables: &Vec<Box<dyn renderable::Renderable>>,
     ) -> Vec<Box<vc::AutoCommandBuffer>> {
 
         let dimensions = self.dimensions();
@@ -158,16 +160,20 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
 
+
         // Sort renderables by mesh.
-        let mut meshes: HashMap<Arc<renderable::Mesh>, Vec<cgm::Matrix4<f32>>> = HashMap::new();
-        let mut textures: HashMap<Arc<renderable::Mesh>, Arc<renderable::Texture>> = HashMap::new();
+        let mut meshes: HashMap<u64, Vec<&cgm::Matrix4<f32>>> = HashMap::new();
+        let mut textures: HashMap<u64, u64> = HashMap::new();
+
+        profiler.end("mgc.prep");
         for r in renderables {
-            if let Some((mesh, texture, transform)) = r.render_data() {
-                textures.entry(mesh.clone()).or_insert(texture);
-                let entry = meshes.entry(mesh.clone()).or_insert(vec![]);
+            if let Some((meshId, textureId, transform)) = r.render_data() {
+                textures.entry(meshId).or_insert(textureId);
+                let entry = meshes.entry(meshId).or_insert(vec![]);
                 entry.push(transform);
             }
         }
+        profiler.end("mgc.sort");
 
         let device = self.surface_binding().device.clone();
         let queue = self.surface_binding().graphics_queue.clone();
@@ -175,7 +181,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
-        for (mesh, transforms) in meshes {
+        for (meshId, transforms) in meshes {
+            let mesh = rm.get_mesh(meshId).unwrap();
+            let textureId = textures.get(&meshId).unwrap().clone();
+            let texture = rm.get_texture(textureId).unwrap();
+
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
 
@@ -190,7 +200,6 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             ).unwrap();
             future.flush().unwrap();
 
-            let texture = textures.get(&mesh).unwrap().clone();
             let image = texture.vulkan_texture(queue.clone());
             let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(image);
 
@@ -200,6 +209,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
             buffers.push(Box::new(builder.build().unwrap()));
         }
+        profiler.end("mgc.build");
 
         return buffers;
     }
@@ -232,10 +242,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     pub fn flip(
         &mut self,
         view: &cgm::Matrix4<f32>,
-        renderables: &Vec<Arc<dyn renderable::Renderable>>,
+        rm: &renderable::ResourceManager,
+        renderables: &Vec<Box<dyn renderable::Renderable>>,
     ) {
+        let mut profiler = crate::util::profiler::Profiler::new();
+
         // Build batch command buffer as early as possible.
-        let mut batches = self.make_graphics_commands(view, renderables);
+        let mut batches = self.make_graphics_commands(&mut profiler, view, rm, renderables);
+        profiler.end("mgc");
 
         match &self.previous_frame_end {
             None => (),
@@ -245,8 +259,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         if !self.armed {
             self.arm();
             // Rearming means the batch is invalid - rebuild it.
-            batches = self.make_graphics_commands(view, renderables);
+            batches = self.make_graphics_commands(&mut profiler, view, rm, renderables);
         }
+        profiler.end("arm");
 
         let chain = self.swapchain_binding().chain.clone();
         // TODO(q3k): check the 'suboptimal' (second) bool
@@ -259,9 +274,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             },
             Err(err) => panic!("{:?}", err),
         };
+        profiler.end("acquire");
 
         let fb = self.swapchain_binding().framebuffers[image_index].clone();
         let command_buffer = self.make_command_buffer(fb, batches);
+        profiler.end("mcb");
 
         let gq = self.surface_binding().graphics_queue.clone();
         let pq = self.surface_binding().present_queue.clone();
@@ -271,6 +288,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             .unwrap()
             .then_swapchain_present(pq, chain.clone(), image_index)
             .then_signal_fence_and_flush();
+        profiler.end("execute");
 
         match future {
             Ok(_) => (),
@@ -284,7 +302,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         self.previous_frame_end = Some(Box::new(future.unwrap()));
         if let Some(rate) = self.fps_counter.tick() {
-            log::info!("FPS: {}", rate)
+            log::info!("FPS: {}", rate);
+            profiler.print();
         }
     }
 

@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use vulkano::buffer as vb;
 use vulkano::descriptor::descriptor as vdD;
 use vulkano::descriptor::descriptor_set as vdd;
 use vulkano::descriptor::pipeline_layout as vdp;

@@ -48,8 +48,13 @@ impl Renderer {
         (events_loop, surface)
     }
 
-    pub fn draw_frame(&mut self, view: &cgm::Matrix4<f32>, renderables: &Vec<Arc<dyn renderable::Renderable>>) {
-        self.instance.flip(view, renderables);
+    pub fn draw_frame(
+        &mut self,
+        view: &cgm::Matrix4<f32>,
+        rm: &renderable::ResourceManager,
+        renderables: &Vec<Box<dyn renderable::Renderable>>
+    ) {
+        self.instance.flip(view, rm, renderables);
     }
 
     pub fn poll_close(&mut self) -> bool {

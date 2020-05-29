@@ -3,7 +3,6 @@ use std::ffi::CStr;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
-use std::path;
 
 use vulkano::descriptor::descriptor as vdd;
 use vulkano::descriptor::pipeline_layout as vdp;
