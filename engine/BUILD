@@ -32,6 +32,7 @@ rust_binary(
         "//third_party/cargo:env_logger",
         "//third_party/cargo:vulkano",
         "//third_party/cargo:vulkano_win",
+        "@com_github_q3k_q3d//:q3d_rs",
         "@io_bazel_rules_rust//tools/runfiles",
     ],
     data = [

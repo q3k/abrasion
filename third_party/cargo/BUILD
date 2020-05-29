@@ -17,8 +17,12 @@ alias(
     actual = "//third_party/cargo/vendor/env_logger-0.6.2:env_logger",
 )
 alias(
+    name = "flatbuffers",
+    actual = "//third_party/cargo/vendor/flatbuffers-0.6.1:flatbuffers",
+)
+alias(
     name = "image",
-    actual = "//third_party/cargo/vendor/image-0.23.1:image",
+    actual = "//third_party/cargo/vendor/image-0.23.4:image",
 )
 alias(
     name = "log",
@@ -38,5 +42,5 @@ alias(
 )
 alias(
     name = "winit",
-    actual = "//third_party/cargo/vendor/winit-0.22.0:winit",
+    actual = "//third_party/cargo/vendor/winit-0.22.2:winit",
 )
