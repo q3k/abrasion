@@ -32,7 +32,7 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/kernel32-sys-0.2.2:kernel32_sys",
-        "//third_party/cargo/vendor/net2-0.2.33:net2",
+        "//third_party/cargo/vendor/net2-0.2.34:net2",
         "//third_party/cargo/vendor/winapi-0.2.8:winapi",
         "//third_party/cargo/vendor/ws2_32-sys-0.2.1:ws2_32_sys",
     ],

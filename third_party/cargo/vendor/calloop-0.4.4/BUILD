@@ -31,7 +31,7 @@ rust_library(
     edition = "2015",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/mio-0.6.21:mio",
+        "//third_party/cargo/vendor/mio-0.6.22:mio",
         "//third_party/cargo/vendor/mio-extras-2.0.6:mio_extras",
         "//third_party/cargo/vendor/nix-0.14.1:nix",
     ],

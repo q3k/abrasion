@@ -32,7 +32,7 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/vulkano-0.18.0:vulkano",
-        "//third_party/cargo/vendor/winit-0.22.0:winit",
+        "//third_party/cargo/vendor/winit-0.22.2:winit",
     ],
     rustc_flags = [
         "--cap-lints=allow",

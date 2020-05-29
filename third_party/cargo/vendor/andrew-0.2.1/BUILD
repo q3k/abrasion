@@ -35,8 +35,8 @@ rust_library(
         "//third_party/cargo/vendor/line_drawing-0.7.0:line_drawing",
         "//third_party/cargo/vendor/walkdir-2.3.1:walkdir",
         "//third_party/cargo/vendor/xdg-2.2.0:xdg",
-        "//third_party/cargo/vendor/xml-rs-0.8.0:xml_rs",
-        "//third_party/cargo/vendor/rusttype-0.8.2:rusttype",
+        "//third_party/cargo/vendor/xml-rs-0.8.3:xml_rs",
+        "//third_party/cargo/vendor/rusttype-0.8.3:rusttype",
     ],
     rustc_flags = [
         "--cap-lints=allow",

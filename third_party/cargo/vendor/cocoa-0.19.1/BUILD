@@ -36,7 +36,7 @@ rust_library(
         "//third_party/cargo/vendor/core-foundation-0.6.4:core_foundation",
         "//third_party/cargo/vendor/core-graphics-0.17.3:core_graphics",
         "//third_party/cargo/vendor/foreign-types-0.3.2:foreign_types",
-        "//third_party/cargo/vendor/libc-0.2.67:libc",
+        "//third_party/cargo/vendor/libc-0.2.71:libc",
         "//third_party/cargo/vendor/objc-0.2.7:objc",
     ],
     rustc_flags = [

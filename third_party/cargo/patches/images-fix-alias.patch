@@ -1,7 +1,7 @@
-diff --git a/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs b/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
+diff --git a/third_party/cargo/vendor/image-0.23.4/src/jpeg/decoder.rs b/third_party/cargo/vendor/image-0.23.4/src/jpeg/decoder.rs
 index 0abe266..1fcd2f2 100644
---- a/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
-+++ b/third_party/cargo/vendor/image-0.23.1/src/jpeg/decoder.rs
+--- a/third_party/cargo/vendor/image-0.23.4/src/jpeg/decoder.rs
++++ b/third_party/cargo/vendor/image-0.23.4/src/jpeg/decoder.rs
 @@ -11,21 +11,21 @@ use crate::image::{ImageDecoder, ImageFormat};
  
  /// JPEG decoder

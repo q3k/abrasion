@@ -32,7 +32,7 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/core-foundation-sys-0.7.0:core_foundation_sys",
-        "//third_party/cargo/vendor/libc-0.2.67:libc",
+        "//third_party/cargo/vendor/libc-0.2.71:libc",
     ],
     rustc_flags = [
         "--cap-lints=allow",

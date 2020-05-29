@@ -31,7 +31,7 @@ rust_library(
     edition = "2015",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/dlib-0.4.1:dlib",
+        "//third_party/cargo/vendor/dlib-0.4.2:dlib",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
     ],
     rustc_flags = [

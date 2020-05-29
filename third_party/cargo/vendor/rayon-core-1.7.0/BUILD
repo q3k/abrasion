@@ -35,10 +35,10 @@ rust_library(
     srcs = glob(["**/*.rs"]),
     deps = [
         "//third_party/cargo/vendor/crossbeam-deque-0.7.3:crossbeam_deque",
-        "//third_party/cargo/vendor/crossbeam-queue-0.2.1:crossbeam_queue",
+        "//third_party/cargo/vendor/crossbeam-queue-0.2.2:crossbeam_queue",
         "//third_party/cargo/vendor/crossbeam-utils-0.7.2:crossbeam_utils",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-        "//third_party/cargo/vendor/num_cpus-1.12.0:num_cpus",
+        "//third_party/cargo/vendor/num_cpus-1.13.0:num_cpus",
     ],
     rustc_flags = [
         "--cap-lints=allow",

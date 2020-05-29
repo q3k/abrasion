@@ -35,7 +35,7 @@ rust_library(
         "//third_party/cargo/vendor/crossbeam-channel-0.4.2:crossbeam_channel",
         "//third_party/cargo/vendor/crossbeam-deque-0.7.3:crossbeam_deque",
         "//third_party/cargo/vendor/crossbeam-epoch-0.8.2:crossbeam_epoch",
-        "//third_party/cargo/vendor/crossbeam-queue-0.2.1:crossbeam_queue",
+        "//third_party/cargo/vendor/crossbeam-queue-0.2.2:crossbeam_queue",
         "//third_party/cargo/vendor/crossbeam-utils-0.7.2:crossbeam_utils",
     ],
     rustc_flags = [

@@ -33,7 +33,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/lazycell-1.2.1:lazycell",
         "//third_party/cargo/vendor/log-0.4.8:log",
-        "//third_party/cargo/vendor/mio-0.6.21:mio",
+        "//third_party/cargo/vendor/mio-0.6.22:mio",
         "//third_party/cargo/vendor/slab-0.4.2:slab",
     ],
     rustc_flags = [

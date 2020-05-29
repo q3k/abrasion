@@ -39,7 +39,7 @@ rust_library(
         "//third_party/cargo/vendor/atty-0.2.14:atty",
         "//third_party/cargo/vendor/humantime-1.3.0:humantime",
         "//third_party/cargo/vendor/log-0.4.8:log",
-        "//third_party/cargo/vendor/regex-1.3.5:regex",
+        "//third_party/cargo/vendor/regex-1.3.9:regex",
         "//third_party/cargo/vendor/termcolor-1.1.0:termcolor",
     ],
     rustc_flags = [

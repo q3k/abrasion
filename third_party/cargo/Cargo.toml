@@ -15,6 +15,7 @@ vulkano-win = "0.18.0"
 winit = "0.22.0"
 cgmath = "0.17.0"
 openvr = "0.6.0"
+flatbuffers = "0.6.1"
 
 [raze]
 workspace_path = "//third_party/cargo"
@@ -22,7 +23,7 @@ target = "x86_64-unknown-linux-gnu"
 
 [raze.crates.andrew.'0.2.1']
 skipped_deps = ['rusttype-0.7.9']
-additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.2:rusttype']
+additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.3:rusttype']
 
 [raze.crates.x11-dl.'2.18.5']
 gen_buildrs = true
@@ -38,11 +39,11 @@ additional_flags = [
     "--cfg=atomic_cas"
 ]
 
-[raze.crates.libloading.'0.5.2']
+[raze.crates.libloading.'0.6.2']
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
 
 [raze.crates.cgmath.'0.17.0']
 gen_buildrs = true
 
-[raze.crates.image.'0.23.1']
+[raze.crates.image.'0.23.4']
 gen_buildrs = true

@@ -33,7 +33,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/proc-macro2-0.4.30:proc_macro2",
         "//third_party/cargo/vendor/quote-0.6.13:quote",
-        "//third_party/cargo/vendor/xml-rs-0.8.0:xml_rs",
+        "//third_party/cargo/vendor/xml-rs-0.8.3:xml_rs",
     ],
     rustc_flags = [
         "--cap-lints=allow",

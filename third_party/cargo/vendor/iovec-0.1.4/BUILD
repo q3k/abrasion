@@ -31,7 +31,7 @@ rust_library(
     edition = "2015",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/libc-0.2.67:libc",
+        "//third_party/cargo/vendor/libc-0.2.71:libc",
     ],
     rustc_flags = [
         "--cap-lints=allow",

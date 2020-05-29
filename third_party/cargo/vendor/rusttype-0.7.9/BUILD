@@ -37,7 +37,7 @@ rust_library(
     edition = "2018",
     srcs = glob(["**/*.rs"]),
     deps = [
-        "//third_party/cargo/vendor/rusttype-0.8.2:rusttype",
+        "//third_party/cargo/vendor/rusttype-0.8.3:rusttype",
     ],
     rustc_flags = [
         "--cap-lints=allow",
