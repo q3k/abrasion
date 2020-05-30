@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time;
 use log;
@@ -164,15 +163,17 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
 
 
-        // Sort renderables by mesh.
-        let mut meshes: ResourceMap<&cgm::Matrix4<f32>> = ResourceMap::new();
-        let mut textures: HashMap<renderable::ResourceID, renderable::ResourceID> = HashMap::new();
+        // Sort renderables by mesh and textureid.
+        let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
+
+        let ubo = data::UniformBufferObject {
+            view: proj * view,
+        };
 
         profiler.end("mgc.prep");
         for r in renderables {
             if let Some((mesh_id, texture_id, transform)) = r.render_data() {
-                textures.entry(mesh_id).or_insert(texture_id);
-                meshes.add(mesh_id, transform);
+                meshes.add((mesh_id, texture_id), transform);
             }
         }
         profiler.end("mgc.sort");
@@ -183,17 +184,12 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
-        for (mesh_id, transforms) in meshes.resources {
+        for ((mesh_id, texture_id), transforms) in meshes.resources {
             let mesh = rm.mesh(&mesh_id).unwrap();
-            let texture_id = textures.get(&mesh_id).unwrap();
             let texture = rm.texture(&texture_id).unwrap();
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
-
-            let ubo = data::UniformBufferObject {
-                view: proj * view,
-            };
 
             let (instancebuffer, future) = vb::immutable::ImmutableBuffer::from_iter(
                 transforms.iter().map(|t| { data::Instance::new(t) }),
