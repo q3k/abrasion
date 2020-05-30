@@ -1,7 +1,5 @@
 use std::cmp::PartialEq;
 
-use crate::render::renderable::ResourceID;
-
 /// A map from ResourceID to Vec<T>, useful for building up information about
 /// a scene. This implementation is currently naive, but is pretty fast
 /// compared to a HashMap as it performs no hashing - just uses ResourceIDs.

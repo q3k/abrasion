@@ -16,6 +16,7 @@ rust_binary(
         "src/render/vulkan/data.rs",
         "src/render/vulkan/mod.rs",
         "src/render/vulkan/pipeline.rs",
+        "src/render/vulkan/pipeline_forward.rs",
         "src/render/vulkan/qfi.rs",
         "src/render/vulkan/shaders.rs",
         "src/render/vulkan/surface_binding.rs",

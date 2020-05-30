@@ -13,6 +13,7 @@ use vulkano::sync::{FenceSignalFuture, GpuFuture};
 pub mod data;
 mod surface_binding;
 mod pipeline;
+mod pipeline_forward;
 mod qfi;
 mod shaders;
 mod swapchain_binding;
@@ -136,7 +137,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let render_pass = self.swapchain_binding().render_pass.clone();
 
-        self.pipeline = Some(Box::new(pipeline::Forward::new(device.clone(), chain.dimensions(), render_pass)));
+        self.pipeline = Some(Box::new(pipeline_forward::Forward::new(device.clone(), chain.dimensions(), render_pass)));
         self.uniform_pool = Some(
             vb::CpuBufferPool::new(device.clone(), vb::BufferUsage::uniform_buffer_transfer_destination())
         );
