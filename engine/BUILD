@@ -25,6 +25,7 @@ rust_binary(
         "src/util/file.rs",
         "src/util/mod.rs",
         "src/util/profiler.rs",
+        "src/util/resourcemap.rs",
     ],
     deps = [
         "//third_party/cargo:cgmath",

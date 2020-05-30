@@ -21,6 +21,8 @@ mod worker;
 
 use crate::render::renderable;
 use crate::util::counter::Counter;
+use crate::util::profiler::Profiler;
+use crate::util::resourcemap::ResourceMap;
 
 const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
 
@@ -104,7 +106,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             uniform_pool: None,
             previous_frame_end: None,
             armed: false,
-            fps_counter: crate::util::counter::Counter::new(time::Duration::from_millis(1000)),
+            fps_counter: Counter::new(time::Duration::from_millis(1000)),
         }
     }
 
@@ -145,7 +147,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     fn make_graphics_commands(
         &mut self,
-        profiler: &mut crate::util::profiler::Profiler,
+        profiler: &mut Profiler,
         view: &cgm::Matrix4<f32>,
         rm: &renderable::ResourceManager,
         renderables: &Vec<Box<dyn renderable::Renderable>>,
@@ -163,15 +165,14 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
 
         // Sort renderables by mesh.
-        let mut meshes: HashMap<renderable::ResourceID, Vec<&cgm::Matrix4<f32>>> = HashMap::new();
+        let mut meshes: ResourceMap<&cgm::Matrix4<f32>> = ResourceMap::new();
         let mut textures: HashMap<renderable::ResourceID, renderable::ResourceID> = HashMap::new();
 
         profiler.end("mgc.prep");
         for r in renderables {
-            if let Some((meshId, textureId, transform)) = r.render_data() {
-                textures.entry(meshId).or_insert(textureId);
-                let entry = meshes.entry(meshId).or_insert(vec![]);
-                entry.push(transform);
+            if let Some((mesh_id, texture_id, transform)) = r.render_data() {
+                textures.entry(mesh_id).or_insert(texture_id);
+                meshes.add(mesh_id, transform);
             }
         }
         profiler.end("mgc.sort");
@@ -182,10 +183,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
-        for (meshId, transforms) in meshes {
-            let mesh = rm.mesh(&meshId).unwrap();
-            let textureId = textures.get(&meshId).unwrap().clone();
-            let texture = rm.texture(&textureId).unwrap();
+        for (mesh_id, transforms) in meshes.resources {
+            let mesh = rm.mesh(&mesh_id).unwrap();
+            let texture_id = textures.get(&mesh_id).unwrap();
+            let texture = rm.texture(&texture_id).unwrap();
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
@@ -246,7 +247,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         rm: &renderable::ResourceManager,
         renderables: &Vec<Box<dyn renderable::Renderable>>,
     ) {
-        let mut profiler = crate::util::profiler::Profiler::new();
+        let mut profiler = Profiler::new();
 
         // Build batch command buffer as early as possible.
         let mut batches = self.make_graphics_commands(&mut profiler, view, rm, renderables);
