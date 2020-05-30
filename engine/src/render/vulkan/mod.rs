@@ -20,6 +20,7 @@ mod swapchain_binding;
 mod worker;
 
 use crate::render::renderable;
+use crate::util::counter::Counter;
 
 const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
 
@@ -42,7 +43,7 @@ pub struct Instance<WT> {
     uniform_pool: Option<vb::CpuBufferPool<data::UniformBufferObject>>,
     armed: bool,
     previous_frame_end: Option<Box<FlipFuture<WT>>>,
-    fps_counter: crate::util::counter::Counter,
+    fps_counter: Counter,
 }
 
 type FlipFuture<WT> = FenceSignalFuture<vs::PresentFuture<vc::CommandBufferExecFuture<vs::SwapchainAcquireFuture<WT>, Arc<vc::AutoCommandBuffer>>, WT>>;
@@ -162,8 +163,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
 
         // Sort renderables by mesh.
-        let mut meshes: HashMap<u64, Vec<&cgm::Matrix4<f32>>> = HashMap::new();
-        let mut textures: HashMap<u64, u64> = HashMap::new();
+        let mut meshes: HashMap<renderable::ResourceID, Vec<&cgm::Matrix4<f32>>> = HashMap::new();
+        let mut textures: HashMap<renderable::ResourceID, renderable::ResourceID> = HashMap::new();
 
         profiler.end("mgc.prep");
         for r in renderables {
@@ -182,9 +183,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
         for (meshId, transforms) in meshes {
-            let mesh = rm.get_mesh(meshId).unwrap();
+            let mesh = rm.mesh(&meshId).unwrap();
             let textureId = textures.get(&meshId).unwrap().clone();
-            let texture = rm.get_texture(textureId).unwrap();
+            let texture = rm.texture(&textureId).unwrap();
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();

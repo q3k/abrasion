@@ -9,7 +9,7 @@ mod render;
 mod util;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable, ResourceManager, Texture, Mesh};
+use render::renderable::{Object, Renderable, Resource, ResourceManager, Texture, Mesh};
 
 fn main() {
     env_logger::init();
@@ -61,12 +61,12 @@ fn main() {
             20, 22, 21, 22, 20, 23,
 
         ]);
-        rm.add_mesh(Mesh::new(vertices, indices))
+        rm.add(Resource::Mesh(Mesh::new(vertices, indices)))
     };
 
     let path = &crate::util::file::resource_path(String::from("assets/test-128px.png"));
     let image = Arc::new(image::open(path).unwrap());
-    let texture_cube = rm.add_texture(Texture::new(image));
+    let texture_cube = rm.add(Resource::Texture(Texture::new(image)));
 
     let mut renderer = render::Renderer::initialize();
 

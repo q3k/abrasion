@@ -15,15 +15,45 @@ use vulkano::image as vm;
 
 use crate::render::vulkan::data;
 
-pub trait Renderable {
-    fn render_data(&self) -> Option<(u64, u64, &cgm::Matrix4<f32>)> {
-        None
-    }
-}
-
 pub struct ResourceManager {
     meshes: HashMap<u64, Mesh>,
     textures: HashMap<u64, Texture>,
+}
+
+#[derive(Copy, Clone)]
+pub enum ResourceID {
+    Texture(u64),
+    Mesh(u64),
+}
+
+impl hash::Hash for ResourceID {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        match self {
+            ResourceID::Texture(i) => i.hash(state),
+            ResourceID::Mesh(i) => i.hash(state),
+        }
+    }
+}
+
+impl PartialEq for ResourceID {
+    fn eq(&self, other: &Self) -> bool {
+        let this = match self {
+            ResourceID::Texture(i) => i,
+            ResourceID::Mesh(i) => i,
+        };
+        let that = match other {
+            ResourceID::Texture(i) => i,
+            ResourceID::Mesh(i) => i,
+        };
+        this == that
+    }
+}
+
+impl Eq for ResourceID {}
+
+pub enum Resource {
+    Texture(Texture),
+    Mesh(Mesh),
 }
 
 impl<'a> ResourceManager {
@@ -34,24 +64,33 @@ impl<'a> ResourceManager {
         }
     }
 
-    pub fn add_mesh(&mut self, m: Mesh) -> u64 {
-        let id = m.id;
-        self.meshes.insert(id, m);
-        id
+    pub fn add(&mut self, r: Resource) -> ResourceID {
+        match r {
+            Resource::Texture(t) => {
+                let id = t.id;
+                self.textures.insert(id, t);
+                ResourceID::Texture(id)
+            }
+            Resource::Mesh(t) => {
+                let id = t.id;
+                self.meshes.insert(id, t);
+                ResourceID::Mesh(id)
+            }
+        }
     }
 
-    pub fn add_texture(&mut self, t: Texture) -> u64 {
-        let id = t.id;
-        self.textures.insert(id, t);
-        id
+    pub fn texture(&'a self, id: &ResourceID) -> Option<&'a Texture> {
+        if let ResourceID::Texture(i) = id {
+            return Some(self.textures.get(&i).unwrap());
+        }
+        return None
     }
 
-    pub fn get_mesh(&'a self, id: u64) -> Option<&'a Mesh> {
-        self.meshes.get(&id)
-    }
-
-    pub fn get_texture(&'a self, id: u64) -> Option<&'a Texture> {
-        self.textures.get(&id)
+    pub fn mesh(&'a self, id: &ResourceID) -> Option<&'a Mesh> {
+        if let ResourceID::Mesh(i) = id {
+            return Some(self.meshes.get(&i).unwrap());
+        }
+        return None
     }
 }
 
@@ -179,14 +218,20 @@ impl PartialEq for Mesh {
 
 impl Eq for Mesh {}
 
+pub trait Renderable {
+    fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {
+        None
+    }
+}
+
 pub struct Object {
-    pub mesh: u64,
-    pub texture: u64,
+    pub mesh: ResourceID,
+    pub texture: ResourceID,
     pub transform: cgm::Matrix4<f32>,
 }
 
 impl Renderable for Object {
-    fn render_data(&self) -> Option<(u64, u64, &cgm::Matrix4<f32>)> {
+    fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {
         Some((self.mesh, self.texture, &self.transform))
     }
 }
