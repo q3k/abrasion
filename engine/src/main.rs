@@ -10,7 +10,7 @@ mod util;
 mod physics;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable, Resource, ResourceManager, Material, Mesh, ImageRefOrColor};
+use render::renderable::{Object, Renderable, ResourceManager, Material, Mesh, ImageRefOrColor};
 use physics::color;
 
 fn main() {
@@ -63,13 +63,13 @@ fn main() {
             20, 22, 21, 22, 20, 23,
 
         ]);
-        rm.add(Resource::Mesh(Mesh::new(vertices, indices)))
+        rm.add_mesh(Mesh::new(vertices, indices))
     };
 
-    let material_cube = rm.add(Resource::Material(Material::new(
+    let material_cube = rm.add_material(Material::new(
         ImageRefOrColor::image(String::from("assets/test-128px.png")),
         ImageRefOrColor::color(color::LinearF32::new(1.0)),
-    )));
+    ));
 
     let mut renderer = render::Renderer::initialize();
 
