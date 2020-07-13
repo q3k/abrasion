@@ -199,8 +199,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             ).unwrap();
             future.flush().unwrap();
 
-            let image = material.vulkan_textures(queue.clone()).diffuse;
-            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(image);
+            let textures = material.vulkan_textures(queue.clone());
+            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(textures);
 
             let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());
             builder = builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),

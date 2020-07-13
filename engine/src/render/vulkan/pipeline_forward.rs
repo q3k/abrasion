@@ -7,7 +7,6 @@ use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
 use vulkano::format::Format;
 use vulkano::framebuffer as vf;
-use vulkano::image as vm;
 use vulkano::pipeline as vp;
 use vulkano::pipeline::shader as vps;
 use vulkano::pipeline::vertex as vpv;
@@ -149,10 +148,10 @@ impl pipeline::Pipeline for Forward {
         self.pipeline.clone()
     }
 
-    fn make_descriptor_set(&mut self, texture_image: Arc<vm::ImmutableImage<Format>>) -> Arc<pipeline::VulkanoDescriptorSet> {
+    fn make_descriptor_set(&mut self, textures: data::Textures) -> Arc<pipeline::VulkanoDescriptorSet> {
         let image_sampler = vs::Sampler::simple_repeat_linear(self.device.clone());
         Arc::new(self.descriptor_set_pool.next()
-            .add_sampled_image(texture_image.clone(), image_sampler).unwrap()
+            .add_sampled_image(textures.diffuse.clone(), image_sampler).unwrap()
             .build().unwrap())
     }
 }
