@@ -88,6 +88,17 @@ impl<'a> ResourceManager {
     }
 }
 
+pub struct PBRTextureSet {
+    pub diffuse: Texture<color::XYZ>,
+    pub roughness: Texture<color::LinearF32>,
+}
+
+impl PBRTextureSet {
+    pub fn build(self, rm: &mut ResourceManager) -> ResourceID {
+        rm.add_material(Material::new(self.diffuse, self.roughness))
+    }
+}
+
 pub struct Material {
     diffuse: Texture<color::XYZ>,
     roughness: Texture<color::LinearF32>,
