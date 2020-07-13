@@ -10,7 +10,7 @@ mod util;
 mod physics;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable, ResourceManager, Material, Mesh, ImageRefOrColor};
+use render::renderable::{Object, Renderable, ResourceManager, Material, Mesh, Texture};
 use physics::color;
 
 fn main() {
@@ -67,8 +67,8 @@ fn main() {
     };
 
     let material_cube = rm.add_material(Material::new(
-        ImageRefOrColor::image(String::from("assets/test-128px.png")),
-        ImageRefOrColor::color(color::LinearF32::new(1.0)),
+        Texture::from_image(String::from("assets/test-128px.png")),
+        Texture::from_color(color::LinearF32::new(1.0)),
     ));
 
     let mut renderer = render::Renderer::initialize();

@@ -89,8 +89,8 @@ impl<'a> ResourceManager {
 }
 
 pub struct Material {
-    diffuse: ImageRefOrColor<color::XYZ>,
-    roughness: ImageRefOrColor<color::LinearF32>,
+    diffuse: Texture<color::XYZ>,
+    roughness: Texture<color::LinearF32>,
 
     id: u64,
     // vulkan cache
@@ -99,8 +99,8 @@ pub struct Material {
 
 impl Material {
     pub fn new(
-        diffuse: ImageRefOrColor<color::XYZ>,
-        roughness: ImageRefOrColor<color::LinearF32>,
+        diffuse: Texture<color::XYZ>,
+        roughness: Texture<color::LinearF32>,
     ) -> Self {
         Self {
             diffuse,
@@ -298,36 +298,29 @@ impl ChannelLayout for color::LinearF32 {
     }
 }
 
-pub enum ImageRefOrColor<T: ChannelLayout> {
+pub enum Texture<T: ChannelLayout> {
     Color(T),
-    ImageRef(ImageRef),
+    ImageRef(String),
 }
 
-impl<T: ChannelLayout> ImageRefOrColor<T> {
+impl<T: ChannelLayout> Texture<T> {
     fn vulkan_image(&self, graphics_queue: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>> {
         match self {
-            ImageRefOrColor::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
-            ImageRefOrColor::<T>::ImageRef(r) => T::vulkan_from_image(r.load(), graphics_queue),
+            Texture::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
+            Texture::<T>::ImageRef(r) => {
+                let path = &file::resource_path(r.clone());
+                let img = Arc::new(image::open(path).unwrap());
+                T::vulkan_from_image(img, graphics_queue)
+            },
         }
     }
 
-    pub fn color(color: T) -> Self {
-        ImageRefOrColor::<T>::Color(color)
+    pub fn from_color(color: T) -> Self {
+        Texture::<T>::Color(color)
     }
 
-    pub fn image(name: String) -> Self {
-        ImageRefOrColor::<T>::ImageRef(ImageRef{ name })
-    }
-}
-
-pub struct ImageRef {
-    name: String,
-}
-
-impl ImageRef {
-    fn load (&self) -> Arc<image::DynamicImage> {
-        let path = &file::resource_path(self.name.clone());
-        Arc::new(image::open(path).unwrap())
+    pub fn from_image(name: String) -> Self {
+        Texture::<T>::ImageRef(name)
     }
 }
 
