@@ -164,7 +164,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
 
 
-        // Sort renderables by mesh and textureid.
+        // Sort renderables by mesh and materialid.
         let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
 
         let ubo = data::UniformBufferObject {
@@ -173,8 +173,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         profiler.end("mgc.prep");
         for r in renderables {
-            if let Some((mesh_id, texture_id, transform)) = r.render_data() {
-                meshes.add((mesh_id, texture_id), transform);
+            if let Some((mesh_id, material_id, transform)) = r.render_data() {
+                meshes.add((mesh_id, material_id), transform);
             }
         }
         profiler.end("mgc.sort");
@@ -185,9 +185,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
-        for ((mesh_id, texture_id), transforms) in meshes.resources {
+        for ((mesh_id, material_id), transforms) in meshes.resources {
             let mesh = rm.mesh(&mesh_id).unwrap();
-            let texture = rm.texture(&texture_id).unwrap();
+            let material = rm.material(&material_id).unwrap();
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
@@ -199,7 +199,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             ).unwrap();
             future.flush().unwrap();
 
-            let image = texture.vulkan_texture(queue.clone());
+            let image = material.vulkan_textures(queue.clone()).diffuse;
             let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(image);
 
             let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());

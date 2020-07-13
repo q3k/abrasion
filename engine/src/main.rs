@@ -7,9 +7,11 @@ use cgmath as cgm;
 
 mod render;
 mod util;
+mod physics;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable, Resource, ResourceManager, Texture, Mesh};
+use render::renderable::{Object, Renderable, Resource, ResourceManager, Material, Mesh, ImageRefOrColor};
+use physics::color;
 
 fn main() {
     env_logger::init();
@@ -64,9 +66,10 @@ fn main() {
         rm.add(Resource::Mesh(Mesh::new(vertices, indices)))
     };
 
-    let path = &crate::util::file::resource_path(String::from("assets/test-128px.png"));
-    let image = Arc::new(image::open(path).unwrap());
-    let texture_cube = rm.add(Resource::Texture(Texture::new(image)));
+    let material_cube = rm.add(Resource::Material(Material::new(
+        ImageRefOrColor::image(String::from("assets/test-128px.png")),
+        ImageRefOrColor::color(color::LinearF32::new(1.0)),
+    )));
 
     let mut renderer = render::Renderer::initialize();
 
@@ -78,7 +81,7 @@ fn main() {
                 let cube = render::renderable::Object {
                     mesh: mesh_cube,
                     transform: transform,
-                    texture: texture_cube,
+                    material: material_cube,
                 };
                 cubes.push(Box::new(cube));
             }

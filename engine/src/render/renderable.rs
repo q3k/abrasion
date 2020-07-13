@@ -14,22 +14,24 @@ use vulkano::format as vf;
 use vulkano::image as vm;
 
 use crate::render::vulkan::data;
+use crate::physics::color;
+use crate::util::file;
 
 pub struct ResourceManager {
     meshes: HashMap<u64, Mesh>,
-    textures: HashMap<u64, Texture>,
+    materials: HashMap<u64, Material>,
 }
 
 #[derive(Copy, Clone)]
 pub enum ResourceID {
-    Texture(u64),
+    Material(u64),
     Mesh(u64),
 }
 
 impl hash::Hash for ResourceID {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         match self {
-            ResourceID::Texture(i) => i.hash(state),
+            ResourceID::Material(i) => i.hash(state),
             ResourceID::Mesh(i) => i.hash(state),
         }
     }
@@ -38,11 +40,11 @@ impl hash::Hash for ResourceID {
 impl PartialEq for ResourceID {
     fn eq(&self, other: &Self) -> bool {
         let this = match self {
-            ResourceID::Texture(i) => i,
+            ResourceID::Material(i) => i,
             ResourceID::Mesh(i) => i,
         };
         let that = match other {
-            ResourceID::Texture(i) => i,
+            ResourceID::Material(i) => i,
             ResourceID::Mesh(i) => i,
         };
         this == that
@@ -52,7 +54,7 @@ impl PartialEq for ResourceID {
 impl Eq for ResourceID {}
 
 pub enum Resource {
-    Texture(Texture),
+    Material(Material),
     Mesh(Mesh),
 }
 
@@ -60,16 +62,16 @@ impl<'a> ResourceManager {
     pub fn new() -> Self {
         Self {
             meshes: HashMap::new(),
-            textures: HashMap::new(),
+            materials: HashMap::new(),
         }
     }
 
     pub fn add(&mut self, r: Resource) -> ResourceID {
         match r {
-            Resource::Texture(t) => {
+            Resource::Material(t) => {
                 let id = t.id;
-                self.textures.insert(id, t);
-                ResourceID::Texture(id)
+                self.materials.insert(id, t);
+                ResourceID::Material(id)
             }
             Resource::Mesh(t) => {
                 let id = t.id;
@@ -79,9 +81,9 @@ impl<'a> ResourceManager {
         }
     }
 
-    pub fn texture(&'a self, id: &ResourceID) -> Option<&'a Texture> {
-        if let ResourceID::Texture(i) = id {
-            return Some(self.textures.get(&i).unwrap());
+    pub fn material(&'a self, id: &ResourceID) -> Option<&'a Material> {
+        if let ResourceID::Material(i) = id {
+            return Some(self.materials.get(&i).unwrap());
         }
         return None
     }
@@ -94,47 +96,169 @@ impl<'a> ResourceManager {
     }
 }
 
-pub struct Texture {
-    image: Arc<image::DynamicImage>,
+pub trait ChannelLayout {
+    fn vulkan_from_image(
+        image: Arc<image::DynamicImage>,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>>;
+
+    fn vulkan_from_value(
+        &self,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>>;
+}
+
+impl ChannelLayout for color::XYZ {
+    fn vulkan_from_image(
+        image: Arc<image::DynamicImage>,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>> {
+        let (width, height) = (image.width(), image.height());
+        let rgba = image.to_rgba();
+        // TODO(q3k): RGB -> CIE XYZ
+        let (image_view, future) = vm::ImmutableImage::from_iter(
+            rgba.into_raw().iter().cloned(),
+            vm::Dimensions::Dim2d{ width, height },
+            vf::Format::R8G8B8A8Unorm,
+            graphics_queue.clone(),
+        ).unwrap();
+
+        future.flush().unwrap();
+        image_view
+    }
+
+    fn vulkan_from_value(
+        &self,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>> {
+        let mut image = image::ImageBuffer::<image::Rgba<f32>, Vec<f32>>::new(1, 1);
+        image.put_pixel(0, 0, image::Rgba([self.x, self.y, self.z, 0.0]));
+
+        let (image_view, future) = vm::ImmutableImage::from_iter(
+            image.into_raw().iter().cloned(),
+            vm::Dimensions::Dim2d{ width: 1, height: 1 },
+            vf::Format::R32G32B32A32Sfloat,
+            graphics_queue.clone(),
+        ).unwrap();
+        future.flush().unwrap();
+        image_view
+    }
+}
+
+impl ChannelLayout for color::LinearF32 {
+    fn vulkan_from_image(
+        image: Arc<image::DynamicImage>,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>> {
+        let (width, height) = (image.width(), image.height());
+        assert!(match image.color() {
+            image::ColorType::L8 => true,
+            image::ColorType::L16 => true,
+            _ => false,
+        }, "linearf32 texture must be 8-bit grayscale");
+        let gray = image.to_luma();
+        let (image_view, future) = vm::ImmutableImage::from_iter(
+            gray.into_raw().iter().cloned(),
+            vm::Dimensions::Dim2d{ width, height },
+            vf::Format::R8G8B8A8Unorm,
+            graphics_queue.clone(),
+        ).unwrap();
+
+        future.flush().unwrap();
+        image_view
+    }
+
+    fn vulkan_from_value(
+        &self,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Arc<vm::ImmutableImage<vf::Format>> {
+        let mut image = image::ImageBuffer::<image::Luma<f32>, Vec<f32>>::new(1, 1);
+        image.put_pixel(0, 0, image::Luma([self.d]));
+
+        let (image_view, future) = vm::ImmutableImage::from_iter(
+            image.into_raw().iter().cloned(),
+            vm::Dimensions::Dim2d{ width: 1, height: 1 },
+            vf::Format::R32Sfloat,
+            graphics_queue.clone(),
+        ).unwrap();
+        
+        future.flush().unwrap();
+        image_view
+    }
+}
+
+pub enum ImageRefOrColor<T: ChannelLayout> {
+    Color(T),
+    ImageRef(ImageRef),
+}
+
+impl<T: ChannelLayout> ImageRefOrColor<T> {
+    fn vulkan_image(&self, graphics_queue: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>> {
+        match self {
+            ImageRefOrColor::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
+            ImageRefOrColor::<T>::ImageRef(r) => T::vulkan_from_image(r.load(), graphics_queue),
+        }
+    }
+
+    pub fn color(color: T) -> Self {
+        ImageRefOrColor::<T>::Color(color)
+    }
+
+    pub fn image(name: String) -> Self {
+        ImageRefOrColor::<T>::ImageRef(ImageRef{ name })
+    }
+}
+
+pub struct ImageRef {
+    name: String,
+}
+
+impl ImageRef {
+    fn load (&self) -> Arc<image::DynamicImage> {
+        let path = &file::resource_path(self.name.clone());
+        Arc::new(image::open(path).unwrap())
+    }
+}
+
+pub struct Material {
+    diffuse: ImageRefOrColor<color::XYZ>,
+    roughness: ImageRefOrColor<color::LinearF32>,
 
     id: u64,
     // vulkan cache
-    vulkan: Mutex<Option<Arc<vm::ImmutableImage<vf::Format>>>>,
+    vulkan: Mutex<Option<data::Textures>>,
 }
-impl Texture {
+
+impl Material {
     pub fn new(
-        image: Arc<image::DynamicImage>,
+        diffuse: ImageRefOrColor<color::XYZ>,
+        roughness: ImageRefOrColor<color::LinearF32>,
     ) -> Self {
         Self {
-            image,
+            diffuse,
+            roughness,
+
             // TODO: use a better method
             id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
             vulkan: Mutex::new(None),
         }
     }
-    pub fn vulkan_texture(
+
+    pub fn vulkan_textures(
         &self,
         graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>> {
+    ) -> data::Textures {
         let mut cache = self.vulkan.lock().unwrap();
         match &mut *cache {
             Some(data) => data.clone(),
             None => {
-                let width = self.image.width();
-                let height = self.image.height();
-                let image_rgba = self.image.to_rgba();
-                let (image_view, future) = vm::ImmutableImage::from_iter(
-                    image_rgba.into_raw().iter().cloned(),
-                    vm::Dimensions::Dim2d{ width, height },
-                    vf::Format::R8G8B8A8Unorm,
-                    graphics_queue.clone(),
-                ).unwrap();
-
-                future.flush().unwrap();
-
-                *cache = Some(image_view.clone());
-
-                image_view
+                let diffuse = self.diffuse.vulkan_image(graphics_queue.clone());
+                let roughness = self.roughness.vulkan_image(graphics_queue.clone());
+                let textures = data::Textures {
+                    diffuse, roughness,
+                };
+                *cache = Some(textures.clone());
+                textures
             },
         }
     }
@@ -226,12 +350,12 @@ pub trait Renderable {
 
 pub struct Object {
     pub mesh: ResourceID,
-    pub texture: ResourceID,
+    pub material: ResourceID,
     pub transform: cgm::Matrix4<f32>,
 }
 
 impl Renderable for Object {
     fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {
-        Some((self.mesh, self.texture, &self.transform))
+        Some((self.mesh, self.material, &self.transform))
     }
 }

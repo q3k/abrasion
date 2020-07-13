@@ -38,25 +38,17 @@ impl Forward {
                     name: Some(Cow::Borrowed("pos")),
                 },
                 vps::ShaderInterfaceDefEntry {
-                    location: 1..2, format: Format::R32G32B32Sfloat,
-                    name: Some(Cow::Borrowed("color")),
-                },
-                vps::ShaderInterfaceDefEntry {
-                    location: 2..6, format: Format::R32G32B32A32Sfloat,
+                    location: 1..5, format: Format::R32G32B32A32Sfloat,
                     name: Some(Cow::Borrowed("model")),
                 },
                 vps::ShaderInterfaceDefEntry {
-                    location: 6..7, format: Format::R32G32Sfloat,
+                    location: 5..6, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("tex")),
                 },
             ],
             outputs: vec![
                 vps::ShaderInterfaceDefEntry {
-                    location: 0..1, format: Format::R32G32B32Sfloat,
-                    name: Some(Cow::Borrowed("fragColor")),
-                },
-                vps::ShaderInterfaceDefEntry {
-                    location: 1..2, format: Format::R32G32Sfloat,
+                    location: 0..1, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("fragTexCoord")),
                 },
             ],
@@ -78,11 +70,7 @@ impl Forward {
             ty: vps::GraphicsShaderType::Fragment,
             inputs: vec![
                 vps::ShaderInterfaceDefEntry {
-                    location: 0..1, format: Format::R32G32B32Sfloat,
-                    name: Some(Cow::Borrowed("fragColor")),
-                },
-                vps::ShaderInterfaceDefEntry {
-                    location: 1..2, format: Format::R32G32Sfloat,
+                    location: 0..1, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("fragTexCoord")),
                 },
             ],

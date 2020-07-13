@@ -1,3 +1,8 @@
+use std::sync::Arc;
+
+use vulkano::image as vm;
+use vulkano::format::Format;
+
 use cgmath as cgm;
 
 #[derive(Default, Copy, Clone)]
@@ -34,4 +39,12 @@ vulkano::impl_vertex!(Instance, model);
 #[derive(Copy, Clone)]
 pub struct UniformBufferObject {
     pub view: cgm::Matrix4<f32>,
+}
+
+#[derive(Clone)]
+pub struct Textures {
+    // diffuse: RGB
+    pub diffuse: Arc<vm::ImmutableImage<Format>>,
+    // roughness: R
+    pub roughness: Arc<vm::ImmutableImage<Format>>,
 }

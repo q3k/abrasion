@@ -11,6 +11,8 @@ rust_binary(
     ],
     srcs = [
         "src/main.rs",
+        "src/physics/mod.rs",
+        "src/physics/color.rs",
         "src/render/mod.rs",
         "src/render/renderable.rs",
         "src/render/vulkan/data.rs",
