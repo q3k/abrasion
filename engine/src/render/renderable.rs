@@ -53,11 +53,6 @@ impl PartialEq for ResourceID {
 
 impl Eq for ResourceID {}
 
-pub enum Resource {
-    Material(Material),
-    Mesh(Mesh),
-}
-
 impl<'a> ResourceManager {
     pub fn new() -> Self {
         Self {
@@ -143,12 +138,7 @@ pub struct Mesh {
 
     id: u64,
     // vulkan buffers cache
-    vulkan: Mutex<Option<MeshVulkanData>>,
-}
-
-struct MeshVulkanData {
-    vbuffer: Arc<vb::ImmutableBuffer<[data::Vertex]>>,
-    ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
+    vulkan: Mutex<Option<data::VertexData>>,
 }
 
 impl Mesh {
@@ -163,8 +153,6 @@ impl Mesh {
             vulkan: Mutex::new(None),
         }
     }
-
-    pub fn get_id(&self) -> u64 { self.id }
 
     pub fn vulkan_buffers(
         &self,
@@ -190,7 +178,7 @@ impl Mesh {
                 vfuture.flush().unwrap();
                 ifuture.flush().unwrap();
 
-                *cache = Some(MeshVulkanData {
+                *cache = Some(data::VertexData {
                     vbuffer: vbuffer.clone(),
                     ibuffer: ibuffer.clone(),
                 });
@@ -200,20 +188,6 @@ impl Mesh {
         }
     }
 }
-
-impl hash::Hash for Mesh {
-    fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
-
-impl PartialEq for Mesh {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl Eq for Mesh {}
 
 pub trait Renderable {
     fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {

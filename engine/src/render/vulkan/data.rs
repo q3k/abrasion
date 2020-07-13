@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use vulkano::buffer as vb;
 use vulkano::image as vm;
 use vulkano::format::Format;
 
@@ -47,4 +48,9 @@ pub struct Textures {
     pub diffuse: Arc<vm::ImmutableImage<Format>>,
     // roughness: R
     pub roughness: Arc<vm::ImmutableImage<Format>>,
+}
+
+pub struct VertexData {
+    pub vbuffer: Arc<vb::ImmutableBuffer<[Vertex]>>,
+    pub ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
 }
