@@ -95,6 +95,21 @@ impl Forward {
                         ..vdD::ShaderStages::none()
                     },
                 },
+                vdD::DescriptorDesc {
+                    ty: vdD::DescriptorDescTy::CombinedImageSampler(vdD::DescriptorImageDesc {
+                        sampled: true,
+                        dimensions: vdD::DescriptorImageDescDimensions::TwoDimensional,
+                        format: None,
+                        multisampled: false,
+                        array_layers: vdD::DescriptorImageDescArray::NonArrayed,
+                    }),
+                    array_count: 1,
+                    readonly: true,
+                    stages: vdD::ShaderStages {
+                        fragment: true,
+                        ..vdD::ShaderStages::none()
+                    },
+                },
             ],
             push_constants: vec![],
         }.load_into(device.clone()).expect("could not load fragment shader");
@@ -151,7 +166,8 @@ impl pipeline::Pipeline for Forward {
     fn make_descriptor_set(&mut self, textures: data::Textures) -> Arc<pipeline::VulkanoDescriptorSet> {
         let image_sampler = vs::Sampler::simple_repeat_linear(self.device.clone());
         Arc::new(self.descriptor_set_pool.next()
-            .add_sampled_image(textures.diffuse.clone(), image_sampler).unwrap()
+            .add_sampled_image(textures.diffuse.clone(), image_sampler.clone()).unwrap()
+            .add_sampled_image(textures.roughness.clone(), image_sampler.clone()).unwrap()
             .build().unwrap())
     }
 }
