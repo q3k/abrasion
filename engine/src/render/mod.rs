@@ -16,6 +16,8 @@ use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 
 pub mod vulkan;
+pub mod material;
+pub mod mesh;
 pub mod renderable;
 
 const WIDTH: u32 = 800;

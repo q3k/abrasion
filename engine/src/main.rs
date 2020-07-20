@@ -10,7 +10,9 @@ mod util;
 mod physics;
 
 use render::vulkan::data;
-use render::renderable::{Object, Renderable, ResourceManager, Mesh, Texture, PBRTextureSet};
+use render::material::{Texture, PBRMaterialBuilder};
+use render::mesh::Mesh;
+use render::renderable::{Object, Renderable, ResourceManager};
 use physics::color;
 
 fn main() {
@@ -66,10 +68,10 @@ fn main() {
         rm.add_mesh(Mesh::new(vertices, indices))
     };
 
-    let material = PBRTextureSet {
+    let material = rm.add_material(PBRMaterialBuilder {
         diffuse: Texture::from_image(String::from("assets/test-128px.png")),
         roughness: Texture::from_color(color::LinearF32::new(1.0)),
-    }.build(&mut rm);
+    }.build());
 
 
     let mut cubes: Vec<Box<Object>> = vec![];
