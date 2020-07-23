@@ -15,10 +15,11 @@ use vulkano_win::VkSurfaceBuild;
 use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 
-pub mod vulkan;
+pub mod light;
 pub mod material;
 pub mod mesh;
 pub mod renderable;
+pub mod vulkan;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -52,11 +53,12 @@ impl Renderer {
 
     pub fn draw_frame(
         &mut self,
+        camera: &cgm::Point3<f32>,
         view: &cgm::Matrix4<f32>,
         rm: &renderable::ResourceManager,
         renderables: &Vec<Box<dyn renderable::Renderable>>
     ) {
-        self.instance.flip(view, rm, renderables);
+        self.instance.flip(camera, view, rm, renderables);
     }
 
     pub fn poll_close(&mut self) -> bool {

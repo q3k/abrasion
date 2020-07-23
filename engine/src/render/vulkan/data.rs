@@ -9,18 +9,18 @@ use cgmath as cgm;
 #[derive(Default, Copy, Clone)]
 pub struct Vertex {
     pos: [f32; 3],
-    color: [f32; 3],
+    normal: [f32; 3],
     tex: [f32; 2],
 }
 
 impl Vertex {
-    pub fn new(pos: [f32; 3], color: [f32; 3], tex: [f32; 2]) -> Self {
+    pub fn new(pos: [f32; 3], normal: [f32; 3], tex: [f32; 2]) -> Self {
         Self {
-            pos, color, tex,
+            pos, normal, tex,
         }
     }
 }
-vulkano::impl_vertex!(Vertex, pos, color, tex);
+vulkano::impl_vertex!(Vertex, pos, normal, tex);
 
 #[derive(Default, Copy, Clone)]
 pub struct Instance {
@@ -37,9 +37,17 @@ impl Instance {
 }
 vulkano::impl_vertex!(Instance, model);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
+pub struct OmniLight {
+    pub pos: [f32; 4],
+    pub color: [f32; 4],
+}
+
+#[derive(Copy, Clone, Debug)]
 pub struct UniformBufferObject {
     pub view: cgm::Matrix4<f32>,
+    pub camera_pos: cgm::Vector4<f32>,
+    pub omni_lights: [OmniLight; 3],
 }
 
 #[derive(Clone)]

@@ -10,9 +10,10 @@ mod util;
 mod physics;
 
 use render::vulkan::data;
+use render::light::Omni;
 use render::material::{Texture, PBRMaterialBuilder};
 use render::mesh::Mesh;
-use render::renderable::{Object, Renderable, ResourceManager};
+use render::renderable::{Light, Object, Renderable, ResourceManager};
 use physics::color;
 
 fn main() {
@@ -23,35 +24,35 @@ fn main() {
 
     let mesh = {
         let vertices = Arc::new(vec![
-            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 1.0, 1.0], [1.0, 0.0]),
-            data::Vertex::new([0.5, -0.5, 0.5], [1.0, 1.0, 0.0], [0.0, 0.0]),
-            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 1.0]),
+            data::Vertex::new([-0.5, -0.5,  0.5], [ 0.0,  0.0,  1.0], [1.0, 0.0]),
+            data::Vertex::new([ 0.5, -0.5,  0.5], [ 0.0,  0.0,  1.0], [0.0, 0.0]),
+            data::Vertex::new([ 0.5,  0.5,  0.5], [ 0.0,  0.0,  1.0], [0.0, 1.0]),
+            data::Vertex::new([-0.5,  0.5,  0.5], [ 0.0,  0.0,  1.0], [1.0, 1.0]),
 
-            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 1.0]),
-            data::Vertex::new([0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 1.0]),
-            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [1.0, 0.0]),
-            data::Vertex::new([0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [0.0, 0.0]),
+            data::Vertex::new([ 0.5, -0.5, -0.5], [ 1.0,  0.0,  0.0], [0.0, 1.0]),
+            data::Vertex::new([ 0.5,  0.5, -0.5], [ 1.0,  0.0,  0.0], [1.0, 1.0]),
+            data::Vertex::new([ 0.5,  0.5,  0.5], [ 1.0,  0.0,  0.0], [1.0, 0.0]),
+            data::Vertex::new([ 0.5, -0.5,  0.5], [ 1.0,  0.0,  0.0], [0.0, 0.0]),
 
-            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [1.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [0.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 0.0]),
-            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5, -0.5], [-1.0,  0.0,  0.0], [1.0, 1.0]),
+            data::Vertex::new([-0.5,  0.5, -0.5], [-1.0,  0.0,  0.0], [0.0, 1.0]),
+            data::Vertex::new([-0.5,  0.5,  0.5], [-1.0,  0.0,  0.0], [0.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5,  0.5], [-1.0,  0.0,  0.0], [1.0, 0.0]),
 
-            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 1.0]),
-            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 1.0]),
-            data::Vertex::new([0.5, -0.5, 0.5], [0.0, 1.0, 1.0], [1.0, 0.0]),
-            data::Vertex::new([-0.5, -0.5, 0.5], [1.0, 0.0, 1.0], [0.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5, -0.5], [ 0.0, -1.0,  0.0], [0.0, 1.0]),
+            data::Vertex::new([ 0.5, -0.5, -0.5], [ 0.0, -1.0,  0.0], [1.0, 1.0]),
+            data::Vertex::new([ 0.5, -0.5,  0.5], [ 0.0, -1.0,  0.0], [1.0, 0.0]),
+            data::Vertex::new([-0.5, -0.5,  0.5], [ 0.0, -1.0,  0.0], [0.0, 0.0]),
 
-            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 1.0, 1.0], [1.0, 1.0]),
-            data::Vertex::new([0.5, 0.5, -0.5], [1.0, 1.0, 0.0], [0.0, 1.0]),
-            data::Vertex::new([0.5, 0.5, 0.5], [0.0, 1.0, 1.0], [0.0, 0.0]),
-            data::Vertex::new([-0.5, 0.5, 0.5], [1.0, 0.0, 1.0], [1.0, 0.0]),
+            data::Vertex::new([-0.5,  0.5, -0.5], [ 0.0,  1.0,  0.0], [1.0, 1.0]),
+            data::Vertex::new([ 0.5,  0.5, -0.5], [ 0.0,  1.0,  0.0], [0.0, 1.0]),
+            data::Vertex::new([ 0.5,  0.5,  0.5], [ 0.0,  1.0,  0.0], [0.0, 0.0]),
+            data::Vertex::new([-0.5,  0.5,  0.5], [ 0.0,  1.0,  0.0], [1.0, 0.0]),
 
-            data::Vertex::new([-0.5, -0.5, -0.5], [1.0, 1.0, 1.0], [0.0, 0.0]),
-            data::Vertex::new([0.5, -0.5, -0.5], [1.0, 1.0, 0.0], [1.0, 0.0]),
-            data::Vertex::new([0.5, 0.5, -0.5], [0.0, 1.0, 1.0], [1.0, 1.0]),
-            data::Vertex::new([-0.5, 0.5, -0.5], [1.0, 0.0, 1.0], [0.0, 1.0]),
+            data::Vertex::new([-0.5, -0.5, -0.5], [ 0.0,  0.0, -1.0], [0.0, 0.0]),
+            data::Vertex::new([ 0.5, -0.5, -0.5], [ 0.0,  0.0, -1.0], [1.0, 0.0]),
+            data::Vertex::new([ 0.5,  0.5, -0.5], [ 0.0,  0.0, -1.0], [1.0, 1.0]),
+            data::Vertex::new([-0.5,  0.5, -0.5], [ 0.0,  0.0, -1.0], [0.0, 1.0]),
         ]);
         let indices = Arc::new(vec![
             0, 1, 2, 2, 3, 0,
@@ -87,7 +88,13 @@ fn main() {
         }
     }
 
-    let renderables: Vec<Box<dyn Renderable>> = cubes.into_iter().map(|e| e as Box<dyn Renderable>).collect();
+    let light1 = rm.add_light(Omni::test(cgm::Vector3::new(-10.0, -10.0, -5.0)));
+    let light2 = rm.add_light(Omni::test(cgm::Vector3::new(10.0, 10.0, -5.0)));
+
+
+    let mut renderables: Vec<Box<dyn Renderable>> = cubes.into_iter().map(|e| e as Box<dyn Renderable>).collect();
+    renderables.push(Box::new(Light{ light: light1 }));
+    renderables.push(Box::new(Light{ light: light2 }));
 
     let start = time::Instant::now();
     let mut renderer = render::Renderer::initialize();
@@ -97,17 +104,29 @@ fn main() {
 
         let position = (instant / 10.0) * 3.14 * 2.0;
 
+        let camera = cgm::Point3::new(
+            //position.cos() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
+            //position.sin() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
+            7.0 + (position / 4.0).sin(),
+            12.0 + (position / 4.0).cos(),
+            3.0
+        );
+
+        if let Some(light) = rm.light_mut(&light1) {
+            light.position = cgm::Vector3::new(
+                -0.0 + (position*3.0).sin() * 4.0,
+                -0.0 + (position*4.0).cos() * 4.0,
+                -0.0 + (position*2.0).sin() * 1.0,
+            );
+        }
+
         let view = cgm::Matrix4::look_at(
-            cgm::Point3::new(
-                position.cos() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
-                position.sin() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
-                3.0
-            ),
+            camera.clone(),
             cgm::Point3::new(0.0, 0.0, 0.0),
             cgm::Vector3::new(0.0, 0.0, 1.0)
         );
 
-        renderer.draw_frame(&view, &rm, &renderables);
+        renderer.draw_frame(&camera, &view, &rm, &renderables);
         if renderer.poll_close() {
             return;
         }

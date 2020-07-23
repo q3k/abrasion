@@ -148,6 +148,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     fn make_graphics_commands(
         &mut self,
         profiler: &mut Profiler,
+        camera: &cgm::Point3<f32>,
         view: &cgm::Matrix4<f32>,
         rm: &renderable::ResourceManager,
         renderables: &Vec<Box<dyn renderable::Renderable>>,
@@ -160,30 +161,42 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             0.1,
             1000.0
         );
-
         let mut buffers: Vec<Box<vc::AutoCommandBuffer>> = vec![];
-
-
-        // Sort renderables by mesh and materialid.
-        let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
-
-        let ubo = data::UniformBufferObject {
-            view: proj * view,
-        };
-
         profiler.end("mgc.prep");
+
+
+        // Sort renderables by mesh and materialid, and find lights.
+        let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
+        let mut omni_lights = [data::OmniLight{ pos: [0.0, 0.0, 0.0, 0.0], color: [0.0, 0.0, 0.0, 0.0]}; 3];
+        let mut omni_light_count = 0;
+
         for r in renderables {
             if let Some((mesh_id, material_id, transform)) = r.render_data() {
                 meshes.add((mesh_id, material_id), transform);
             }
+            if let Some(light_id) = r.light_data() {
+                if omni_light_count < 3 {
+                    let light = rm.light(&light_id).unwrap();
+                    omni_lights[omni_light_count] = light.vulkan_uniform();
+                    omni_light_count += 1;
+                }
+            }
         }
         profiler.end("mgc.sort");
+
 
         let device = self.surface_binding().device.clone();
         let queue = self.surface_binding().graphics_queue.clone();
         let rp = self.swapchain_binding().render_pass.clone();
 
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
+
+        let camera_pos = camera.to_homogeneous();
+        let ubo = data::UniformBufferObject {
+            camera_pos: camera_pos,
+            view: proj * view,
+            omni_lights,
+        };
 
         for ((mesh_id, material_id), transforms) in meshes.resources {
             let mesh = rm.mesh(&mesh_id).unwrap();
@@ -240,6 +253,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
     // (╯°□°)╯︵ ┻━┻
     pub fn flip(
         &mut self,
+        camera: &cgm::Point3<f32>,
         view: &cgm::Matrix4<f32>,
         rm: &renderable::ResourceManager,
         renderables: &Vec<Box<dyn renderable::Renderable>>,
@@ -247,7 +261,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let mut profiler = Profiler::new();
 
         // Build batch command buffer as early as possible.
-        let mut batches = self.make_graphics_commands(&mut profiler, view, rm, renderables);
+        let mut batches = self.make_graphics_commands(&mut profiler, camera, view, rm, renderables);
         profiler.end("mgc");
 
         match &self.previous_frame_end {
@@ -258,7 +272,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         if !self.armed {
             self.arm();
             // Rearming means the batch is invalid - rebuild it.
-            batches = self.make_graphics_commands(&mut profiler, view, rm, renderables);
+            batches = self.make_graphics_commands(&mut profiler, camera, view, rm, renderables);
         }
         profiler.end("arm");
 

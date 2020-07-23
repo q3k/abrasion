@@ -37,11 +37,15 @@ impl Forward {
                     name: Some(Cow::Borrowed("pos")),
                 },
                 vps::ShaderInterfaceDefEntry {
-                    location: 1..5, format: Format::R32G32B32A32Sfloat,
+                    location: 1..2, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("normal")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 2..6, format: Format::R32G32B32A32Sfloat,
                     name: Some(Cow::Borrowed("model")),
                 },
                 vps::ShaderInterfaceDefEntry {
-                    location: 5..6, format: Format::R32G32Sfloat,
+                    location: 6..7, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("tex")),
                 },
             ],
@@ -50,14 +54,23 @@ impl Forward {
                     location: 0..1, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("fragTexCoord")),
                 },
+                vps::ShaderInterfaceDefEntry {
+                    location: 1..2, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragWorldPos")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 2..3, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragNormal")),
+                },
             ],
             uniforms: vec![],
             push_constants: vec![
                 vdp::PipelineLayoutDescPcRange {
                     offset: 0,
-                    size: 64usize,
+                    size: 128usize,
                     stages: vdD::ShaderStages {
                         vertex: true,
+                        fragment: true,
                         ..vdD::ShaderStages::none()
                     },
                 },
@@ -71,6 +84,14 @@ impl Forward {
                 vps::ShaderInterfaceDefEntry {
                     location: 0..1, format: Format::R32G32Sfloat,
                     name: Some(Cow::Borrowed("fragTexCoord")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 1..2, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragWorldPos")),
+                },
+                vps::ShaderInterfaceDefEntry {
+                    location: 2..3, format: Format::R32G32B32Sfloat,
+                    name: Some(Cow::Borrowed("fragNormal")),
                 },
             ],
             outputs: vec![
@@ -111,7 +132,17 @@ impl Forward {
                     },
                 },
             ],
-            push_constants: vec![],
+            push_constants: vec![
+                vdp::PipelineLayoutDescPcRange {
+                    offset: 0,
+                    size: 128usize,
+                    stages: vdD::ShaderStages {
+                        vertex: true,
+                        fragment: true,
+                        ..vdD::ShaderStages::none()
+                    },
+                },
+            ],
         }.load_into(device.clone()).expect("could not load fragment shader");
 
         let dimensions = [viewport_dimensions[0] as f32, viewport_dimensions[1] as f32];
