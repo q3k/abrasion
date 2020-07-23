@@ -189,7 +189,7 @@ void main() {
         Lo += Li;
     }
     
-    vec3 ambient = vec3(0.03) * albedo;
+    vec3 ambient = vec3(0.00) * albedo;
     vec3 color = ambient + Lo;
     outColor = vec4(color, 1.0);
 }
