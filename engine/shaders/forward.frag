@@ -1,26 +1,24 @@
+// Forward rendering fragment shader.
+//
+// Copyright 2020 Sergiusz 'q3k' Bazanski <q3k@q3k.org>
+//
+// This file is part of Abrasion.
+//
+// Abrasion is free software: you can redistribute it and/or modify it under
+// the terms of the GNU General Public License as published by the Free
+// Software Foundation, version 3.
+//
+// Abrasion is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License along with
+// Abrasion.  If not, see <https://www.gnu.org/licenses/>.
+//
 // vim: set ft=glsl:
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-
-struct OmniLight {
-    vec4 pos;
-    vec4 color;
-};
-
-layout(binding = 0) uniform FragmentUniformBufferObject {
-    vec4 cameraPos;
-    OmniLight omniLights[4];
-} ubo;
-layout(binding = 1) uniform sampler2D texSamplerDiffuse;
-layout(binding = 2) uniform sampler2D texSamplerRoughness;
-
-layout(location = 0) in vec2 fragTexCoord;
-layout(location = 1) in vec3 fragWorldPos;
-layout(location = 2) in vec3 fragNormal;
-
-layout(location = 0) out vec4 outColor;
-
-const float PI = 3.14159;
 
 // We implement a Lambertiand & Cook-Torrance BRDF-based lighting system.
 // All of this is based on a number of scientific papers, meta-studies and modern sources. We do
@@ -30,7 +28,7 @@ const float PI = 3.14159;
 // A good summary of different research is available this blog post by Brian Karis, that attempts
 // to catalogue all existing BRDF-related functions:
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
-
+//
 /// Bibliography:
 //
 // [Bec63]
@@ -70,6 +68,26 @@ const float PI = 3.14159;
 // [GA19]
 // Romain Guy, Mathias Agopian, "Physically Based Rendering in Filament"
 // URL: https://google.github.io/filament/Filament.html
+
+struct OmniLight {
+    vec4 pos;
+    vec4 color;
+};
+
+layout(binding = 0) uniform FragmentUniformBufferObject {
+    vec4 cameraPos;
+    OmniLight omniLights[4];
+} ubo;
+layout(binding = 1) uniform sampler2D texSamplerDiffuse;
+layout(binding = 2) uniform sampler2D texSamplerRoughness;
+
+layout(location = 0) in vec2 fragTexCoord;
+layout(location = 1) in vec3 fragWorldPos;
+layout(location = 2) in vec3 fragNormal;
+
+layout(location = 0) out vec4 outColor;
+
+const float PI = 3.14159;
 
 // [Sch94] Fresnel approximation, used for F in Cook-Torrance BRDF.
 vec3 FresnelSchlick(float HdotV, vec3 F0) {
