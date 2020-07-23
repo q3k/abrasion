@@ -23,7 +23,7 @@ impl Profiler {
     pub fn print(&self) {
         let total: f64 = self.sections.iter().map(|(_, d)| d.as_secs_f64()).sum();
         for (n, d) in &self.sections {
-            log::info!("{}: {:.5}%", n, 100.0*d.as_secs_f64()/total);
+            log::debug!("{}: {:.5}%", n, 100.0*d.as_secs_f64()/total);
         }
     }
 }

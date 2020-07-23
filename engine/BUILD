@@ -55,8 +55,14 @@ pkg_tar(
     name = "demo",
     srcs = [
         ":engine",
+        "dist_start.sh",
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
+        "//assets:test-128px.png",
     ],
-    strip_prefix = '/engine',
+    strip_prefix = '/',
+    package_dir = 'demo',
+    remap_paths = {
+        "engine/dist_start.sh": "start.sh",
+    },
 )

@@ -23,8 +23,6 @@ impl ShaderDefinition {
         fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
 
         let path = &crate::util::file::resource_path(self.name.clone());
-        log::info!("Loading shader {}", path.to_str().unwrap_or("UNKNOWN"));
-
         let mut f = File::open(path).map_err(stringify)?;
         let mut v = vec![];
         f.read_to_end(&mut v).map_err(stringify)?;
