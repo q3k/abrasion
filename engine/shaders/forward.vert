@@ -1,11 +1,6 @@
 // vim: set ft=glsl:
 #version 450
 
-struct OmniLight {
-    vec3 pos;
-    vec3 color;
-};
-
 layout(push_constant) uniform PushConstantObject {
     mat4 view;
 } pco;
@@ -31,6 +26,6 @@ void main() {
     fragWorldPos = world.xyz / world.w;
 
     gl_Position = pco.view * world;
-    // Vulkanize
+    // Vulkanize (see comment about counter-clockwise triangles in //engine/src/render/vulkan/pipeline_forward.rs).
     gl_Position.y = -gl_Position.y;
 }
