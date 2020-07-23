@@ -7,15 +7,12 @@ struct OmniLight {
     vec4 color;
 };
 
-layout(push_constant) uniform PushConstantObject {
-    mat4 view;
+layout(binding = 0) uniform FragmentUniformBufferObject {
     vec4 cameraPos;
-    OmniLight omniLights[3];
-} pco;
-
-
-layout(binding = 0) uniform sampler2D texSamplerDiffuse;
-layout(binding = 1) uniform sampler2D texSamplerRoughness;
+    OmniLight omniLights[4];
+} ubo;
+layout(binding = 1) uniform sampler2D texSamplerDiffuse;
+layout(binding = 2) uniform sampler2D texSamplerRoughness;
 
 layout(location = 0) in vec2 fragTexCoord;
 layout(location = 1) in vec3 fragWorldPos;
@@ -126,7 +123,7 @@ vec3 SpecularCookTorrance(float NdotH, float NdotV, float NdotL, vec3 F, float r
 
 
 void main() {
-    vec3 cameraPos = pco.cameraPos.xyz / pco.cameraPos.w;
+    vec3 cameraPos = ubo.cameraPos.xyz / ubo.cameraPos.w;
 
     // Normal of this fragment.
     vec3 N = normalize(fragNormal);
@@ -153,8 +150,8 @@ void main() {
     // integrate by iterating over all luminance sources, that currently are point lights.
     vec3 Lo = vec3(0.0);
     for (int i = 0; i < 3; ++i) {
-        vec3 lightPos = pco.omniLights[i].pos.xyz;
-        vec3 lightColor = pco.omniLights[i].color.xyz;
+        vec3 lightPos = ubo.omniLights[i].pos.xyz;
+        vec3 lightColor = ubo.omniLights[i].color.xyz;
 
         // Unit vector pointing at light from fragment.
         vec3 L = normalize(lightPos - fragWorldPos);

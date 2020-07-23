@@ -6,11 +6,9 @@ struct OmniLight {
     vec3 color;
 };
 
-layout(push_constant) uniform UniformBufferObject {
+layout(push_constant) uniform PushConstantObject {
     mat4 view;
-    vec3 cameraPos;
-    OmniLight omniLights[2];
-} ubo;
+} pco;
 
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 normal;
@@ -32,7 +30,7 @@ void main() {
     fragNormal = normal;
     fragWorldPos = world.xyz / world.w;
 
-    gl_Position = ubo.view * world;
+    gl_Position = pco.view * world;
     // Vulkanize
     gl_Position.y = -gl_Position.y;
 }

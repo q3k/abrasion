@@ -42,7 +42,7 @@ pub struct Instance<WT> {
     swapchain_binding: Option<swapchain_binding::SwapchainBinding<WT>>,
 
     pipeline: Option<Box<dyn pipeline::Pipeline>>,
-    uniform_pool: Option<vb::CpuBufferPool<data::UniformBufferObject>>,
+    uniform_pool: Option<vb::CpuBufferPool<data::FragmentUniformBufferObject>>,
     armed: bool,
     previous_frame_end: Option<Box<FlipFuture<WT>>>,
     fps_counter: Counter,
@@ -167,7 +167,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         // Sort renderables by mesh and materialid, and find lights.
         let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
-        let mut omni_lights = [data::OmniLight{ pos: [0.0, 0.0, 0.0, 0.0], color: [0.0, 0.0, 0.0, 0.0]}; 3];
+        let mut omni_lights = [data::OmniLight{ pos: [0.0, 0.0, 0.0, 0.0], color: [0.0, 0.0, 0.0, 0.0]}; 4];
         let mut omni_light_count = 0;
 
         for r in renderables {
@@ -175,7 +175,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
                 meshes.add((mesh_id, material_id), transform);
             }
             if let Some(light_id) = r.light_data() {
-                if omni_light_count < 3 {
+                if omni_light_count < 4 {
                     let light = rm.light(&light_id).unwrap();
                     omni_lights[omni_light_count] = light.vulkan_uniform();
                     omni_light_count += 1;
@@ -192,11 +192,15 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let pipeline = self.pipeline.as_ref().unwrap().get_pipeline().clone();
 
         let camera_pos = camera.to_homogeneous();
-        let ubo = data::UniformBufferObject {
-            camera_pos: camera_pos,
+        let pco = data::PushConstantObject {
             view: proj * view,
+        };
+        let ubo = data::FragmentUniformBufferObject {
+            camera_pos: camera_pos,
             omni_lights,
         };
+
+        let ubo_buffer = Arc::new(self.uniform_pool.as_ref().unwrap().next(ubo).unwrap());
 
         for ((mesh_id, material_id), transforms) in meshes.resources {
             let mesh = rm.mesh(&mesh_id).unwrap();
@@ -213,11 +217,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             future.flush().unwrap();
 
             let textures = material.vulkan_textures(queue.clone());
-            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(textures);
+            let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(textures, ubo_buffer.clone());
 
             let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());
             builder = builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
-                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), ds, ubo).unwrap();
+                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), ds, pco).unwrap();
 
             buffers.push(Box::new(builder.build().unwrap()));
         }

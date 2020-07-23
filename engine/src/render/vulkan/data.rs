@@ -44,10 +44,14 @@ pub struct OmniLight {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct UniformBufferObject {
+pub struct PushConstantObject {
     pub view: cgm::Matrix4<f32>,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct FragmentUniformBufferObject {
     pub camera_pos: cgm::Vector4<f32>,
-    pub omni_lights: [OmniLight; 3],
+    pub omni_lights: [OmniLight; 4],
 }
 
 #[derive(Clone)]

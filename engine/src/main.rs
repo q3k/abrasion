@@ -89,7 +89,7 @@ fn main() {
     }
 
     let light1 = rm.add_light(Omni::test(cgm::Vector3::new(-10.0, -10.0, -5.0)));
-    let light2 = rm.add_light(Omni::test(cgm::Vector3::new(10.0, 10.0, -5.0)));
+    let light2 = rm.add_light(Omni::test(cgm::Vector3::new(-10.0, -10.0, -5.0)));
 
 
     let mut renderables: Vec<Box<dyn Renderable>> = cubes.into_iter().map(|e| e as Box<dyn Renderable>).collect();
@@ -112,13 +112,16 @@ fn main() {
             3.0
         );
 
-        if let Some(light) = rm.light_mut(&light1) {
-            light.position = cgm::Vector3::new(
-                -0.0 + (position*3.0).sin() * 4.0,
-                -0.0 + (position*4.0).cos() * 4.0,
-                -0.0 + (position*2.0).sin() * 1.0,
-            );
-        }
+        rm.light_mut(&light1).as_mut().unwrap().position = cgm::Vector3::new(
+            -0.0 + (position*3.0).sin() * 4.0,
+            -0.0 + (position*4.0).cos() * 4.0,
+            -0.0 + (position*2.0).sin() * 3.0,
+        );
+        rm.light_mut(&light2).as_mut().unwrap().position = cgm::Vector3::new(
+            -0.0 + (position*3.0).cos() * 4.0,
+            -0.0 + (position*4.0).sin() * 4.0,
+            -0.0 + (position*2.0).cos() * 3.0,
+        );
 
         let view = cgm::Matrix4::look_at(
             camera.clone(),
