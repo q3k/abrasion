@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use vulkano::swapchain as vs;
 use vulkano::image as vm;
+use vulkano::image::traits::ImageAccess;
 use vulkano::format as vf;
 use vulkano::framebuffer as vfb;
 use vulkano::sync as vy;
@@ -34,6 +35,7 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
 
         let image_usage = vm::ImageUsage {
             color_attachment: true,
+            transfer_destination: true,
             .. vm::ImageUsage::none()
         };
 
@@ -88,14 +90,18 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
         log::info!("Swap chain: present mode {:?}, {} images", present_mode, images.len());
 
         let depth_format = Self::find_depth_format();
-        let depth_image = vm::AttachmentImage::with_usage(
+        // TODO(q3k): make configurable and check with hardware
+        let sample_count = 8;
+
+        let depth_image = vm::AttachmentImage::multisampled_with_usage(
             surface_binding.device.clone(),
             chain.dimensions(),
+            sample_count,
             depth_format,
             vm::ImageUsage { depth_stencil_attachment: true, ..vm::ImageUsage::none() },
         ).unwrap();
-        let render_pass = Self::create_render_pass(surface_binding, chain.format(), depth_format);
-        let framebuffers = Self::create_framebuffers(render_pass.clone(), images.clone(), depth_image);
+        let render_pass = Self::create_render_pass(surface_binding, chain.format(), depth_format, sample_count);
+        let framebuffers = Self::create_framebuffers(surface_binding, render_pass.clone(), images.clone(), depth_image, sample_count);
 
         Self {
             chain,
@@ -109,43 +115,58 @@ impl<WT: 'static + Send + Sync> SwapchainBinding<WT> {
         surface_binding: &super::surface_binding::SurfaceBinding<WT>,
         color_format: vf::Format,
         depth_format: vf::Format,
+        sample_count: u32,
     ) -> Arc<dyn vfb::RenderPassAbstract + Send + Sync> {
         let device = surface_binding.device.clone();
 
         Arc::new(vulkano::single_pass_renderpass!(device,
             attachments: {
-                color: {
+                multisample_color: {
                     load: Clear,
                     store: Store,
                     format: color_format,
-                    samples: 1,
+                    samples: sample_count,
                 },
-                depth: {
+                multisample_depth: {
                     load: Clear,
                     store: DontCare,
                     format: depth_format,
-                    samples: 1,
+                    samples: sample_count,
                     initial_layout: ImageLayout::Undefined,
                     final_layout: ImageLayout::DepthStencilAttachmentOptimal,
+                },
+                resolve_color: {
+                    load: DontCare,
+                    store: Store,
+                    format: color_format,
+                    samples: 1,
+                    initial_layout: ImageLayout::Undefined,
                 }
             },
             pass: {
-                color: [color],
-                depth_stencil: {depth}
+                color: [multisample_color],
+                depth_stencil: {multisample_depth},
+                resolve: [resolve_color]
             }
         ).unwrap())
     }
 
     fn create_framebuffers(
+        surface_binding: &super::surface_binding::SurfaceBinding<WT>,
         render_pass: Arc<dyn vfb::RenderPassAbstract + Send + Sync>,
         images: Vec<Arc<vm::SwapchainImage<WT>>>,
         depth_image: Arc<vm::AttachmentImage<vf::Format>>,
+        sample_count: u32,
     ) -> Vec<Arc<dyn vfb::FramebufferAbstract + Send + Sync>> {
+        let device = surface_binding.device.clone();
         images.iter()
             .map(|image| {
+                let dim = image.dimensions().width_height();
+                let multisample_image = vm::AttachmentImage::transient_multisampled(device.clone(), dim, sample_count, image.format()).unwrap();
                 let fba: Arc<dyn vfb::FramebufferAbstract + Send + Sync> = Arc::new(vfb::Framebuffer::start(render_pass.clone())
-                    .add(image.clone()).unwrap()
+                    .add(multisample_image.clone()).unwrap()
                     .add(depth_image.clone()).unwrap()
+                    .add(image.clone()).unwrap()
                     .build().unwrap());
                 fba
             })

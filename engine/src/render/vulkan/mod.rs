@@ -241,7 +241,11 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let mut primary = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
                  .unwrap()
-                 .begin_render_pass(framebuffer.clone(), true, vec![[0.0, 0.0, 0.0, 1.0].into(), vulkano::format::ClearValue::Depth(1.0)])
+                 .begin_render_pass(framebuffer.clone(), true, vec![
+                    [0.0, 0.0, 0.0, 1.0].into(),
+                    vulkano::format::ClearValue::Depth(1.0),
+                    vulkano::format::ClearValue::None,
+                 ])
                  .unwrap();
 
 
