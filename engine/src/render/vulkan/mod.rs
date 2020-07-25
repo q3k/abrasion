@@ -27,6 +27,7 @@ use vulkano::swapchain as vs;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
 pub mod data;
+pub mod material;
 mod surface_binding;
 mod pipeline;
 mod pipeline_forward;

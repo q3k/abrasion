@@ -19,113 +19,21 @@ use std::sync::Mutex;
 use std::time;
 
 use image;
-use image::GenericImageView;
 use vulkano::device as vd;
 use vulkano::format as vf;
 use vulkano::image as vm;
-use vulkano::sync::GpuFuture;
 
 use crate::physics::color;
 use crate::render::vulkan::data;
+use crate::render::vulkan::material::ChannelLayoutVulkan;
 use crate::util::file;
 
-pub trait ChannelLayout {
-    fn vulkan_from_image(
-        image: Arc<image::DynamicImage>,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>>;
-
-    fn vulkan_from_value(
-        &self,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>>;
-}
-
-impl ChannelLayout for color::XYZ {
-    fn vulkan_from_image(
-        image: Arc<image::DynamicImage>,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>> {
-        let (width, height) = (image.width(), image.height());
-        let rgba = image.to_rgba();
-        // TODO(q3k): RGB -> CIE XYZ
-        let (image_view, future) = vm::ImmutableImage::from_iter(
-            rgba.into_raw().iter().cloned(),
-            vm::Dimensions::Dim2d{ width, height },
-            vf::Format::R8G8B8A8Unorm,
-            graphics_queue.clone(),
-        ).unwrap();
-
-        future.flush().unwrap();
-        image_view
-    }
-
-    fn vulkan_from_value(
-        &self,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>> {
-        let mut image = image::ImageBuffer::<image::Rgba<f32>, Vec<f32>>::new(1, 1);
-        image.put_pixel(0, 0, image::Rgba([self.x, self.y, self.z, 0.0]));
-
-        let (image_view, future) = vm::ImmutableImage::from_iter(
-            image.into_raw().iter().cloned(),
-            vm::Dimensions::Dim2d{ width: 1, height: 1 },
-            vf::Format::R32G32B32A32Sfloat,
-            graphics_queue.clone(),
-        ).unwrap();
-        future.flush().unwrap();
-        image_view
-    }
-}
-
-impl ChannelLayout for color::LinearF32 {
-    fn vulkan_from_image(
-        image: Arc<image::DynamicImage>,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>> {
-        let (width, height) = (image.width(), image.height());
-        assert!(match image.color() {
-            image::ColorType::L8 => true,
-            image::ColorType::L16 => true,
-            _ => false,
-        }, "linearf32 texture must be 8-bit grayscale");
-        let gray = image.to_luma();
-        let (image_view, future) = vm::ImmutableImage::from_iter(
-            gray.into_raw().iter().cloned(),
-            vm::Dimensions::Dim2d{ width, height },
-            vf::Format::R8G8B8A8Unorm,
-            graphics_queue.clone(),
-        ).unwrap();
-
-        future.flush().unwrap();
-        image_view
-    }
-
-    fn vulkan_from_value(
-        &self,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> Arc<vm::ImmutableImage<vf::Format>> {
-        let mut image = image::ImageBuffer::<image::Luma<f32>, Vec<f32>>::new(1, 1);
-        image.put_pixel(0, 0, image::Luma([self.d]));
-
-        let (image_view, future) = vm::ImmutableImage::from_iter(
-            image.into_raw().iter().cloned(),
-            vm::Dimensions::Dim2d{ width: 1, height: 1 },
-            vf::Format::R32Sfloat,
-            graphics_queue.clone(),
-        ).unwrap();
-        
-        future.flush().unwrap();
-        image_view
-    }
-}
-
-pub enum Texture<T: ChannelLayout> {
+pub enum Texture<T: ChannelLayoutVulkan> {
     Color(T),
     ImageRef(String),
 }
 
-impl<T: ChannelLayout> Texture<T> {
+impl<T: ChannelLayoutVulkan> Texture<T> {
     fn vulkan_image(&self, graphics_queue: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>> {
         match self {
             Texture::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
