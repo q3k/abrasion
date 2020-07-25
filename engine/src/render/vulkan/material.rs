@@ -143,19 +143,30 @@ impl ChannelLayoutVulkan for color::XYZ {
         let (width, height) = (image.width(), image.height());
         let rgba = image.to_rgba();
 
+        let mut xyz = Vec::new();
+        for (_, _, color) in rgba.enumerate_pixels() {
+            let image::Rgba([r, g, b, a]) = color;
+            let r = (*r as f32) / 255.0;
+            let g = (*g as f32) / 255.0;
+            let b = (*b as f32) / 255.0;
+            let a = (*a as f32) / 255.0;
+            let (x, y, z) = color::srgb_to_cie_xyz(r, g, b);
+            xyz.push(x);
+            xyz.push(y);
+            xyz.push(z);
+            xyz.push(a);
+        }
+
         // TODO(q3k): RGB -> CIE XYZ
-        mipmapped_from_iter(width, height, vf::Format::R8G8B8A8Unorm, rgba.into_raw().iter().cloned(), graphics_queue)
+        mipmapped_from_iter(width, height, vf::Format::R32G32B32A32Sfloat, xyz.into_iter(), graphics_queue)
     }
 
     fn vulkan_from_value(
         &self,
         graphics_queue: Arc<vd::Queue>,
     ) -> Arc<vm::ImmutableImage<vf::Format>> {
-        let mut image = image::ImageBuffer::<image::Rgba<f32>, Vec<f32>>::new(1, 1);
-        image.put_pixel(0, 0, image::Rgba([self.x, self.y, self.z, 0.0]));
-
         let (image_view, future) = vm::ImmutableImage::from_iter(
-            image.into_raw().iter().cloned(),
+            vec!([self.x, self.y, self.z, 1.0 as f32]).into_iter(),
             vm::Dimensions::Dim2d{ width: 1, height: 1 },
             vf::Format::R32G32B32A32Sfloat,
             graphics_queue.clone(),
