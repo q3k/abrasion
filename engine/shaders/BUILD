@@ -12,8 +12,9 @@ glsl_binary(
     name = "forward_frag",
     srcs = [
         "forward.frag",
+
         "forward_brdf.frag",
-        #"forward_camera.frag",
+        "forward_defs.frag",
     ],
     visibility = ["//engine:__pkg__"],
 )

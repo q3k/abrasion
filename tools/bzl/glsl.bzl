@@ -3,7 +3,9 @@ def _glsl_binary(ctx):
     binary = ctx.outputs.binary
     compiler = ctx.executable._compiler
 
-    args = ["-V", "-o", binary.path] + [s.path for s in srcs]
+    main = srcs[0].path
+
+    args = [main, "-o", binary.path]
 
     ctx.actions.run(
         inputs=srcs,
@@ -21,7 +23,7 @@ glsl_binary = rule(
             allow_files=True,
         ),
         "_compiler": attr.label(
-            default=Label("@glslang//:glslangValidator"),
+            default=Label("@shaderc//:glslc"),
             allow_single_file=True,
             executable=True,
             cfg="host",

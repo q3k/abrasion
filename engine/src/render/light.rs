@@ -43,7 +43,7 @@ impl Omni {
     pub fn test(position: cgm::Vector3<f32>) -> Self {
         Self {
             position,
-            color: color::XYZ::new(234.7, 214.1, 207.9),
+            color: color::XYZ::new(234.7*10.0, 214.1*10.0, 207.9*10.0),
             // TODO: use a better method
             id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
         }

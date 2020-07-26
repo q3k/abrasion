@@ -88,4 +88,5 @@ cc_binary(
         ":libshaderc",
         ":libshaderc_util",
     ],
+    visibility = ["//visibility:public"],
 )
