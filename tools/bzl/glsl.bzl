@@ -5,7 +5,7 @@ def _glsl_binary(ctx):
 
     main = srcs[0].path
 
-    args = [main, "-o", binary.path]
+    args = [main, "-O", "-o", binary.path]
 
     ctx.actions.run(
         inputs=srcs,
