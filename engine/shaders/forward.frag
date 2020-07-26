@@ -26,11 +26,11 @@
 
 /// Camera settings.
 // Aperture (in f-stops)
-const float CAMERA_APERTURE = 4.0; // f/8 and be there
+const float CAMERA_APERTURE = 8.0; // f/8 and be there
 // Shutter speed (in seconds)
-const float CAMERA_SHUTTER = 1.0 / 60; // 180° shutter at 30FPS.
+const float CAMERA_SHUTTER = 1.0 / 120; // 180° shutter at 60FPS.
 // Film sensitivity ('ISO')
-const float CAMERA_SENSITIVITY = 3200.0;
+const float CAMERA_SENSITIVITY = 100.0;
 
 // Exposure Value at ISO 100, per [Ray00] equation (12).
 const float CAMERA_EV_100 = log2((CAMERA_APERTURE * CAMERA_APERTURE)/CAMERA_SHUTTER);
@@ -75,7 +75,8 @@ void main() {
     F0 = mix(F0, albedo, metallic);
 
     vec3 Lo = BRDFIlluminance(N, V, F0, albedo, dielectric, roughness);
-    vec3 ambient = vec3(0.00) * albedo;
+    // Add 500 nits ambient light.
+    vec3 ambient = vec3(500.00) * albedo;
     vec3 color = XYZ_TO_SRGB * ((ambient + Lo) * CAMERA_EXPOSURE);
 
     outColor = vec4(GammaCorrect(color.x), GammaCorrect(color.y), GammaCorrect(color.z), 1.0);

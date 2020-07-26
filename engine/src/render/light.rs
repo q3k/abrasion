@@ -41,9 +41,13 @@ impl Omni {
     // M. Krystek. 1985. "An algorithm to calculate correlated color temperature"
     // Color Research & Application, 10 (1), 38–40.
     pub fn test(position: cgm::Vector3<f32>) -> Self {
+        Self::with_color(position, color::XYZ::new(234.7*10.0, 214.1*10.0, 207.9*10.0))
+    }
+
+    pub fn with_color(position: cgm::Vector3<f32>, color: color::XYZ) -> Self{
         Self {
             position,
-            color: color::XYZ::new(234.7*10.0, 214.1*10.0, 207.9*10.0),
+            color,
             // TODO: use a better method
             id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
         }

@@ -107,10 +107,30 @@ fn main() {
     let light1 = rm.add_light(Omni::test(cgm::Vector3::new(-10.0, -10.0, -5.0)));
     let light2 = rm.add_light(Omni::test(cgm::Vector3::new(-10.0, -10.0, -5.0)));
 
+    // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
+    // these are negligible at this scale.
+    let sun_distance: f32 = 149_597_870_700.0;
+    // Solar constant: solar radiant power per square meter of earth's area [w/m^2].
+    let solar_constant: f32 = 1366.0;
+    // Solar luminous emittance (assuming 93 luminous efficacy) [lm/m^2].
+    let sun_luminous_emittance: f32 = solar_constant * 93.0;
+    // Solar luminour power (integrating over a sphere of radius == sun_distance) [lm].
+    let sun_lumen: f32 = sun_luminous_emittance * (4.0 * 3.14159 * sun_distance * sun_distance);
+
+    // In our scene, the sun at a 30 degree zenith.
+    let sun_angle: f32 = (3.14159 * 2.0) / (360.0 / 30.0);
+    let sun = rm.add_light(
+        Omni::with_color(
+            cgm::Vector3::new(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance),
+            color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0)
+        )
+    );
+
 
     let mut renderables: Vec<Box<dyn Renderable>> = cubes.into_iter().map(|e| e as Box<dyn Renderable>).collect();
     renderables.push(Box::new(Light{ light: light1 }));
     renderables.push(Box::new(Light{ light: light2 }));
+    renderables.push(Box::new(Light{ light: sun }));
 
     let start = time::Instant::now();
     let mut renderer = render::Renderer::initialize();
@@ -121,8 +141,6 @@ fn main() {
         let position = (instant / 10.0) * 3.14 * 2.0;
 
         let camera = cgm::Point3::new(
-            //position.cos() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
-            //position.sin() * 10.0 * (((position*2.0).cos()/2.0)+1.0),
             7.0 + (position / 4.0).sin(),
             12.0 + (position / 4.0).cos(),
             3.0
