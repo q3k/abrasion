@@ -1,0 +1,91 @@
+load("@abrasion//third_party/shaderc:build-version.bzl", "build_version")
+
+build_version(
+    name = "build-version",
+)
+
+cc_library(
+    name = "libshaderc_util",
+    hdrs = [
+        "libshaderc_util/include/libshaderc_util/args.h",
+        "libshaderc_util/include/libshaderc_util/compiler.h",
+        "libshaderc_util/include/libshaderc_util/counting_includer.h",
+        "libshaderc_util/include/libshaderc_util/file_finder.h",
+        "libshaderc_util/include/libshaderc_util/io.h",
+        "libshaderc_util/include/libshaderc_util/mutex.h",
+        "libshaderc_util/include/libshaderc_util/resources.h",
+        "libshaderc_util/include/libshaderc_util/resources.inc",
+        "libshaderc_util/include/libshaderc_util/string_piece.h",
+
+        # should go to srcs?
+        "libshaderc_util/include/libshaderc_util/format.h",
+        "libshaderc_util/include/libshaderc_util/message.h",
+        "libshaderc_util/include/libshaderc_util/shader_stage.h",
+        "libshaderc_util/include/libshaderc_util/spirv_tools_wrapper.h",
+        "libshaderc_util/include/libshaderc_util/universal_unistd.h",
+        "libshaderc_util/include/libshaderc_util/version_profile.h",
+    ],
+    srcs = [
+        "libshaderc_util/src/args.cc",
+        "libshaderc_util/src/compiler.cc",
+        "libshaderc_util/src/file_finder.cc",
+        "libshaderc_util/src/io.cc",
+        "libshaderc_util/src/message.cc",
+        "libshaderc_util/src/resources.cc",
+        "libshaderc_util/src/shader_stage.cc",
+        "libshaderc_util/src/spirv_tools_wrapper.cc",
+        "libshaderc_util/src/version_profile.cc",
+    ],
+    deps = [
+        "@glslang//:glslang",
+        "@glslang//:SPIRV",
+        "@spirv_tools//:spirv_tools",
+        "@spirv_tools//:spirv_tools_opt",
+    ],
+    strip_include_prefix = "libshaderc_util/include/",
+)
+
+cc_library(
+    name = "libshaderc",
+    hdrs = [
+        "libshaderc/include/shaderc/env.h",
+        "libshaderc/include/shaderc/shaderc.h",
+        "libshaderc/include/shaderc/shaderc.hpp",
+        "libshaderc/include/shaderc/status.h",
+        "libshaderc/include/shaderc/visibility.h",
+    ],
+    srcs = [
+        "libshaderc/src/shaderc.cc",
+        "libshaderc/src/shaderc_private.h",
+    ],
+    deps = [
+        ":libshaderc_util",
+    ],
+    strip_include_prefix = "libshaderc/include",
+)
+
+cc_binary(
+    name = "glslc",
+    srcs = [
+        "build-version",
+
+        "glslc/src/dependency_info.h",
+        "glslc/src/dependency_info.cc",
+        "glslc/src/file.h",
+        "glslc/src/file.cc",
+        "glslc/src/file_includer.h",
+        "glslc/src/file_includer.cc",
+        "glslc/src/file_compiler.h",
+        "glslc/src/file_compiler.cc",
+        "glslc/src/resource_parse.h",
+        "glslc/src/resource_parse.cc",
+        "glslc/src/shader_stage.h",
+        "glslc/src/shader_stage.cc",
+
+        "glslc/src/main.cc",
+    ],
+    deps = [
+        ":libshaderc",
+        ":libshaderc_util",
+    ],
+)
