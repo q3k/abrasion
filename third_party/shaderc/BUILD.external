@@ -60,6 +60,7 @@ cc_library(
     ],
     deps = [
         ":libshaderc_util",
+        "@spirv_headers//:spirv_cpp_headers",
     ],
     strip_include_prefix = "libshaderc/include",
 )

@@ -10,13 +10,13 @@ def _http_archive(name, strip_prefix, gh_name, **kw):
     http_archive(
         name = name,
         sha256 = sha,
-        strip_prefix = "{}-{}".format(strip_prefix, remote),
+        strip_prefix = (strip_prefix + remote) if strip_prefix.endswith('-') else strip_prefix,
         url = "https://github.com/{}/archive/{}.tar.gz".format(gh_name, remote),
         **kw,
     )
 
 def shaderc_deps():
-    _http_archive("spirv_headers", "SPIRV-Headers", "KhronosGroup/SPIRV-Headers")
-    _http_archive("spirv_tools", "SPIRV-Tools", "KhronosGroup/SPIRV-Tools")
-    _http_archive("glslang", "glslang", "KhronosGroup/glslang")
-    _http_archive("shaderc", "shaderc", "google/shaderc", build_file="//third_party/shaderc:BUILD.external")
+    _http_archive("spirv_headers", "SPIRV-Headers-", "KhronosGroup/SPIRV-Headers")
+    _http_archive("spirv_tools", "SPIRV-Tools-", "KhronosGroup/SPIRV-Tools")
+    _http_archive("glslang", "glslang-", "KhronosGroup/glslang")
+    _http_archive("shaderc", "shaderc-2020.2", "google/shaderc", build_file="//third_party/shaderc:BUILD.external")
