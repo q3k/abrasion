@@ -78,7 +78,7 @@ pub fn srgb_to_cie_xyz(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
         if v < 0.004045 {
             v / 12.92
         } else {
-            let v: f32 = ((v + 0.055) / (1.055));
+            let v: f32 = (v + 0.055) / (1.055);
             v.powf(2.4) as f32
         }
     };

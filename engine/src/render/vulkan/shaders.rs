@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
-use log;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::prelude::*;

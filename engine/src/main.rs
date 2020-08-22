@@ -25,6 +25,7 @@ mod render;
 mod util;
 mod physics;
 
+use ecs::{component, world};
 use render::vulkan::data;
 use render::light::Omni;
 use render::material::{Texture, PBRMaterialBuilder};
@@ -32,9 +33,39 @@ use render::mesh::Mesh;
 use render::renderable::{Light, Object, Renderable, ResourceManager};
 use physics::color;
 
+#[derive(Debug)]
+struct Dupa {
+    zupa: u32,
+    kupa: Vec<u32>,
+}
+
+impl component::Component for Dupa {}
+
+#[derive(Debug)]
+struct Position {
+    x: u32,
+    y: u32,
+    z: u32,
+}
+
+impl component::Component for Position {}
+
 fn main() {
     env_logger::init();
     log::info!("Starting...");
+
+    let mut world = world::World::new();
+    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).with(Position { x: 2, y: 13, z: 7 }).build();
+    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
+    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
+    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
+
+    for dupa in world.components::<Dupa>() {
+        log::info!("dupa {:?}", dupa);
+    }
+    for dupa in world.components::<Position>() {
+        log::info!("position {:?}", dupa);
+    }
 
     let mut rm = ResourceManager::new();
 

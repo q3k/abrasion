@@ -1,4 +1,4 @@
-load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary")
+load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 rust_binary(
@@ -11,16 +11,19 @@ rust_binary(
     ],
     srcs = [
         "src/main.rs",
+
         "src/physics/mod.rs",
         "src/physics/color.rs",
+
+        "src/render/mod.rs",
         "src/render/light.rs",
         "src/render/material.rs",
         "src/render/mesh.rs",
-        "src/render/mod.rs",
         "src/render/renderable.rs",
+
+        "src/render/vulkan/mod.rs",
         "src/render/vulkan/data.rs",
         "src/render/vulkan/material.rs",
-        "src/render/vulkan/mod.rs",
         "src/render/vulkan/pipeline.rs",
         "src/render/vulkan/pipeline_forward.rs",
         "src/render/vulkan/qfi.rs",
@@ -28,13 +31,15 @@ rust_binary(
         "src/render/vulkan/surface_binding.rs",
         "src/render/vulkan/swapchain_binding.rs",
         "src/render/vulkan/worker.rs",
+
+        "src/util/mod.rs",
         "src/util/counter.rs",
         "src/util/file.rs",
-        "src/util/mod.rs",
         "src/util/profiler.rs",
         "src/util/resourcemap.rs",
     ],
     deps = [
+        "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:image",
         "//third_party/cargo:winit",
