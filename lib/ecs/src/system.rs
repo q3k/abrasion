@@ -101,7 +101,7 @@ mod test {
         type SystemData = (ReadWriteData<'a, Position>, ReadData<'a, Velocity>);
 
         fn run(&mut self, (mut pos, vel): Self::SystemData) {
-            for (mut p, v) in pos.iter_mut().zip(vel.iter()) {
+            for ((_, mut p), (_, v)) in pos.iter_mut().zip(vel.iter()) {
                 p.x += v.x;
                 p.y += v.y;
                 p.z += v.z;
@@ -122,8 +122,8 @@ mod test {
         p.add_system(Physics);
 
         let positions = world.components::<Position>();
-        assert_eq!(vec![3, 6],  positions.iter().map(|el| el.z).collect::<Vec<u32>>());
+        assert_eq!(vec![3, 6],  positions.iter().map(|(_, el)| el.z).collect::<Vec<u32>>());
         p.run();
-        assert_eq!(vec![4, 7],  positions.iter().map(|el| el.z).collect::<Vec<u32>>());
+        assert_eq!(vec![4, 7],  positions.iter().map(|(_, el)| el.z).collect::<Vec<u32>>());
     }
 }

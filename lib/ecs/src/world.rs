@@ -6,8 +6,11 @@ use std::iter::Iterator;
 use crate::entity;
 use crate::component;
 
+type EntityComponent = (entity::ID, Box<dyn component::Component>);
+
+
 pub struct ReadData<'a, T: component::Component> {
-    underlying: &'a RefCell<Vec<Box<dyn component::Component>>>,
+    underlying: &'a RefCell<Vec<EntityComponent>>,
     phantom: PhantomData<&'a T>,
 }
 
@@ -21,31 +24,33 @@ impl<'a, T: component::Component> ReadData<'a, T> {
 }
 
 pub struct ReadDataIter<'a, T: component::Component> {
-    underlying: Option<Ref<'a, [Box<dyn component::Component>]>>,
+    underlying: Option<Ref<'a, [EntityComponent]>>,
     phantom: PhantomData<&'a T>,
 }
 
 impl <'a, T: component::Component> Iterator for ReadDataIter<'a, T> {
-    type Item = Ref<'a, T>;
+    type Item = (entity::ID, Ref<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.underlying.as_ref().unwrap().len() == 0 {
             return None;
         }
-        let (u, n) = Ref::map_split(self.underlying.take().unwrap(), |slice| {
-            let (left, right) = slice.split_at(1);
-            let ptr = left[0].as_ref();
-            let left = unsafe { & *(ptr as *const (dyn component::Component) as *const T) };
+        let mut id: u64 = 0;
+        let (head, tail) = Ref::map_split(self.underlying.take().unwrap(), |slice| {
+            let (head, tail) = slice.split_first().unwrap();
+            id = head.0;
+            let ptr = head.1.as_ref();
 
-            return (left, right);
+            let el = unsafe { & *(ptr as *const (dyn component::Component) as *const T) };
+            return (el, tail);
         });
-        self.underlying = Some(n);
-        Some(u)
+        self.underlying = Some(tail);
+        Some((id, head))
     }
 }
 
 pub struct ReadWriteData<'a, T: component::Component> {
-    underlying: &'a RefCell<Vec<Box<dyn component::Component>>>,
+    underlying: &'a RefCell<Vec<EntityComponent>>,
     phantom: PhantomData<&'a T>,
 }
 
@@ -59,46 +64,46 @@ impl<'a, T: component::Component> ReadWriteData<'a, T> {
 }
 
 pub struct ReadWriteDataIter<'a, T: component::Component> {
-    underlying: Option<RefMut<'a, [Box<dyn component::Component>]>>,
+    underlying: Option<RefMut<'a, [EntityComponent]>>,
     phantom: PhantomData<&'a T>,
 }
 
 impl <'a, T: component::Component> Iterator for ReadWriteDataIter<'a, T> {
-    type Item = RefMut<'a, T>;
+    type Item = (entity::ID, RefMut<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.underlying.as_ref().unwrap().len() == 0 {
             return None;
         }
-        let (u, n) = RefMut::map_split(self.underlying.take().unwrap(), |slice| {
-            let (left, right) = slice.split_at_mut(1);
-            let ptr: &mut dyn component::Component = &mut *(left[0]);
-            let left = unsafe {
+
+        let mut id: u64 = 0;
+        let (head, tail) = RefMut::map_split(self.underlying.take().unwrap(), |slice| {
+            let (head, tail) = slice.split_first_mut().unwrap();
+            id = head.0;
+            let ptr: &mut dyn component::Component = &mut (*head.1);
+
+            let el = unsafe {
                 &mut *(ptr as *mut (dyn component::Component) as *mut T)
             };
-
-            return (left, right);
+            return (el, tail);
         });
-        self.underlying = Some(n);
-        Some(u)
+        self.underlying = Some(tail);
+        Some((id, head))
     }
 }
 
-
 pub struct World {
     entities: BTreeMap<entity::ID, entity::Entity>,
-    entity_ids_by_component: BTreeMap<component::ID, Vec<entity::ID>>,
-    components_by_id: BTreeMap<component::ID, RefCell<Vec<Box<dyn component::Component>>>>,
+    components_by_id: BTreeMap<component::ID, RefCell<Vec<EntityComponent>>>,
     next_id: entity::ID,
 
-    empty: RefCell<Vec<Box<dyn component::Component>>>,
+    empty: RefCell<Vec<EntityComponent>>,
 }
 
 impl World {
     pub fn new() -> Self {
         Self {
             entities: BTreeMap::new(),
-            entity_ids_by_component: BTreeMap::new(),
             components_by_id: BTreeMap::new(),
             next_id: 1u64,
             empty: RefCell::new(Vec::new()),
@@ -117,10 +122,8 @@ impl World {
         c: Box<dyn component::Component>,
         e: entity::Entity
     ) {
-        let vec = self.entity_ids_by_component.entry(cid).or_insert(vec!());
-        vec.push(e.id());
         let vec = self.components_by_id.entry(cid).or_insert(RefCell::new(vec!()));
-        vec.borrow_mut().push(c);
+        vec.borrow_mut().push((e.id(), c));
     }
 
     pub fn commit(&mut self, ent: entity::Entity) {
@@ -130,7 +133,7 @@ impl World {
     pub fn components<'a, T: component::Component>(&'a self) -> ReadData<T> {
         let underlying = match self.components_by_id.get(&component::id::<T>()) {
             None => &self.empty,
-            Some(r) => &r,
+            Some(r) => r,
         };
         ReadData {
             underlying: underlying,
@@ -181,9 +184,9 @@ mod tests {
         let mut named = world.components::<Name>().iter();
         let mut named2 = world.components::<Name>().iter();
         //assert_eq!(named.len(), 2);
-        assert_eq!(String::from("foo"), named.next().unwrap().0);
-        assert_eq!(String::from("foo"), named2.next().unwrap().0);
-        assert_eq!(String::from("bar"), named.next().unwrap().0);
-        assert_eq!(String::from("bar"), named2.next().unwrap().0);
+        assert_eq!(String::from("foo"), (named.next().unwrap().1).0);
+        assert_eq!(String::from("foo"), (named2.next().unwrap().1).0);
+        assert_eq!(String::from("bar"), (named.next().unwrap().1).0);
+        assert_eq!(String::from("bar"), (named2.next().unwrap().1).0);
     }
 }
