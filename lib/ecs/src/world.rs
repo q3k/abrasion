@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::cell::{Ref, RefCell, RefMut};
-use std::ops::Deref;
 use std::marker::PhantomData;
 use std::iter::Iterator;
 
@@ -51,7 +50,7 @@ pub struct ReadWriteData<'a, T: component::Component> {
 }
 
 impl<'a, T: component::Component> ReadWriteData<'a, T> {
-    pub fn iter_mut(&self) -> ReadWriteDataIter<'a, T> {
+    pub fn iter_mut(&mut self) -> ReadWriteDataIter<'a, T> {
         ReadWriteDataIter {
             underlying: Some(RefMut::map(self.underlying.borrow_mut(), |el| el.as_mut_slice())),
             phantom: PhantomData,
@@ -153,7 +152,6 @@ impl World {
 
 #[cfg(test)]
 mod tests {
-    use crate::entity;
     use crate::component;
     use crate::world;
 
