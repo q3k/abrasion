@@ -5,6 +5,7 @@ rust_library(
     srcs = [
         "src/lib.rs",
         "src/component.rs",
+        "src/componentmap.rs",
         "src/entity.rs",
         "src/system.rs",
         "src/world.rs",
