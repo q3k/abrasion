@@ -54,19 +54,6 @@ fn main() {
     env_logger::init();
     log::info!("Starting...");
 
-    let mut world = world::World::new();
-    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).with(Position { x: 2, y: 13, z: 7 }).build();
-    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
-    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
-    world.new_entity().with(Dupa { zupa: 2137, kupa: vec!(1,2,3,4)} ).build();
-
-    for dupa in world.components::<Dupa>() {
-        log::info!("dupa {:?}", dupa);
-    }
-    for dupa in world.components::<Position>() {
-        log::info!("position {:?}", dupa);
-    }
-
     let mut rm = ResourceManager::new();
 
     let mesh = {
