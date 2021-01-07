@@ -49,6 +49,6 @@ rust_library(
     version = "0.6.1",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/smallvec-1.4.0:smallvec",
+        "//third_party/cargo/vendor/smallvec-1.6.0:smallvec",
     ],
 )

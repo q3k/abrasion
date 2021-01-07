@@ -1,0 +1,87 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load(
+    "@io_bazel_rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
+
+# Unsupported target "decode" with type "bench" omitted
+
+# Unsupported target "encode" with type "bench" omitted
+
+rust_library(
+    name = "image",
+    srcs = glob(["**/*.rs"]),
+    aliases = {
+        "//third_party/cargo/vendor/jpeg-decoder-0.1.20:jpeg_decoder": "jpeg",
+    },
+    crate_features = [
+        "bmp",
+        "dds",
+        "default",
+        "dxt",
+        "farbfeld",
+        "gif",
+        "hdr",
+        "ico",
+        "jpeg",
+        "jpeg_rayon",
+        "png",
+        "pnm",
+        "scoped_threadpool",
+        "tga",
+        "tiff",
+        "webp",
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.23.12",
+    # buildifier: leave-alone
+    deps = [
+        "//third_party/cargo/vendor/bytemuck-1.4.1:bytemuck",
+        "//third_party/cargo/vendor/byteorder-1.3.4:byteorder",
+        "//third_party/cargo/vendor/color_quant-1.1.0:color_quant",
+        "//third_party/cargo/vendor/gif-0.11.1:gif",
+        "//third_party/cargo/vendor/jpeg-decoder-0.1.20:jpeg_decoder",
+        "//third_party/cargo/vendor/num-iter-0.1.42:num_iter",
+        "//third_party/cargo/vendor/num-rational-0.3.2:num_rational",
+        "//third_party/cargo/vendor/num-traits-0.2.14:num_traits",
+        "//third_party/cargo/vendor/png-0.16.8:png",
+        "//third_party/cargo/vendor/scoped_threadpool-0.1.9:scoped_threadpool",
+        "//third_party/cargo/vendor/tiff-0.6.1:tiff",
+    ],
+)

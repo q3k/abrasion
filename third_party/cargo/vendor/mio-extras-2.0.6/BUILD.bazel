@@ -49,9 +49,9 @@ rust_library(
     version = "2.0.6",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/lazycell-1.2.1:lazycell",
-        "//third_party/cargo/vendor/log-0.4.8:log",
-        "//third_party/cargo/vendor/mio-0.6.22:mio",
+        "//third_party/cargo/vendor/lazycell-1.3.0:lazycell",
+        "//third_party/cargo/vendor/log-0.4.11:log",
+        "//third_party/cargo/vendor/mio-0.6.23:mio",
         "//third_party/cargo/vendor/slab-0.4.2:slab",
     ],
 )

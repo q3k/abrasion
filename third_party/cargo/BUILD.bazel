@@ -14,7 +14,7 @@ licenses([
 # Aliased targets
 alias(
     name = "cgmath",
-    actual = "//third_party/cargo/vendor/cgmath-0.17.0:cgmath",
+    actual = "//third_party/cargo/vendor/cgmath-0.18.0:cgmath",
     tags = [
         "cargo-raze",
         "manual",
@@ -41,7 +41,7 @@ alias(
 
 alias(
     name = "image",
-    actual = "//third_party/cargo/vendor/image-0.23.4:image",
+    actual = "//third_party/cargo/vendor/image-0.23.12:image",
     tags = [
         "cargo-raze",
         "manual",
@@ -50,16 +50,7 @@ alias(
 
 alias(
     name = "log",
-    actual = "//third_party/cargo/vendor/log-0.4.8:log",
-    tags = [
-        "cargo-raze",
-        "manual",
-    ],
-)
-
-alias(
-    name = "openvr",
-    actual = "//third_party/cargo/vendor/openvr-0.6.0:openvr",
+    actual = "//third_party/cargo/vendor/log-0.4.11:log",
     tags = [
         "cargo-raze",
         "manual",
@@ -68,7 +59,7 @@ alias(
 
 alias(
     name = "vulkano",
-    actual = "//third_party/cargo/vendor/vulkano-0.18.0:vulkano",
+    actual = "//third_party/cargo/vendor/vulkano-0.20.0:vulkano",
     tags = [
         "cargo-raze",
         "manual",
@@ -77,7 +68,7 @@ alias(
 
 alias(
     name = "vulkano_win",
-    actual = "//third_party/cargo/vendor/vulkano-win-0.18.0:vulkano_win",
+    actual = "//third_party/cargo/vendor/vulkano-win-0.20.0:vulkano_win",
     tags = [
         "cargo-raze",
         "manual",
@@ -86,7 +77,7 @@ alias(
 
 alias(
     name = "winit",
-    actual = "//third_party/cargo/vendor/winit-0.22.2:winit",
+    actual = "//third_party/cargo/vendor/winit-0.24.0:winit",
     tags = [
         "cargo-raze",
         "manual",

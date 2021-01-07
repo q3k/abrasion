@@ -50,6 +50,6 @@ rust_library(
     version = "0.4.2",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/libloading-0.6.2:libloading",
+        "//third_party/cargo/vendor/libloading-0.6.6:libloading",
     ],
 )

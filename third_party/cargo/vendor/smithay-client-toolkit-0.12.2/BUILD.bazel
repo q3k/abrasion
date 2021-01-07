@@ -1,0 +1,82 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load(
+    "@io_bazel_rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
+
+# Unsupported target "compositor_info" with type "example" omitted
+
+# Unsupported target "image_viewer" with type "example" omitted
+
+# Unsupported target "kbd_input" with type "example" omitted
+
+# Unsupported target "layer_shell" with type "example" omitted
+
+# Unsupported target "pointer_input" with type "example" omitted
+
+# Unsupported target "selection" with type "example" omitted
+
+# Unsupported target "themed_frame" with type "example" omitted
+
+rust_library(
+    name = "smithay_client_toolkit",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+        "andrew",
+        "calloop",
+        "default",
+        "frames",
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.12.2",
+    # buildifier: leave-alone
+    deps = [
+        "//third_party/cargo/vendor/andrew-0.3.1:andrew",
+        "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
+        "//third_party/cargo/vendor/calloop-0.6.5:calloop",
+        "//third_party/cargo/vendor/dlib-0.4.2:dlib",
+        "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
+        "//third_party/cargo/vendor/log-0.4.11:log",
+        "//third_party/cargo/vendor/memmap2-0.1.0:memmap2",
+        "//third_party/cargo/vendor/nix-0.18.0:nix",
+        "//third_party/cargo/vendor/wayland-client-0.28.3:wayland_client",
+        "//third_party/cargo/vendor/wayland-cursor-0.28.3:wayland_cursor",
+        "//third_party/cargo/vendor/wayland-protocols-0.28.3:wayland_protocols",
+    ],
+)

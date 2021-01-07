@@ -10,11 +10,11 @@ path = "fake_lib.rs"
 env_logger = "0.6.1"
 image = "0.23.1"
 log = "0.4.6"
-vulkano = "0.18.0"
-vulkano-win = "0.18.0"
-winit = "0.22.0"
-cgmath = "0.17.0"
-openvr = "0.6.0"
+vulkano = "0.20.0"
+vulkano-win = "0.20.0"
+winit = "0.24.0"
+cgmath = "0.18.0"
+#openvr = "0.6.0"
 flatbuffers = "0.6.1"
 
 [workspace.metadata.raze]
@@ -43,11 +43,23 @@ additional_flags = [
     "--cfg=atomic_cas"
 ]
 
-[workspace.metadata.raze.crates.libloading.'0.6.2']
+[workspace.metadata.raze.crates.libloading.'0.6.6']
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
 
-[workspace.metadata.raze.crates.cgmath.'0.17.0']
+[workspace.metadata.raze.crates.cgmath.'0.18.0']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.image.'0.23.4']
+[workspace.metadata.raze.crates.image.'0.23.12']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.num-rational.'0.3.2']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.libc.'0.2.82']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.wayland-client.'0.28.3']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.wayland-protocols.'0.28.3']
 gen_buildrs = true

@@ -1,0 +1,92 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load(
+    "@io_bazel_rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
+# buildifier: disable=load-on-top
+load(
+    "@io_bazel_rules_rust//cargo:cargo_build_script.bzl",
+    "cargo_build_script",
+)
+
+cargo_build_script(
+    name = "wayland_protocols_build_script",
+    srcs = glob(["**/*.rs"]),
+    build_script_env = {
+    },
+    crate_features = [
+        "client",
+        "unstable_protocols",
+        "wayland-client",
+    ],
+    crate_root = "build.rs",
+    data = glob(["**"]),
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.28.3",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/cargo/vendor/wayland-scanner-0.28.3:wayland_scanner",
+    ],
+)
+
+rust_library(
+    name = "wayland_protocols",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+        "client",
+        "unstable_protocols",
+        "wayland-client",
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.28.3",
+    # buildifier: leave-alone
+    deps = [
+        ":wayland_protocols_build_script",
+        "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
+        "//third_party/cargo/vendor/wayland-client-0.28.3:wayland_client",
+        "//third_party/cargo/vendor/wayland-commons-0.28.3:wayland_commons",
+    ],
+)

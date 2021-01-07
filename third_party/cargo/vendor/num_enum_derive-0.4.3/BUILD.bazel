@@ -50,9 +50,9 @@ rust_library(
     version = "0.4.3",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/proc-macro-crate-0.1.4:proc_macro_crate",
-        "//third_party/cargo/vendor/proc-macro2-1.0.17:proc_macro2",
-        "//third_party/cargo/vendor/quote-1.0.6:quote",
-        "//third_party/cargo/vendor/syn-1.0.27:syn",
+        "//third_party/cargo/vendor/proc-macro-crate-0.1.5:proc_macro_crate",
+        "//third_party/cargo/vendor/proc-macro2-1.0.24:proc_macro2",
+        "//third_party/cargo/vendor/quote-1.0.8:quote",
+        "//third_party/cargo/vendor/syn-1.0.58:syn",
     ],
 )
