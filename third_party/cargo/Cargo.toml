@@ -17,33 +17,37 @@ cgmath = "0.17.0"
 openvr = "0.6.0"
 flatbuffers = "0.6.1"
 
-[raze]
+[workspace.metadata.raze]
 workspace_path = "//third_party/cargo"
-target = "x86_64-unknown-linux-gnu"
+targets = [ "x86_64-unknown-linux-gnu" ]
+genmode = "Vendored"
+rust_rules_workspace_name = "io_bazel_rules_rust"
+package_aliases_dir = "."
+default_gen_buildrs = false
 
-[raze.crates.andrew.'0.2.1']
+[workspace.metadata.raze.crates.andrew.'0.2.1']
 skipped_deps = ['rusttype-0.7.9']
 additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.3:rusttype']
 
-[raze.crates.x11-dl.'2.18.5']
+[workspace.metadata.raze.crates.x11-dl.'2.18.5']
 gen_buildrs = true
 
-[raze.crates.wayland-client.'0.23.6']
+[workspace.metadata.raze.crates.wayland-client.'0.23.6']
 gen_buildrs = true
 
-[raze.crates.wayland-protocols.'0.23.6']
+[workspace.metadata.raze.crates.wayland-protocols.'0.23.6']
 gen_buildrs = true
 
-[raze.crates.log.'0.4.8']
+[workspace.metadata.raze.crates.log.'0.4.8']
 additional_flags = [
     "--cfg=atomic_cas"
 ]
 
-[raze.crates.libloading.'0.6.2']
+[workspace.metadata.raze.crates.libloading.'0.6.2']
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
 
-[raze.crates.cgmath.'0.17.0']
+[workspace.metadata.raze.crates.cgmath.'0.17.0']
 gen_buildrs = true
 
-[raze.crates.image.'0.23.4']
+[workspace.metadata.raze.crates.image.'0.23.4']
 gen_buildrs = true

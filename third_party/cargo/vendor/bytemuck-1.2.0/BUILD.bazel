@@ -1,45 +1,59 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "Zlib"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # Zlib from expression "Zlib"
+])
+
+# Generated Targets
 
 rust_library(
     name = "bytemuck",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+    ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
+    data = [],
     edition = "2018",
-    srcs = glob(["**/*.rs"]),
-    deps = [
-    ],
     rustc_flags = [
         "--cap-lints=allow",
     ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
     version = "1.2.0",
-    crate_features = [
+    # buildifier: leave-alone
+    deps = [
     ],
 )
 
 # Unsupported target "cast_slice_tests" with type "test" omitted
+
 # Unsupported target "doc_tests" with type "test" omitted
+
 # Unsupported target "std_tests" with type "test" omitted

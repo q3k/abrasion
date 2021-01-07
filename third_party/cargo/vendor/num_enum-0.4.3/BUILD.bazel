@@ -1,48 +1,63 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "BSD-3-Clause"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
-# Unsupported target "lib" with type "test" omitted
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # BSD-3-Clause from expression "BSD-3-Clause"
+])
+
+# Generated Targets
 
 rust_library(
     name = "num_enum",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+        "default",
+        "std",
+    ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
+    data = [],
     edition = "2018",
-    srcs = glob(["**/*.rs"]),
-    deps = [
+    proc_macro_deps = [
         "//third_party/cargo/vendor/derivative-2.1.1:derivative",
         "//third_party/cargo/vendor/num_enum_derive-0.4.3:num_enum_derive",
     ],
     rustc_flags = [
         "--cap-lints=allow",
     ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
     version = "0.4.3",
-    crate_features = [
-        "default",
-        "std",
+    # buildifier: leave-alone
+    deps = [
     ],
 )
+
+# Unsupported target "lib" with type "test" omitted
 
 # Unsupported target "renamed_num_enum" with type "test" omitted

@@ -1,50 +1,71 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "MIT,Apache-2.0"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT OR Apache-2.0"
+])
+
+# Generated Targets
 
 # Unsupported target "cache" with type "bench" omitted
+
 # Unsupported target "draw" with type "bench" omitted
+
 # Unsupported target "gpu_cache" with type "example" omitted
+
 # Unsupported target "image" with type "example" omitted
-# Unsupported target "issues" with type "test" omitted
-# Unsupported target "render_reference" with type "test" omitted
+
+# Unsupported target "simple" with type "example" omitted
 
 rust_library(
     name = "rusttype",
+    srcs = glob(["**/*.rs"]),
+    aliases = {
+        "//third_party/cargo/vendor/rusttype-0.8.3:rusttype": "rusttype_next",
+    },
+    crate_features = [
+    ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
+    data = [],
     edition = "2018",
-    srcs = glob(["**/*.rs"]),
-    deps = [
-        "//third_party/cargo/vendor/rusttype-0.8.3:rusttype",
-    ],
     rustc_flags = [
         "--cap-lints=allow",
     ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
     version = "0.7.9",
-    crate_features = [
+    # buildifier: leave-alone
+    deps = [
+        "//third_party/cargo/vendor/rusttype-0.8.3:rusttype",
     ],
 )
 
-# Unsupported target "simple" with type "example" omitted
+# Unsupported target "issues" with type "test" omitted
+
+# Unsupported target "render_reference" with type "test" omitted

@@ -1,54 +1,81 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "Apache-2.0,MIT"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # Apache-2.0 from expression "Apache-2.0 OR MIT"
+])
+
+# Generated Targets
 
 # Unsupported target "build-script-build" with type "custom-build" omitted
-# Unsupported target "double_init_fail" with type "test" omitted
-# Unsupported target "init_zero_threads" with type "test" omitted
 
 rust_library(
     name = "rayon_core",
+    srcs = glob(["**/*.rs"]),
+    aliases = {
+    },
+    crate_features = [
+    ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
+    data = [],
     edition = "2018",
-    srcs = glob(["**/*.rs"]),
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "1.7.0",
+    # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/crossbeam-deque-0.7.3:crossbeam_deque",
         "//third_party/cargo/vendor/crossbeam-queue-0.2.2:crossbeam_queue",
         "//third_party/cargo/vendor/crossbeam-utils-0.7.2:crossbeam_utils",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/num_cpus-1.13.0:num_cpus",
-    ],
-    rustc_flags = [
-        "--cap-lints=allow",
-    ],
-    version = "1.7.0",
-    crate_features = [
-    ],
+    ] + selects.with_or({
+        # cfg(unix)
+        (
+            "@io_bazel_rules_rust//rust/platform:x86_64-unknown-linux-gnu",
+        ): [
+        ],
+        "//conditions:default": [],
+    }),
 )
 
+# Unsupported target "double_init_fail" with type "test" omitted
+
+# Unsupported target "init_zero_threads" with type "test" omitted
+
 # Unsupported target "scope_join" with type "test" omitted
+
 # Unsupported target "scoped_threadpool" with type "test" omitted
+
 # Unsupported target "simple_panic" with type "test" omitted
+
 # Unsupported target "stack_overflow_crash" with type "test" omitted

@@ -1,48 +1,65 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "MIT"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
 
 # Unsupported target "build-script-build" with type "custom-build" omitted
+
 alias(
-  name = "ws2_32_sys",
-  actual = ":ws2_32",
+    name = "ws2_32_sys",
+    actual = ":ws2_32",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
 
 rust_library(
     name = "ws2_32",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+    ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
+    data = [],
     edition = "2015",
-    srcs = glob(["**/*.rs"]),
-    deps = [
-        "//third_party/cargo/vendor/winapi-0.2.8:winapi",
-    ],
     rustc_flags = [
         "--cap-lints=allow",
     ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
     version = "0.2.1",
-    crate_features = [
+    # buildifier: leave-alone
+    deps = [
+        "//third_party/cargo/vendor/winapi-0.2.8:winapi",
     ],
 )
-

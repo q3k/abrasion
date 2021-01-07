@@ -1,43 +1,38 @@
 """
+@generated
 cargo-raze crate build file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
-package(default_visibility = [
-  # Public for visibility by "@raze__crate__version//" targets.
-  #
-  # Prefer access through "//third_party/cargo", which limits external
-  # visibility to explicit Cargo.toml dependencies.
-  "//visibility:public",
-])
 
-licenses([
-  "notice", # "MIT"
-])
-
+# buildifier: disable=load
 load(
     "@io_bazel_rules_rust//rust:rust.bzl",
-    "rust_library",
     "rust_binary",
+    "rust_library",
     "rust_test",
 )
 
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
 
 rust_library(
     name = "wayland_sys",
-    crate_root = "src/lib.rs",
-    crate_type = "lib",
-    edition = "2015",
     srcs = glob(["**/*.rs"]),
-    deps = [
-        "//third_party/cargo/vendor/dlib-0.4.2:dlib",
-        "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-    ],
-    rustc_flags = [
-        "--cap-lints=allow",
-    ],
-    version = "0.23.6",
     crate_features = [
         "client",
         "cursor",
@@ -46,5 +41,21 @@ rust_library(
         "egl",
         "lazy_static",
     ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2015",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.23.6",
+    # buildifier: leave-alone
+    deps = [
+        "//third_party/cargo/vendor/dlib-0.4.2:dlib",
+        "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
+    ],
 )
-

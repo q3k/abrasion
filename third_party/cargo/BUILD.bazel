@@ -1,46 +1,94 @@
 """
-cargo-raze workspace build file.
+@generated
+cargo-raze generated Bazel file.
 
 DO NOT EDIT! Replaced on runs of cargo-raze
 """
+
 package(default_visibility = ["//visibility:public"])
 
 licenses([
-  "notice" # See individual crates for specific licenses
+    "notice",  # See individual crates for specific licenses
 ])
+
+# Aliased targets
 alias(
     name = "cgmath",
     actual = "//third_party/cargo/vendor/cgmath-0.17.0:cgmath",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "env_logger",
     actual = "//third_party/cargo/vendor/env_logger-0.6.2:env_logger",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "flatbuffers",
     actual = "//third_party/cargo/vendor/flatbuffers-0.6.1:flatbuffers",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "image",
     actual = "//third_party/cargo/vendor/image-0.23.4:image",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "log",
     actual = "//third_party/cargo/vendor/log-0.4.8:log",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "openvr",
     actual = "//third_party/cargo/vendor/openvr-0.6.0:openvr",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "vulkano",
     actual = "//third_party/cargo/vendor/vulkano-0.18.0:vulkano",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "vulkano_win",
     actual = "//third_party/cargo/vendor/vulkano-win-0.18.0:vulkano_win",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
+
 alias(
     name = "winit",
     actual = "//third_party/cargo/vendor/winit-0.22.2:winit",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
 )
