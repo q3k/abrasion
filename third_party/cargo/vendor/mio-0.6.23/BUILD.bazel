@@ -66,6 +66,16 @@ rust_library(
             "//third_party/cargo/vendor/libc-0.2.82:libc",
         ],
         "//conditions:default": [],
+    }) + selects.with_or({
+        # cfg(windows)
+        (
+            "@io_bazel_rules_rust//rust/platform:x86_64-pc-windows-msvc",
+        ): [
+            "//third_party/cargo/vendor/kernel32-sys-0.2.2:kernel32_sys",
+            "//third_party/cargo/vendor/miow-0.2.2:miow",
+            "//third_party/cargo/vendor/winapi-0.2.8:winapi",
+        ],
+        "//conditions:default": [],
     }),
 )
 
