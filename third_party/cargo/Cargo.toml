@@ -69,3 +69,6 @@ gen_buildrs = true
 
 [workspace.metadata.raze.crates.maybe-uninit.'2.0.0']
 gen_buildrs = true
+
+[workspace.metadata.raze.crates.winapi.'0.3.9']
+gen_buildrs = true
