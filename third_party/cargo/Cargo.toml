@@ -63,3 +63,6 @@ gen_buildrs = true
 
 [workspace.metadata.raze.crates.wayland-protocols.'0.28.3']
 gen_buildrs = true
+
+[workspace.metadata.raze.crates.maybe-uninit.'2.0.0']
+gen_buildrs = true

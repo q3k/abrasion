@@ -90,14 +90,14 @@ fn mipmapped_from_iter<P, I, F>(
     let mut cb = vcb::AutoCommandBufferBuilder::new(graphics_queue.device().clone(), graphics_queue.family()).unwrap();
 
     // Transfer buffer into mipmap_source_image.
-    cb = cb.copy_buffer_to_image_dimensions(
+    cb.copy_buffer_to_image_dimensions(
         source, mipmap_source_image_init,
         [0, 0, 0], dimensions.width_height_depth(), 0,
         dimensions.array_layers_with_cube(), 0,
     ).unwrap();
 
     // Copy mip level 0 (original image) using image_init.
-    cb = cb.blit_image(
+    cb.blit_image(
         mipmap_source_image.clone(), [0, 0, 0], [width as i32, height as i32, 1], 0, 0,
         image_init, [0, 0, 0], [width as i32, height as i32, 1], 0, 0,
         1, vs::Filter::Linear
@@ -108,7 +108,7 @@ fn mipmapped_from_iter<P, I, F>(
     let img_dimensions = vm::ImageAccess::dimensions(&image);
     for mip_idx in 1..image.mipmap_levels() {
         let dest_dim = img_dimensions.mipmap_dimensions(mip_idx).unwrap();
-        cb = cb.blit_image(
+        cb.blit_image(
             mipmap_source_image.clone(), [0, 0, 0], [width as i32, height as i32, 1], 0, 0,
             image.clone(), [0, 0, 0], [dest_dim.width() as i32, dest_dim.height() as i32, 1i32], 0, mip_idx,
             1, vs::Filter::Linear
@@ -168,6 +168,7 @@ impl ChannelLayoutVulkan for color::XYZ {
         let (image_view, future) = vm::ImmutableImage::from_iter(
             vec!([self.x, self.y, self.z, 1.0 as f32]).into_iter(),
             vm::Dimensions::Dim2d{ width: 1, height: 1 },
+            vm::MipmapsCount::One,
             vf::Format::R32G32B32A32Sfloat,
             graphics_queue.clone(),
         ).unwrap();
@@ -202,6 +203,7 @@ impl ChannelLayoutVulkan for color::LinearF32 {
         let (image_view, future) = vm::ImmutableImage::from_iter(
             image.into_raw().iter().cloned(),
             vm::Dimensions::Dim2d{ width: 1, height: 1 },
+            vm::MipmapsCount::One,
             vf::Format::R32Sfloat,
             graphics_queue.clone(),
         ).unwrap();

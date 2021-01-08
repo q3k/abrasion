@@ -25,7 +25,7 @@ use winit::{
     event_loop::EventLoop,
     event::Event,
     event::WindowEvent,
-    platform::desktop::EventLoopExtDesktop,
+    platform::run_return::EventLoopExtRunReturn,
 };
 use vulkano_win::VkSurfaceBuild;
 use vulkano::instance as vi;

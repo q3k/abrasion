@@ -237,10 +237,12 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(textures, ubo_buffer.clone());
 
             let (vbuffer, ibuffer) = mesh.vulkan_buffers(queue.clone());
-            builder = builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
-                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), ds, pco).unwrap();
+            builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
+                vec![vbuffer.clone(), instancebuffer], ibuffer.clone(), ds, pco)
+                .unwrap();
+            let buffer = builder.build().unwrap();
 
-            buffers.push(Box::new(builder.build().unwrap()));
+            buffers.push(Box::new(buffer));
         }
         profiler.end("mgc.build");
 
@@ -257,8 +259,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let qf = self.surface_binding().graphics_queue.family();
 
         let mut primary = vc::AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), qf)
-                 .unwrap()
-                 .begin_render_pass(framebuffer.clone(), true, vec![
+                 .unwrap();
+        primary.begin_render_pass(framebuffer.clone(), vc::SubpassContents::SecondaryCommandBuffers, vec![
                     [0.0, 0.0, 0.0, 1.0].into(),
                     vulkano::format::ClearValue::Depth(1.0),
                     vulkano::format::ClearValue::None,
@@ -268,11 +270,12 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         for batch in batches {
             unsafe {
-                primary = primary.execute_commands(batch).unwrap();
+                primary.execute_commands(batch).unwrap();
             }
         }
+        primary.end_render_pass().unwrap();
 
-        Arc::new(primary.end_render_pass().unwrap().build().unwrap())
+        Arc::new(primary.build().unwrap())
     }
 
     // (╯°□°)╯︵ ┻━┻
