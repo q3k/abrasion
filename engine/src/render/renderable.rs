@@ -19,134 +19,33 @@ use std::hash;
 
 use cgmath as cgm;
 
-use crate::render::light::Omni;
-use crate::render::material::Material;
-use crate::render::mesh::Mesh;
+use ecs::Component;
+use crate::render::{Light, Mesh, Material};
+use crate::render::resource::{ResourceID};
 
-pub struct ResourceManager {
-    meshes: HashMap<u64, Mesh>,
-    materials: HashMap<u64, Material>,
-    lights: HashMap<u64, Omni>,
-}
+pub struct Transform(cgm::Matrix4<f32>);
 
-#[derive(Copy, Clone)]
-pub enum ResourceID {
-    Material(u64),
-    Mesh(u64),
-    Light(u64),
-}
+impl Component for Transform {}
 
-impl ResourceID {
-    pub fn id(&self) -> u64 {
-        match self {
-            ResourceID::Material(i) => *i,
-            ResourceID::Mesh(i) => *i,
-            ResourceID::Light(i) => *i,
-        }
+impl Transform {
+    pub fn at(x: f32, y: f32, z: f32) -> Self {
+        Transform(cgm::Matrix4::from_translation(cgm::Vector3::new(x, y, z)))
+    }
+    pub fn xyzw(&self) -> cgm::Vector4<f32> {
+        self.0 * cgm::Vector4::new(0.0, 0.0, 0.0, 1.0)
+    }
+    pub fn xyz(&self) -> cgm::Vector3<f32> {
+        let res4 = self.xyzw();
+        cgm::Vector3::new(res4.x/res4.w, res4.y/res4.w, res4.z/res4.w)
+    }
+    pub fn m4(&self) -> &cgm::Matrix4<f32> {
+        &self.0
     }
 }
 
-impl hash::Hash for ResourceID {
-    fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        match self {
-            ResourceID::Material(i) => i.hash(state),
-            ResourceID::Mesh(i) => i.hash(state),
-            ResourceID::Light(i) => i.hash(state),
-        }
-    }
+pub enum Renderable {
+    Light(ResourceID<Light>),
+    Mesh(ResourceID<Mesh>, ResourceID<Material>),
 }
 
-impl PartialEq for ResourceID {
-    fn eq(&self, other: &Self) -> bool {
-        self.id() == other.id()
-    }
-}
-
-impl Eq for ResourceID {}
-
-impl<'a> ResourceManager {
-    pub fn new() -> Self {
-        Self {
-            meshes: HashMap::new(),
-            materials: HashMap::new(),
-            lights: HashMap::new(),
-        }
-    }
-
-    pub fn add_material(&mut self, t: Material) -> ResourceID {
-        let id = t.id;
-        self.materials.insert(id, t);
-        ResourceID::Material(id)
-    }
-
-    pub fn add_mesh(&mut self, t: Mesh) -> ResourceID {
-        let id = t.id;
-        self.meshes.insert(id, t);
-        ResourceID::Mesh(id)
-    }
-
-    pub fn add_light(&mut self, t: Omni) -> ResourceID {
-        let id = t.id;
-        self.lights.insert(id, t);
-        ResourceID::Light(id)
-    }
-
-    pub fn material(&'a self, id: &ResourceID) -> Option<&'a Material> {
-        if let ResourceID::Material(i) = id {
-            return Some(self.materials.get(&i).unwrap());
-        }
-        return None
-    }
-
-    pub fn mesh(&'a self, id: &ResourceID) -> Option<&'a Mesh> {
-        if let ResourceID::Mesh(i) = id {
-            return Some(self.meshes.get(&i).unwrap());
-        }
-        return None
-    }
-
-    pub fn light(&'a self, id: &ResourceID) -> Option<&'a Omni> {
-        if let ResourceID::Light(i) = id {
-            return Some(self.lights.get(&i).unwrap());
-        }
-        return None
-    }
-
-    pub fn light_mut(&'a mut self, id: &ResourceID) -> Option<&'a mut Omni> {
-        if let ResourceID::Light(i) = id {
-            return Some(self.lights.get_mut(&i).unwrap());
-        }
-        return None
-    }
-}
-
-pub trait Renderable {
-    fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {
-        None
-    }
-    fn light_data(&self) -> Option<ResourceID> {
-        None
-    }
-}
-
-pub struct Object {
-    pub mesh: ResourceID,
-    pub material: ResourceID,
-    pub transform: cgm::Matrix4<f32>,
-}
-
-impl Renderable for Object {
-    fn render_data(&self) -> Option<(ResourceID, ResourceID, &cgm::Matrix4<f32>)> {
-        Some((self.mesh, self.material, &self.transform))
-    }
-}
-
-pub struct Light {
-    pub light: ResourceID,
-}
-
-impl Renderable for Light {
-    fn light_data(&self) -> Option<ResourceID> {
-        Some(self.light)
-    }
-}
+impl Component for Renderable {}

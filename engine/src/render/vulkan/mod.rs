@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::time;
 use log;
@@ -36,10 +37,10 @@ mod shaders;
 mod swapchain_binding;
 mod worker;
 
-use crate::render::renderable;
 use crate::util::counter::Counter;
 use crate::util::profiler::Profiler;
-use crate::util::resourcemap::ResourceMap;
+use crate::render::{Light, Material, Mesh, ResourceID};
+use crate::render::resource;
 
 const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
 
@@ -47,6 +48,11 @@ fn required_instance_extensions() -> vi::InstanceExtensions {
     let mut exts = vulkano_win::required_extensions();
     exts.ext_debug_utils = true;
     exts
+}
+
+pub struct RenderData<'a> {
+    pub meshes: BTreeMap<(ResourceID<Mesh>, ResourceID<Material>), Vec<&'a cgm::Matrix4<f32>>>,
+    pub lights: Vec<(ResourceID<Light>, cgm::Vector4<f32>)>,
 }
 
 pub struct Instance<WT> {
@@ -167,8 +173,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         profiler: &mut Profiler,
         camera: &cgm::Point3<f32>,
         view: &cgm::Matrix4<f32>,
-        rm: &renderable::ResourceManager,
-        renderables: &Vec<Box<dyn renderable::Renderable>>,
+        data: &RenderData,
+        rm: &resource::Manager,
     ) -> Vec<Box<vc::AutoCommandBuffer>> {
 
         let dimensions = self.dimensions();
@@ -182,23 +188,23 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         profiler.end("mgc.prep");
 
 
-        // Sort renderables by mesh and materialid, and find lights.
-        let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
+        //// Sort renderables by mesh and materialid, and find lights.
+        //let mut meshes: ResourceMap<(renderable::ResourceID, renderable::ResourceID), &cgm::Matrix4<f32>> = ResourceMap::new();
         let mut omni_lights = [data::OmniLight{ pos: [0.0, 0.0, 0.0, 0.0], color: [0.0, 0.0, 0.0, 0.0]}; 4];
         let mut omni_light_count = 0;
 
-        for r in renderables {
-            if let Some((mesh_id, material_id, transform)) = r.render_data() {
-                meshes.add((mesh_id, material_id), transform);
-            }
-            if let Some(light_id) = r.light_data() {
-                if omni_light_count < 4 {
-                    let light = rm.light(&light_id).unwrap();
-                    omni_lights[omni_light_count] = light.vulkan_uniform();
-                    omni_light_count += 1;
+        for (light_id, transform) in &data.lights {
+            if omni_light_count < 4 {
+                let light = light_id.get(rm);
+                match light {
+                    Light::Omni(omni) => {
+                        omni_lights[omni_light_count] = omni.vulkan_uniform(&transform);
+                        omni_light_count += 1;
+                    }
                 }
             }
         }
+
         profiler.end("mgc.sort");
 
 
@@ -219,9 +225,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
         let ubo_buffer = Arc::new(self.uniform_pool.as_ref().unwrap().next(ubo).unwrap());
 
-        for ((mesh_id, material_id), transforms) in meshes.resources {
-            let mesh = rm.mesh(&mesh_id).unwrap();
-            let material = rm.material(&material_id).unwrap();
+        for ((mesh_id, material_id), transforms) in &data.meshes {
+            let mesh = mesh_id.get(rm);
+            let material = material_id.get(rm);
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
@@ -283,13 +289,13 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         &mut self,
         camera: &cgm::Point3<f32>,
         view: &cgm::Matrix4<f32>,
-        rm: &renderable::ResourceManager,
-        renderables: &Vec<Box<dyn renderable::Renderable>>,
+        data: &RenderData,
+        rm: &resource::Manager,
     ) {
         let mut profiler = Profiler::new();
 
         // Build batch command buffer as early as possible.
-        let mut batches = self.make_graphics_commands(&mut profiler, camera, view, rm, renderables);
+        let mut batches = self.make_graphics_commands(&mut profiler, camera, view, data, rm);
         profiler.end("mgc");
 
         match &self.previous_frame_end {
@@ -300,7 +306,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         if !self.armed {
             self.arm();
             // Rearming means the batch is invalid - rebuild it.
-            batches = self.make_graphics_commands(&mut profiler, camera, view, rm, renderables);
+            batches = self.make_graphics_commands(&mut profiler, camera, view, data, rm);
         }
         profiler.end("arm");
 

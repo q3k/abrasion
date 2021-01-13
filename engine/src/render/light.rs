@@ -24,12 +24,10 @@ use crate::render::vulkan::data;
 /// An Omni point light, with position in 3d space, and 'color' defined in lumens per CIE XYZ
 /// color channel.
 pub struct Omni {
-    pub position: cgm::Vector3<f32>,
     /// Luminour power/flux defined as lumens per XYZ color channel.
     pub color: color::XYZ,
-
-    pub id: u64,
 }
+
 
 impl Omni {
     /// Make a test light. This has... a color. It's kinda yellow. And something close to 650
@@ -40,24 +38,34 @@ impl Omni {
     // [Kry85]
     // M. Krystek. 1985. "An algorithm to calculate correlated color temperature"
     // Color Research & Application, 10 (1), 38–40.
-    pub fn test(position: cgm::Vector3<f32>) -> Self {
-        Self::with_color(position, color::XYZ::new(234.7*10.0, 214.1*10.0, 207.9*10.0))
+    pub fn test() -> Self {
+        Self::with_color(color::XYZ::new(234.7*10.0, 214.1*10.0, 207.9*10.0))
     }
 
-    pub fn with_color(position: cgm::Vector3<f32>, color: color::XYZ) -> Self{
+    pub fn with_color(color: color::XYZ) -> Self{
         Self {
-            position,
             color,
-            // TODO: use a better method
-            id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
         }
     }
 
-    pub fn vulkan_uniform(&self) -> data::OmniLight {
+    pub fn vulkan_uniform(&self, pos: &cgm::Vector4<f32>) -> data::OmniLight {
         // TODO: cache this?
         data::OmniLight {
-            pos: [self.position.x, self.position.y, self.position.z, 1.0],
+            pos: [pos.x, pos.y, pos.z, pos.w],
             color: [self.color.x, self.color.y, self.color.z, 0.0],
         }
+    }
+}
+
+pub enum Light {
+    Omni(Omni),
+}
+
+impl Light {
+    pub fn omni_test() -> Light {
+        Light::Omni(Omni::test())
+    }
+    pub fn omni_with_color(color: color::XYZ) -> Light {
+        Light::Omni(Omni::with_color(color))
     }
 }

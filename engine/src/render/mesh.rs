@@ -27,8 +27,6 @@ use crate::render::vulkan::data;
 pub struct Mesh {
     vertices: Arc<Vec<data::Vertex>>,
     indices: Arc<Vec<u16>>,
-
-    pub id: u64,
     // vulkan buffers cache
     vulkan: Mutex<Option<data::VertexData>>,
 }
@@ -40,8 +38,6 @@ impl Mesh {
     ) -> Self {
         Self {
             vertices, indices,
-            // TODO: use a better method
-            id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
             vulkan: Mutex::new(None),
         }
     }
@@ -80,4 +76,3 @@ impl Mesh {
         }
     }
 }
-

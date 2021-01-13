@@ -20,6 +20,7 @@ rust_binary(
         "src/render/material.rs",
         "src/render/mesh.rs",
         "src/render/renderable.rs",
+        "src/render/resource.rs",
 
         "src/render/vulkan/mod.rs",
         "src/render/vulkan/data.rs",
