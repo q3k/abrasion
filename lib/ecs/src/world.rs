@@ -103,7 +103,6 @@ impl<'a, T: component::Resource> ReadResource<'a, T> {
 }
 
 pub struct World {
-    entities: BTreeMap<entity::ID, entity::Entity>,
     components: BTreeMap<component::ID, ComponentMap>,
     resources: ResourceMap,
     next_id: entity::ID,
@@ -112,7 +111,6 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         Self {
-            entities: BTreeMap::new(),
             components: BTreeMap::new(),
             resources: ResourceMap::new(),
             next_id: 1u64,
@@ -133,10 +131,6 @@ impl World {
     ) {
         let map = self.components.entry(cid).or_insert(ComponentMap::new());
         map.insert(e.id(), c).unwrap();
-    }
-
-    pub fn commit(&mut self, ent: entity::Entity) {
-        self.entities.insert(ent.id(), ent);
     }
 
     pub fn components<'a, T: component::Component>(&'a self) -> ReadData<'a, T> {

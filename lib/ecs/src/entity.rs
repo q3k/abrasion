@@ -31,9 +31,6 @@ impl<'a> EntityBuilder<'a> {
     }
 
     pub fn build(self) -> ID {
-        let id = self.ent.id();
-        self.world.commit(self.ent);
-
-        id
+        self.ent.id()
     }
 }
