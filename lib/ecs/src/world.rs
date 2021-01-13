@@ -1,11 +1,16 @@
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::iter::Iterator;
+use std::cell::{Ref, RefMut, RefCell};
 
 use crate::componentmap::{
     ComponentMap,
     ComponentMapIter,
     ComponentMapIterMut,
+};
+use crate::resourcemap::{
+    ResourceMap,
+    ResourceRef,
 };
 use crate::entity;
 use crate::component;
@@ -17,7 +22,7 @@ pub struct ReadData<'a, T: component::Component> {
 
 impl<'a, T: component::Component> ReadData<'a, T> {
     pub fn iter(&self) -> ReadDataIter<'a, T> {
-        let cm = self.world.components.get(&component::id::<T>());
+        let cm = self.world.components.get(&component::component_id::<T>());
         ReadDataIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter().unwrap() ),
@@ -55,7 +60,7 @@ pub struct ReadWriteData<'a, T: component::Component> {
 
 impl<'a, T: component::Component> ReadWriteData<'a, T> {
     pub fn iter_mut(&self) -> ReadWriteDataIter<'a, T> {
-        let cm = self.world.components.get(&component::id::<T>());
+        let cm = self.world.components.get(&component::component_id::<T>());
         ReadWriteDataIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter_mut().unwrap() ),
@@ -86,9 +91,21 @@ impl <'a, T: component::Component> Iterator for ReadWriteDataIter<'a, T> {
     }
 }
 
+pub struct ReadResource<'a, T: component::Resource> {
+    world: &'a World,
+    phantom: PhantomData<&'a T>,
+}
+
+impl<'a, T: component::Resource> ReadResource<'a, T> {
+    pub fn get(&self) -> ResourceRef<'a, T> {
+        self.world.resources.get::<'a, T>().unwrap()
+    }
+}
+
 pub struct World {
     entities: BTreeMap<entity::ID, entity::Entity>,
     components: BTreeMap<component::ID, ComponentMap>,
+    resources: ResourceMap,
     next_id: entity::ID,
 }
 
@@ -97,6 +114,7 @@ impl World {
         Self {
             entities: BTreeMap::new(),
             components: BTreeMap::new(),
+            resources: ResourceMap::new(),
             next_id: 1u64,
         }
     }
@@ -133,6 +151,17 @@ impl World {
             world: self,
             phantom: PhantomData,
         }
+    }
+
+    pub fn resource<'a, T: component::Resource>(&'a self) -> ReadResource<'a, T> {
+        ReadResource {
+            world: self,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn set_resource<T: component::Resource>(&self, r: T) {
+        self.resources.set(r).unwrap();
     }
 }
 

@@ -3,11 +3,16 @@ use std::iter::Peekable;
 
 use crate::{
     component,
-    world::{ReadData, ReadDataIter, ReadWriteData, ReadWriteDataIter, World}
+    world::{
+        ReadData, ReadDataIter,
+        ReadWriteData, ReadWriteDataIter,
+        ReadResource,
+        World,
+    }
 };
 
 pub trait System<'a> {
-    type SystemData: DynamicSystemData<'a>;
+    type SystemData: Access<'a>;
 
     fn run(&mut self, sd: Self::SystemData);
 }
@@ -27,47 +32,72 @@ where
 }
 
 pub trait Access<'a> {
-    //type Component: component::Component;
+    fn fetch(world: &'a World) -> Self;
+}
+
+pub trait AccessComponent<'a> : Access<'a> {
     type Component;
     type Iterator: Iterator<Item = (u64, Self::Component)>;
-    fn fetch(world: &'a  World) -> Self;
     fn iter(&self) -> Self::Iterator;
 }
 
 impl<'a, T: component::Component> Access<'a> for ReadData<'a, T> {
-    type Component = &'a T;
-    type Iterator = ReadDataIter<'a, T>;
     fn fetch(world: &'a  World) -> Self {
         world.components()
     }
+}
+
+impl<'a, T: component::Component> AccessComponent<'a> for ReadData<'a, T> {
+    type Component = &'a T;
+    type Iterator = ReadDataIter<'a, T>;
     fn iter(&self) -> ReadDataIter<'a, T> {
         Self::iter(self)
     }
 }
+
 impl<'a, T: component::Component> Access<'a> for ReadWriteData<'a, T> {
-    type Component = &'a mut T;
-    type Iterator = ReadWriteDataIter<'a, T>;
     fn fetch(world: &'a  World) -> Self {
         world.components_mut()
     }
+}
+
+impl<'a, T: component::Component> AccessComponent<'a> for ReadWriteData<'a, T> {
+    type Component = &'a mut T;
+    type Iterator = ReadWriteDataIter<'a, T>;
     fn iter(&self) -> ReadWriteDataIter<'a, T> {
         Self::iter_mut(self)
     }
 }
 
-pub trait DynamicSystemData<'a> {
-    fn fetch(world: &'a  World) -> Self;
-}
-
-impl <'a, T: Access<'a>> DynamicSystemData<'a> for T {
-    fn fetch(world: &'a  World) -> Self {
-        T::fetch(world)
+impl<'a, T: component::Resource> Access<'a> for ReadResource<'a, T> {
+    fn fetch(world: &'a World) -> Self {
+        world.resource()
     }
 }
 
-impl <'a, T: Access<'a>, U: Access<'a>> DynamicSystemData<'a> for (T, U) {
+impl <'a,
+    T: Access<'a>,
+    U: Access<'a>,
+> Access<'a> for (T, U) {
     fn fetch(world: &'a  World) -> Self {
-        (T::fetch(world), U::fetch(world))
+        (
+            T::fetch(world),
+            U::fetch(world),
+        )
+    }
+}
+
+impl <'a,
+    T: Access<'a>,
+    U: Access<'a>,
+    V: Access<'a>,
+> Access<'a> for (T, U, V) {
+    fn fetch(world: &'a  World) -> Self {
+        (
+            T::fetch(world),
+            U::fetch(world),
+            V::fetch(world),
+        )
     }
 }
 
@@ -95,7 +125,7 @@ pub trait Join<'a> {
     fn next(iters: &mut Self::Iterators) -> Option<Self::Result>;
 }
 
-impl <'a, T: Access<'a>, U: Access<'a>> Join<'a> for (T, U) {
+impl <'a, T: AccessComponent<'a>, U: AccessComponent<'a>> Join<'a> for (T, U) {
     type Iterators = (Peekable<T::Iterator>, Peekable<U::Iterator>);
     type Result = (T::Component, U::Component);
     fn join_all(&'a self) -> JoinIter<'a, Self> {
@@ -139,36 +169,44 @@ impl <'a, J: Join<'a>> Iterator for JoinIter<'a, J> {
 mod test {
     use crate::{
         component::Component,
+        component::Resource,
         system,
         system::Join,
-        world::{ReadData, ReadWriteData, World},
+        world::{ReadData, ReadWriteData, ReadResource, World},
     };
+
+    #[derive(Clone,Debug,Default)]
+    struct Delta(f32);
+    impl Resource for Delta {}
 
     #[derive(Clone,Debug)]
     struct Position {
-        x: u32,
-        y: u32,
-        z: u32,
+        x: f32,
+        y: f32,
+        z: f32,
     }
     impl Component for Position {}
 
     #[derive(Clone,Debug)]
     struct Velocity {
-        x: u32,
-        y: u32,
-        z: u32,
+        x: f32,
+        y: f32,
+        z: f32,
     }
     impl Component for Velocity {}
 
     struct Physics;
     impl<'a> system::System<'a> for Physics {
-        type SystemData = (ReadWriteData<'a, Position>, ReadData<'a, Velocity>);
+        type SystemData = ( ReadWriteData<'a, Position>
+                          , ReadData<'a, Velocity>
+                          , ReadResource<'a, Delta>);
 
-        fn run(&mut self, (pos, vel): Self::SystemData) {
+        fn run(&mut self, (pos, vel, delta): Self::SystemData) {
+            let d = delta.get();
             for (mut p, v) in (pos, vel).join_all() {
-                p.x += v.x;
-                p.y += v.y;
-                p.z += v.z;
+                p.x += v.x * d.0;
+                p.y += v.y * d.0;
+                p.z += v.z * d.0;
             }
         }
     }
@@ -176,8 +214,9 @@ mod test {
     #[test]
     fn processor() {
         let mut world = World::new();
-        world.new_entity().with(Velocity { x: 0, y: 0, z: 1 }).with(Position { x: 1, y: 2, z: 3 }).build();
-        world.new_entity().with(Velocity { x: 0, y: 0, z: 2 }).with(Position { x: 4, y: 5, z: 6 }).build();
+        world.new_entity().with(Velocity { x: 0.0, y: 0.0, z: 1.0 }).with(Position { x: 1.0, y: 2.0, z: 3.0 }).build();
+        world.new_entity().with(Velocity { x: 0.0, y: 0.0, z: 2.0 }).with(Position { x: 4.0, y: 5.0, z: 6.0 }).build();
+        world.set_resource(Delta(1.0));
 
         let mut p = system::Processor {
             world: &world,
@@ -186,8 +225,11 @@ mod test {
         p.add_system(Physics);
 
         let positions = world.components::<Position>();
-        assert_eq!(vec![3, 6],  positions.iter().map(|(_, el)| el.z).collect::<Vec<u32>>());
+        assert_eq!(vec![3.0, 6.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
         p.run();
-        assert_eq!(vec![4, 8],  positions.iter().map(|(_, el)| el.z).collect::<Vec<u32>>());
+        assert_eq!(vec![4.0, 8.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
+        world.set_resource(Delta(2.0));
+        p.run();
+        assert_eq!(vec![6.0, 12.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
     }
 }

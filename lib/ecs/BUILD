@@ -4,9 +4,12 @@ rust_library(
     name = "ecs",
     srcs = [
         "src/lib.rs",
+
+        "src/borrow.rs",
         "src/component.rs",
         "src/componentmap.rs",
         "src/entity.rs",
+        "src/resourcemap.rs",
         "src/system.rs",
         "src/world.rs",
     ],

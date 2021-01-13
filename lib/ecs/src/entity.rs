@@ -26,7 +26,7 @@ impl<'a> EntityBuilder<'a> {
     }
 
     pub fn with<T: component::Component>(self, c: T) -> Self {
-        self.world.register_component_entity(component::id::<T>(), Box::new(c), self.ent);
+        self.world.register_component_entity(component::component_id::<T>(), Box::new(c), self.ent);
         self
     }
 
