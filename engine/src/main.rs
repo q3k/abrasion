@@ -31,21 +31,28 @@ use render::material::{Texture, PBRMaterialBuilder};
 use render::{Light, Material, Mesh, Transform, Renderable};
 use physics::color;
 
-struct App {
-    world: World,
-    renderer: render::Renderer,
+struct Time {
+    start: time::Instant,
+    now: time::Instant,
+}
+impl ecs::Global for Time {}
+
+impl Time {
+    pub fn instant(&self) -> f32  {
+        let instant_ns = self.now.duration_since(self.start).as_nanos() as u64;
+        let instant = ((instant_ns/1000) as f32) / 1_000_000.0;
+        instant
+    }
 }
 
-impl App {
-    pub fn new() -> Self {
-        let mut world = World::new();
-        let renderer = render::Renderer::initialize(&mut world);
-        App {
-            world, renderer,
-        }
-    }
 
-    pub fn initialize_scene(&mut self) {
+struct Main {
+    light1: ecs::EntityID,
+    light2: ecs::EntityID,
+}
+
+impl Main {
+    pub fn new(world: &mut World, renderer: &mut render::Renderer) -> Self {
         let mesh = {
             let vertices = Arc::new(vec![
                 data::Vertex::new([-0.5, -0.5,  0.5], [ 0.0,  0.0,  1.0], [1.0, 0.0]),
@@ -90,10 +97,10 @@ impl App {
                 20, 22, 21, 22, 20, 23,
 
             ]);
-            self.renderer.add_resource(Mesh::new(vertices, indices))
+            renderer.add_resource(Mesh::new(vertices, indices))
         };
 
-        let material = self.renderer.add_resource(PBRMaterialBuilder {
+        let material = renderer.add_resource(PBRMaterialBuilder {
             diffuse: Texture::from_image(String::from("assets/test-128px.png")),
             roughness: Texture::from_color(color::LinearF32::new(1.0)),
         }.build());
@@ -101,7 +108,7 @@ impl App {
         for x in -20..20 {
             for y in -20..20 {
                 for z in -20..20 {
-                    self.world.new_entity()
+                    world.new_entity()
                         .with(Transform::at((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0))
                         .with(Renderable::Mesh(mesh, material))
                         .build();
@@ -109,7 +116,7 @@ impl App {
             }
         }
 
-        let light = self.renderer.add_resource(Light::omni_test());
+        let light = renderer.add_resource(Light::omni_test());
 
         // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
         // these are negligible at this scale.
@@ -122,78 +129,91 @@ impl App {
         let sun_lumen: f32 = sun_luminous_emittance * (4.0 * 3.14159 * sun_distance * sun_distance);
 
         let sun_color = color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0);
-        let sun = self.renderer.add_resource(Light::omni_with_color(sun_color));
+        let sun = renderer.add_resource(Light::omni_with_color(sun_color));
 
         // In our scene, the sun at a 30 degree zenith.
         let sun_angle: f32 = (3.14159 * 2.0) / (360.0 / 30.0);
         
-        self.world.new_entity()
+        let light1 = world.new_entity()
             .with(Transform::at(-10.0, -10.0, -5.0))
             .with(Renderable::Light(light))
             .build();
-        self.world.new_entity()
+        let light2 = world.new_entity()
             .with(Transform::at(-10.0, -10.0, -5.0))
             .with(Renderable::Light(light))
             .build();
-        self.world.new_entity()
+        world.new_entity()
             .with(Transform::at(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance))
             .with(Renderable::Light(sun))
             .build();
 
-    }
-
-    fn run(self) {
-        let mut p = Processor::new(&self.world);
-        p.add_system(self.renderer);
-
-        let start = time::Instant::now();
-        loop {
-            let instant_ns = time::Instant::now().duration_since(start).as_nanos() as u64;
-            let instant = ((instant_ns/1000) as f32) / 1_000_000.0;
-
-            let position = (instant / 10.0) * 3.14 * 2.0;
-
-            let camera = cgm::Point3::new(
-                7.0 + (position / 4.0).sin(),
-                12.0 + (position / 4.0).cos(),
-                3.0
-            );
-
-            let view = cgm::Matrix4::look_at(
-                camera.clone(),
-                cgm::Point3::new(0.0, 0.0, 0.0),
-                cgm::Vector3::new(0.0, 0.0, 1.0)
-            );
-
-            //rm.light_mut(&light1).as_mut().unwrap().position = cgm::Vector3::new(
-            //    -0.0 + (position*3.0).sin() * 4.0,
-            //    -0.0 + (position*4.0).cos() * 4.0,
-            //    -0.0 + (position*2.0).sin() * 3.0,
-            //);
-            //rm.light_mut(&light2).as_mut().unwrap().position = cgm::Vector3::new(
-            //    -0.0 + (position*3.0).cos() * 4.0,
-            //    -0.0 + (position*4.0).sin() * 4.0,
-            //    -0.0 + (position*2.0).cos() * 3.0,
-            //);
-
-            self.world.set_global(render::SceneInfo {
-                camera,
-                view,
-            });
-            p.run();
-            let status = self.world.global::<render::Status>().get();
-            if status.closed {
-                log::info!("Renderer closed, exiting.");
-                return;
-            }
+        Self {
+            light1, light2
         }
+    }
+}
+
+impl<'a> ecs::System <'a> for Main {
+    type SystemData = ( ecs::ReadWriteGlobal<'a, render::SceneInfo>
+                      , ecs::ReadGlobal<'a, Time>
+                      );
+    fn run(&mut self, (scene_info, time): Self::SystemData) {
+        let position = (time.get().instant() / 10.0) * 3.14 * 2.0;
+
+        let camera = cgm::Point3::new(
+            7.0 + (position / 4.0).sin(),
+            12.0 + (position / 4.0).cos(),
+            3.0
+        );
+
+        let view = cgm::Matrix4::look_at(
+            camera.clone(),
+            cgm::Point3::new(0.0, 0.0, 0.0),
+            cgm::Vector3::new(0.0, 0.0, 1.0)
+        );
+
+        scene_info.get().camera = camera;
+        scene_info.get().view = view;
+
+        //rm.light_mut(&light1).as_mut().unwrap().position = cgm::Vector3::new(
+        //    -0.0 + (position*3.0).sin() * 4.0,
+        //    -0.0 + (position*4.0).cos() * 4.0,
+        //    -0.0 + (position*2.0).sin() * 3.0,
+        //);
+        //rm.light_mut(&light2).as_mut().unwrap().position = cgm::Vector3::new(
+        //    -0.0 + (position*3.0).cos() * 4.0,
+        //    -0.0 + (position*4.0).sin() * 4.0,
+        //    -0.0 + (position*2.0).cos() * 3.0,
+        //);
+
     }
 }
 
 fn main() {
     env_logger::init();
+    let mut world = World::new();
+    let mut renderer = render::Renderer::initialize(&mut world);
+    let main = Main::new(&mut world, &mut renderer);
+
     log::info!("Starting...");
-    let mut app = App::new();
-    app.initialize_scene();
-    app.run();
+
+    let mut p = Processor::new(&world);
+    p.add_system(renderer);
+    p.add_system(main);
+
+    let start = time::Instant::now();
+    world.set_global(Time{
+        start,
+        now: start,
+    });
+    loop {
+        world.global_mut::<Time>().get().now = time::Instant::now();
+
+        p.run();
+        let status = world.global::<render::Status>().get();
+        if status.closed {
+            log::info!("Renderer closed, exiting.");
+            return;
+        }
+    }
 }
