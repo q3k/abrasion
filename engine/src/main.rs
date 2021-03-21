@@ -156,8 +156,9 @@ impl Main {
 impl<'a> ecs::System <'a> for Main {
     type SystemData = ( ecs::ReadWriteGlobal<'a, render::SceneInfo>
                       , ecs::ReadGlobal<'a, Time>
+                      , ecs::ReadWriteComponent<'a, Transform>
                       );
-    fn run(&mut self, (scene_info, time): Self::SystemData) {
+    fn run(&mut self, (scene_info, time, transforms): Self::SystemData) {
         let position = (time.get().instant() / 10.0) * 3.14 * 2.0;
 
         let camera = cgm::Point3::new(
@@ -175,16 +176,17 @@ impl<'a> ecs::System <'a> for Main {
         scene_info.get().camera = camera;
         scene_info.get().view = view;
 
-        //rm.light_mut(&light1).as_mut().unwrap().position = cgm::Vector3::new(
-        //    -0.0 + (position*3.0).sin() * 4.0,
-        //    -0.0 + (position*4.0).cos() * 4.0,
-        //    -0.0 + (position*2.0).sin() * 3.0,
-        //);
-        //rm.light_mut(&light2).as_mut().unwrap().position = cgm::Vector3::new(
-        //    -0.0 + (position*3.0).cos() * 4.0,
-        //    -0.0 + (position*4.0).sin() * 4.0,
-        //    -0.0 + (position*2.0).cos() * 3.0,
-        //);
+        *transforms.get_mut(self.light1).unwrap() = Transform::at(
+            -0.0 + (position*3.0).sin() * 4.0,
+            -0.0 + (position*4.0).cos() * 4.0,
+            -0.0 + (position*2.0).sin() * 3.0,
+        );
+
+        *transforms.get_mut(self.light2).unwrap() = Transform::at(
+            -0.0 + (position*3.0).cos() * 4.0,
+            -0.0 + (position*4.0).sin() * 4.0,
+            -0.0 + (position*2.0).cos() * 3.0,
+        );
 
     }
 }
@@ -198,8 +200,8 @@ fn main() {
     log::info!("Starting...");
 
     let mut p = Processor::new(&world);
-    p.add_system(renderer);
     p.add_system(main);
+    p.add_system(renderer);
 
     let start = time::Instant::now();
     world.set_global(Time{

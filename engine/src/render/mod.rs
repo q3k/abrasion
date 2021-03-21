@@ -18,6 +18,7 @@ use std::sync::Arc;
 use std::collections::BTreeMap;
 
 use cgmath as cgm;
+use cgmath::SquareMatrix;
 
 use winit::{
     dpi::LogicalSize,
@@ -113,7 +114,11 @@ impl<'a> ecs::System<'a> for Renderer {
 
 impl Renderer {
     pub fn initialize(world: &mut ecs::World) -> Self {
-        world.set_global(Status{
+        world.set_global(SceneInfo {
+            camera: cgm::Point3::new(0.0, 0.0, 0.0),
+            view: cgm::Matrix4::identity(),
+        });
+        world.set_global(Status {
             closed: false,
         });
 
