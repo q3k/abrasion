@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::iter::Iterator;
-use std::cell::{Ref, RefMut, RefCell};
 
 use crate::componentmap::{
     ComponentMap,
@@ -11,6 +10,7 @@ use crate::componentmap::{
 use crate::resourcemap::{
     ResourceMap,
     ResourceRef,
+    ResourceRefMut,
 };
 use crate::entity;
 use crate::component;
@@ -98,7 +98,18 @@ pub struct ReadResource<'a, T: component::Resource> {
 
 impl<'a, T: component::Resource> ReadResource<'a, T> {
     pub fn get(&self) -> ResourceRef<'a, T> {
-        self.world.resources.get::<'a, T>().unwrap()
+        self.world.resources.get::<T>().unwrap()
+    }
+}
+
+pub struct ReadWriteResource<'a, T: component::Resource> {
+    world: &'a World,
+    phantom: PhantomData<&'a T>,
+}
+
+impl<'a, T: component::Resource> ReadWriteResource<'a, T> {
+    pub fn get(&self) -> ResourceRefMut<'a, T> {
+        self.world.resources.get_mut::<T>().unwrap()
     }
 }
 
@@ -149,6 +160,13 @@ impl World {
 
     pub fn resource<'a, T: component::Resource>(&'a self) -> ReadResource<'a, T> {
         ReadResource {
+            world: self,
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn resource_mut<'a, T: component::Resource>(&'a self) -> ReadWriteResource<'a, T> {
+        ReadWriteResource {
             world: self,
             phantom: PhantomData,
         }
