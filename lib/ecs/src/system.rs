@@ -81,47 +81,28 @@ impl<'a, T: component::Global> Access<'a> for ReadWriteGlobal<'a, T> {
     }
 }
 
-impl <'a,
-    T: Access<'a>,
-    U: Access<'a>,
-> Access<'a> for (T, U) {
-    fn fetch(world: &'a  World) -> Self {
-        (
-            T::fetch(world),
-            U::fetch(world),
-        )
+macro_rules! impl_access_tuple {
+    ( $($ty:ident),* ) => {
+        impl <'a, $($ty),*> Access<'a> for ( $($ty,)* )
+            where $( $ty : Access<'a> ),*
+        {
+            fn fetch(world: &'a  World) -> Self {
+                ( $( $ty::fetch(world), )* )
+            }
+        }
     }
 }
 
-impl <'a,
-    T: Access<'a>,
-    U: Access<'a>,
-    V: Access<'a>,
-> Access<'a> for (T, U, V) {
-    fn fetch(world: &'a  World) -> Self {
-        (
-            T::fetch(world),
-            U::fetch(world),
-            V::fetch(world),
-        )
-    }
-}
-
-impl <'a,
-    T: Access<'a>,
-    U: Access<'a>,
-    V: Access<'a>,
-    W: Access<'a>,
-> Access<'a> for (T, U, V, W) {
-    fn fetch(world: &'a  World) -> Self {
-        (
-            T::fetch(world),
-            U::fetch(world),
-            V::fetch(world),
-            W::fetch(world),
-        )
-    }
-}
+impl_access_tuple!(A);
+impl_access_tuple!(A, B);
+impl_access_tuple!(A, B, C);
+impl_access_tuple!(A, B, C, D);
+impl_access_tuple!(A, B, C, D, E);
+impl_access_tuple!(A, B, C, D, E, F);
+impl_access_tuple!(A, B, C, D, E, F, G);
+impl_access_tuple!(A, B, C, D, E, F, G, H);
+impl_access_tuple!(A, B, C, D, E, F, G, H, I);
+impl_access_tuple!(A, B, C, D, E, F, G, H, I, J);
 
 pub struct Processor<'a> {
     world: &'a  World,
