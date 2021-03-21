@@ -2,6 +2,7 @@ load("@rules_rust//rust:rust.bzl", "rust_test", "rust_library")
 
 rust_library(
     name = "ecs",
+    edition = "2018",
     srcs = [
         "src/lib.rs",
 

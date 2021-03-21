@@ -18,7 +18,7 @@ pub trait System<'a> {
 }
 
 trait WorldRunner<'a> {
-    fn run_world(&mut self, &'a  World);
+    fn run_world(&mut self, w: &'a World);
 }
 
 impl<'a, T> WorldRunner<'a> for T
