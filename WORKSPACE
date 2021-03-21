@@ -3,16 +3,16 @@ workspace(name = "abrasion")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "io_bazel_rules_rust",
-    # master HEAD as of 2021/01/07
-    sha256 = "8e1bae501e0df40e8feb2497ebab37c84930bf00b332f8f55315dfc08d85c30a",
-    strip_prefix = "rules_rust-df18ddbece5b68f86e63414ea4b50d691923039a",
+    name = "rules_rust",
+    # master HEAD as of 2021/03/21
+    sha256 = "94982f79b84c1d8a8ddf73293044819390116bb97f93c63308a3877a858fec63",
+    strip_prefix = "rules_rust-73cb9389700cef4a863526820dd9169e0c3e1e25",
     urls = [
-        "https://github.com/bazelbuild/rules_rust/archive/df18ddbece5b68f86e63414ea4b50d691923039a.tar.gz",
+        "https://github.com/bazelbuild/rules_rust/archive/73cb9389700cef4a863526820dd9169e0c3e1e25.tar.gz",
     ],
 )
 
-load("@io_bazel_rules_rust//rust:repositories.bzl", "rust_repositories")
+load("@rules_rust//rust:repositories.bzl", "rust_repositories")
 rust_repositories()
 
 load("//third_party/shaderc:deps.bzl", "shaderc_deps")

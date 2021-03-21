@@ -24,7 +24,7 @@ targets = [
     "x86_64-pc-windows-msvc",
 ] 
 genmode = "Vendored"
-rust_rules_workspace_name = "io_bazel_rules_rust"
+rust_rules_workspace_name = "rules_rust"
 package_aliases_dir = "."
 default_gen_buildrs = false
 

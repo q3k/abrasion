@@ -1,4 +1,4 @@
-load("@io_bazel_rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
+load("@rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 rust_binary(
@@ -49,7 +49,7 @@ rust_binary(
         "//third_party/cargo:vulkano",
         "//third_party/cargo:vulkano_win",
         "@com_github_q3k_q3d//:q3d_rs",
-        "@io_bazel_rules_rust//tools/runfiles",
+        "@rules_rust//tools/runfiles",
     ],
     data = [
         "//engine/shaders:forward_vert",

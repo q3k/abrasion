@@ -1,4 +1,4 @@
-load("@io_bazel_rules_rust//rust:rust.bzl", "rust_library")
+load("@rules_rust//rust:rust.bzl", "rust_library")
 load("@com_github_google_flatbuffers//:build_defs.bzl", "flatbuffer_library_public")
 
 flatbuffer_library_public(
