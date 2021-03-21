@@ -6,7 +6,7 @@ use crate::{
     world::{
         ReadComponent, ReadComponentIter,
         ReadWriteComponent, ReadWriteComponentIter,
-        ReadResource, ReadWriteResource,
+        ReadGlobal, ReadWriteGlobal,
         World,
     }
 };
@@ -69,15 +69,15 @@ impl<'a, T: component::Component> AccessComponent<'a> for ReadWriteComponent<'a,
     }
 }
 
-impl<'a, T: component::Resource> Access<'a> for ReadResource<'a, T> {
+impl<'a, T: component::Global> Access<'a> for ReadGlobal<'a, T> {
     fn fetch(world: &'a World) -> Self {
-        world.resource()
+        world.global()
     }
 }
 
-impl<'a, T: component::Resource> Access<'a> for ReadWriteResource<'a, T> {
+impl<'a, T: component::Global> Access<'a> for ReadWriteGlobal<'a, T> {
     fn fetch(world: &'a World) -> Self {
-        world.resource_mut()
+        world.global_mut()
     }
 }
 
@@ -197,21 +197,21 @@ impl <'a, J: Join<'a>> Iterator for JoinIter<'a, J> {
 mod test {
     use crate::{
         component::Component,
-        component::Resource,
+        component::Global,
         system,
         system::Join,
-        world::{ReadComponent, ReadWriteComponent, ReadResource, ReadWriteResource, World},
+        world::{ReadComponent, ReadWriteComponent, ReadGlobal, ReadWriteGlobal, World},
     };
 
     #[derive(Clone,Debug,Default)]
     struct Delta(f32);
-    impl Resource for Delta {}
+    impl Global for Delta {}
 
     #[derive(Clone,Debug)]
     struct PhysicsStatus {
         object_count: u64,
     }
-    impl Resource for PhysicsStatus {}
+    impl Global for PhysicsStatus {}
 
     #[derive(Clone,Debug)]
     struct Position {
@@ -233,8 +233,8 @@ mod test {
     impl<'a> system::System<'a> for Physics {
         type SystemData = ( ReadWriteComponent<'a, Position>
                           , ReadComponent<'a, Velocity>
-                          , ReadResource<'a, Delta>
-                          , ReadWriteResource<'a, PhysicsStatus>);
+                          , ReadGlobal<'a, Delta>
+                          , ReadWriteGlobal<'a, PhysicsStatus>);
 
         fn run(&mut self, (pos, vel, delta, status): Self::SystemData) {
             let d = delta.get();
@@ -254,8 +254,8 @@ mod test {
         let mut world = World::new();
         world.new_entity().with(Velocity { x: 0.0, y: 0.0, z: 1.0 }).with(Position { x: 1.0, y: 2.0, z: 3.0 }).build();
         world.new_entity().with(Velocity { x: 0.0, y: 0.0, z: 2.0 }).with(Position { x: 4.0, y: 5.0, z: 6.0 }).build();
-        world.set_resource(Delta(1.0));
-        world.set_resource(PhysicsStatus { object_count: 0u64 });
+        world.set_global(Delta(1.0));
+        world.set_global(PhysicsStatus { object_count: 0u64 });
 
         let mut p = system::Processor {
             world: &world,
@@ -267,9 +267,9 @@ mod test {
         assert_eq!(vec![3.0, 6.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
         p.run();
         assert_eq!(vec![4.0, 8.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
-        world.set_resource(Delta(2.0));
+        world.set_global(Delta(2.0));
         p.run();
         assert_eq!(vec![6.0, 12.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
-        assert_eq!(2, world.resource::<PhysicsStatus>().get().object_count);
+        assert_eq!(2, world.global::<PhysicsStatus>().get().object_count);
     }
 }

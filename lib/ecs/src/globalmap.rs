@@ -5,13 +5,13 @@ use std::ops::{Deref, DerefMut};
 use crate::component;
 use crate::borrow;
 
-struct ResourceMapEntry {
-    resource: Box<dyn component::Resource>,
+struct GlobalMapEntry {
+    global: Box<dyn component::Global>,
     borrow: Cell<borrow::Flag>,
 }
 
-pub struct ResourceMap {
-    value: UnsafeCell<BTreeMap<component::ID, ResourceMapEntry>>,
+pub struct GlobalMap {
+    value: UnsafeCell<BTreeMap<component::ID, GlobalMapEntry>>,
     borrow: Cell<borrow::Flag>,
 }
 
@@ -24,7 +24,7 @@ impl AccessError {
     }
 }
 
-impl ResourceMap {
+impl GlobalMap {
     pub fn new() -> Self {
         Self {
             value: UnsafeCell::new(BTreeMap::new()),
@@ -32,78 +32,78 @@ impl ResourceMap {
         }
     }
 
-    pub fn get<'a, T: component::Resource>(&'a self) -> Result<ResourceRef<'a, T>, AccessError> {
+    pub fn get<'a, T: component::Global>(&'a self) -> Result<GlobalRef<'a, T>, AccessError> {
         match borrow::RefMut::new(&self.borrow) {
             None => Err(AccessError::concurrent()),
             Some(b) => {
                 let map = self.value.get();
                 unsafe {
-                    match (*map).get(&component::resource_id::<T>()) {
+                    match (*map).get(&component::global_id::<T>()) {
                         Some(entry) => {
-                            let val = &entry.resource;
+                            let val = &entry.global;
                             match borrow::Ref::new(&entry.borrow) {
                                 None => Err(AccessError::concurrent()),
                                 Some(b2) => {
                                     let val = val.as_ref();
-                                    let val = & *(val as *const (dyn component::Resource) as *const T);
+                                    let val = & *(val as *const (dyn component::Global) as *const T);
                                     drop(b);
-                                    Ok(ResourceRef { val, borrow: Some(b2) })
+                                    Ok(GlobalRef { val, borrow: Some(b2) })
                                 },
                             }
                         },
-                        None => Err(AccessError("resource absent from world".to_string())),
+                        None => Err(AccessError("global absent from world".to_string())),
                     }
                 }
             }
         }
     }
 
-    pub fn get_mut<'a, T: component::Resource>(&'a self) -> Result<ResourceRefMut<'a, T>, AccessError> {
+    pub fn get_mut<'a, T: component::Global>(&'a self) -> Result<GlobalRefMut<'a, T>, AccessError> {
         match borrow::RefMut::new(&self.borrow) {
             None => Err(AccessError::concurrent()),
             Some(b) => {
                 let map = self.value.get();
                 unsafe {
-                    match (*map).get_mut(&component::resource_id::<T>()) {
+                    match (*map).get_mut(&component::global_id::<T>()) {
                         Some(entry) => {
-                            let val = &mut entry.resource;
+                            let val = &mut entry.global;
                             match borrow::RefMut::new(&entry.borrow) {
                                 None => Err(AccessError::concurrent()),
                                 Some(b2) => {
                                     let val = val.as_mut();
-                                    let val = &mut *(val as *mut (dyn component::Resource) as *mut T);
+                                    let val = &mut *(val as *mut (dyn component::Global) as *mut T);
                                     drop(b);
-                                    Ok(ResourceRefMut { val, borrow: Some(b2) })
+                                    Ok(GlobalRefMut { val, borrow: Some(b2) })
                                 },
                             }
                         },
-                        None => Err(AccessError("resource absent from world".to_string())),
+                        None => Err(AccessError("global absent from world".to_string())),
                     }
                 }
             }
         }
     }
 
-    pub fn set<'a, T: component::Resource>(&'a self, r: T) -> Result<(), AccessError> {
+    pub fn set<'a, T: component::Global>(&'a self, r: T) -> Result<(), AccessError> {
         match borrow::RefMut::new(&self.borrow) {
             None => Err(AccessError::concurrent()),
             Some(b) => {
                 let map = self.value.get();
-                let rid = component::resource_id::<T>();
+                let rid = component::global_id::<T>();
                 unsafe {
                     match (*map).get_mut(&rid) {
                         Some(entry) => {
                             match borrow::RefMut::new(&entry.borrow) {
                                 None => { return Err(AccessError::concurrent()); },
                                 Some(b2) => {
-                                    entry.resource = Box::new(r);
+                                    entry.global = Box::new(r);
                                     drop(b2);
                                 },
                             };
                         },
                         None => {
-                            (*map).insert(rid, ResourceMapEntry {
-                                resource: Box::new(r),
+                            (*map).insert(rid, GlobalMapEntry {
+                                global: Box::new(r),
                                 borrow: Cell::new(borrow::UNUSED),
                             });
                         },
@@ -116,12 +116,12 @@ impl ResourceMap {
     }
 }
 
-pub struct ResourceRef<'a, T: component::Resource> {
+pub struct GlobalRef<'a, T: component::Global> {
     val: *const T,
     borrow: Option<borrow::Ref<'a>>,
 }
 
-impl<'a, T: component::Resource> Deref for ResourceRef<'a, T> {
+impl<'a, T: component::Global> Deref for GlobalRef<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -131,24 +131,24 @@ impl<'a, T: component::Resource> Deref for ResourceRef<'a, T> {
     }
 }
 
-impl <'a, T: component::Resource> Drop for ResourceRef<'a, T> {
+impl <'a, T: component::Global> Drop for GlobalRef<'a, T> {
     fn drop(&mut self) {
         self.borrow = None;
     }
 }
 
-pub struct ResourceRefMut<'a, T: component::Resource> {
+pub struct GlobalRefMut<'a, T: component::Global> {
     val: *mut T,
     borrow: Option<borrow::RefMut<'a>>,
 }
 
-impl <'a, T: component::Resource> Drop for ResourceRefMut<'a, T> {
+impl <'a, T: component::Global> Drop for GlobalRefMut<'a, T> {
     fn drop(&mut self) {
         self.borrow = None;
     }
 }
 
-impl <'a, T: component::Resource> Deref for ResourceRefMut<'a, T> {
+impl <'a, T: component::Global> Deref for GlobalRefMut<'a, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe {
@@ -157,7 +157,7 @@ impl <'a, T: component::Resource> Deref for ResourceRefMut<'a, T> {
     }
 }
 
-impl <'a, T: component::Resource> DerefMut for ResourceRefMut<'a, T> {
+impl <'a, T: component::Global> DerefMut for GlobalRefMut<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
             &mut(*self.val)

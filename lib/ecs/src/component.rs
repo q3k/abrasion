@@ -8,9 +8,9 @@ pub fn component_id<T: Component>() -> ID {
     std::any::TypeId::of::<T>()
 }
 
-pub trait Resource: 'static {
+pub trait Global: 'static {
 }
 
-pub fn resource_id<T: Resource>() -> ID {
+pub fn global_id<T: Global>() -> ID {
     std::any::TypeId::of::<T>()
 }

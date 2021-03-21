@@ -7,10 +7,10 @@ use crate::componentmap::{
     ComponentMapIter,
     ComponentMapIterMut,
 };
-use crate::resourcemap::{
-    ResourceMap,
-    ResourceRef,
-    ResourceRefMut,
+use crate::globalmap::{
+    GlobalMap,
+    GlobalRef,
+    GlobalRefMut,
 };
 use crate::entity;
 use crate::component;
@@ -91,31 +91,31 @@ impl <'a, T: component::Component> Iterator for ReadWriteComponentIter<'a, T> {
     }
 }
 
-pub struct ReadResource<'a, T: component::Resource> {
+pub struct ReadGlobal<'a, T: component::Global> {
     world: &'a World,
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T: component::Resource> ReadResource<'a, T> {
-    pub fn get(&self) -> ResourceRef<'a, T> {
-        self.world.resources.get::<T>().unwrap()
+impl<'a, T: component::Global> ReadGlobal<'a, T> {
+    pub fn get(&self) -> GlobalRef<'a, T> {
+        self.world.globals.get::<T>().unwrap()
     }
 }
 
-pub struct ReadWriteResource<'a, T: component::Resource> {
+pub struct ReadWriteGlobal<'a, T: component::Global> {
     world: &'a World,
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T: component::Resource> ReadWriteResource<'a, T> {
-    pub fn get(&self) -> ResourceRefMut<'a, T> {
-        self.world.resources.get_mut::<T>().unwrap()
+impl<'a, T: component::Global> ReadWriteGlobal<'a, T> {
+    pub fn get(&self) -> GlobalRefMut<'a, T> {
+        self.world.globals.get_mut::<T>().unwrap()
     }
 }
 
 pub struct World {
     components: BTreeMap<component::ID, ComponentMap>,
-    resources: ResourceMap,
+    globals: GlobalMap,
     next_id: entity::ID,
 }
 
@@ -123,7 +123,7 @@ impl World {
     pub fn new() -> Self {
         Self {
             components: BTreeMap::new(),
-            resources: ResourceMap::new(),
+            globals: GlobalMap::new(),
             next_id: 1u64,
         }
     }
@@ -158,22 +158,22 @@ impl World {
         }
     }
 
-    pub fn resource<'a, T: component::Resource>(&'a self) -> ReadResource<'a, T> {
-        ReadResource {
+    pub fn global<'a, T: component::Global>(&'a self) -> ReadGlobal<'a, T> {
+        ReadGlobal {
             world: self,
             phantom: PhantomData,
         }
     }
 
-    pub fn resource_mut<'a, T: component::Resource>(&'a self) -> ReadWriteResource<'a, T> {
-        ReadWriteResource {
+    pub fn global_mut<'a, T: component::Global>(&'a self) -> ReadWriteGlobal<'a, T> {
+        ReadWriteGlobal {
             world: self,
             phantom: PhantomData,
         }
     }
 
-    pub fn set_resource<T: component::Resource>(&self, r: T) {
-        self.resources.set(r).unwrap();
+    pub fn set_global<T: component::Global>(&self, r: T) {
+        self.globals.set(r).unwrap();
     }
 }
 
