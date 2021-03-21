@@ -3,6 +3,9 @@ use std::marker::PhantomData;
 use std::iter::Iterator;
 
 use crate::componentmap::{
+    AccessError,
+    Ref as ComponentMapRef,
+    RefMut as ComponentMapRefMut,
     ComponentMap,
     ComponentMapIter,
     ComponentMapIterMut,
@@ -26,6 +29,14 @@ impl<'a, T: component::Component> ReadComponent<'a, T> {
         ReadComponentIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter().unwrap() ),
+        }
+    }
+
+    pub fn get(&self, e: entity::ID) -> Result<ComponentMapRef<'a, T>, AccessError> {
+        // TODO(q3k): fix the unwrap
+        let cm = self.world.components.get(&component::component_id::<T>()).unwrap();
+        unsafe {
+            cm.get(e)
         }
     }
 }
@@ -64,6 +75,14 @@ impl<'a, T: component::Component> ReadWriteComponent<'a, T> {
         ReadWriteComponentIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter_mut().unwrap() ),
+        }
+    }
+
+    pub fn get_mut(&self, e: entity::ID) -> Result<ComponentMapRefMut<'a, T>, AccessError> {
+        // TODO(q3k): fix the unwrap
+        let cm = self.world.components.get(&component::component_id::<T>()).unwrap();
+        unsafe {
+            cm.get_mut(e)
         }
     }
 }

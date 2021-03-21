@@ -4,6 +4,7 @@ use std::collections::btree_map::{
     Iter as BTMIter,
     IterMut as BTMIterMut,
 };
+use std::ops::{Deref, DerefMut};
 
 use crate::entity;
 use crate::component;
@@ -34,7 +35,7 @@ impl ComponentMap {
                     let map = &*self.value.get();
                     map.iter()
                 },
-                borrow: b,
+                borrow: Some(b),
             }),
         }
     }
@@ -46,7 +47,7 @@ impl ComponentMap {
                     let map = &mut *self.value.get();
                     map.iter_mut()
                 },
-                borrow: b,
+                borrow: Some(b),
             }),
         }
     }
@@ -64,16 +65,116 @@ impl ComponentMap {
             }
         }
     }
+
+    pub unsafe fn get<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<Ref<'a, T>, AccessError> {
+        match borrow::Ref::new(&self.borrow) {
+            None => Err(AccessError("already borrowed mutably".to_string())),
+            Some(b) => {
+                let map = &*self.value.get();
+                match map.get(&e) {
+                    None => Err(AccessError("no such entity".to_string())),
+                    Some(component) => {
+                        let component = component.as_ref();
+                        let val = component as *const (dyn component::Component) as *const T;
+                        Ok(Ref {
+                            val,
+                            borrow: Some(b),
+                        })
+                    },
+                }
+            }
+        }
+    }
+
+    pub unsafe fn get_mut<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<RefMut<'a, T>, AccessError> {
+        match borrow::RefMut::new(&self.borrow) {
+            None => Err(AccessError("already borrowed mutably".to_string())),
+            Some(b) => {
+                let map = &mut*self.value.get();
+                match map.get_mut(&e) {
+                    None => Err(AccessError("no such entity".to_string())),
+                    Some(component) => {
+                        let component = component.as_mut();
+                        let val = component as *mut (dyn component::Component) as *mut T;
+                        Ok(RefMut {
+                            val,
+                            borrow: Some(b),
+                        })
+                    },
+                }
+            }
+        }
+    }
+}
+
+pub struct Ref<'a, T: component::Component> {
+    val: *const T,
+    borrow: Option<borrow::Ref<'a>>,
+}
+
+impl <'a, T: component::Component> Drop for Ref<'a, T> {
+    fn drop(&mut self) {
+        self.borrow = None;
+    }
+}
+
+impl <'a, T: component::Component> Deref for Ref<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            &(*self.val)
+        }
+    }
+}
+
+pub struct RefMut<'a, T: component::Component> {
+    val: *mut T,
+    borrow: Option<borrow::RefMut<'a>>,
+}
+
+impl <'a, T: component::Component> Drop for RefMut<'a, T> {
+    fn drop(&mut self) {
+        self.borrow = None;
+    }
+}
+
+impl <'a, T: component::Component> Deref for RefMut<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            &(*self.val)
+        }
+    }
+}
+
+impl <'a, T: component::Component> DerefMut for RefMut<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe {
+            &mut(*self.val)
+        }
+    }
 }
 
 pub struct ComponentMapIter<'a> {
     pub iter: BTMIter<'a, entity::ID, Box<dyn component::Component>>,
-    #[allow(dead_code)]
-    borrow: borrow::Ref<'a>,
+    borrow: Option<borrow::Ref<'a>>,
+}
+
+impl<'a> Drop for ComponentMapIter<'a> {
+    fn drop(&mut self) {
+        self.borrow = None;
+    }
 }
 
 pub struct ComponentMapIterMut<'a> {
     pub iter: BTMIterMut<'a, entity::ID, Box<dyn component::Component>>,
-    #[allow(dead_code)]
-    borrow: borrow::RefMut<'a>,
+    borrow: Option<borrow::RefMut<'a>>,
+}
+
+impl<'a> Drop for ComponentMapIterMut<'a> {
+    fn drop(&mut self) {
+        self.borrow = None;
+    }
 }
