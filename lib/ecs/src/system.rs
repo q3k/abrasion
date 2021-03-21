@@ -4,8 +4,8 @@ use std::iter::Peekable;
 use crate::{
     component,
     world::{
-        ReadData, ReadDataIter,
-        ReadWriteData, ReadWriteDataIter,
+        ReadComponent, ReadComponentIter,
+        ReadWriteComponent, ReadWriteComponentIter,
         ReadResource, ReadWriteResource,
         World,
     }
@@ -41,30 +41,30 @@ pub trait AccessComponent<'a> : Access<'a> {
     fn iter(&self) -> Self::Iterator;
 }
 
-impl<'a, T: component::Component> Access<'a> for ReadData<'a, T> {
+impl<'a, T: component::Component> Access<'a> for ReadComponent<'a, T> {
     fn fetch(world: &'a  World) -> Self {
         world.components()
     }
 }
 
-impl<'a, T: component::Component> AccessComponent<'a> for ReadData<'a, T> {
+impl<'a, T: component::Component> AccessComponent<'a> for ReadComponent<'a, T> {
     type Component = &'a T;
-    type Iterator = ReadDataIter<'a, T>;
-    fn iter(&self) -> ReadDataIter<'a, T> {
+    type Iterator = ReadComponentIter<'a, T>;
+    fn iter(&self) -> ReadComponentIter<'a, T> {
         Self::iter(self)
     }
 }
 
-impl<'a, T: component::Component> Access<'a> for ReadWriteData<'a, T> {
+impl<'a, T: component::Component> Access<'a> for ReadWriteComponent<'a, T> {
     fn fetch(world: &'a  World) -> Self {
         world.components_mut()
     }
 }
 
-impl<'a, T: component::Component> AccessComponent<'a> for ReadWriteData<'a, T> {
+impl<'a, T: component::Component> AccessComponent<'a> for ReadWriteComponent<'a, T> {
     type Component = &'a mut T;
-    type Iterator = ReadWriteDataIter<'a, T>;
-    fn iter(&self) -> ReadWriteDataIter<'a, T> {
+    type Iterator = ReadWriteComponentIter<'a, T>;
+    fn iter(&self) -> ReadWriteComponentIter<'a, T> {
         Self::iter_mut(self)
     }
 }
@@ -200,7 +200,7 @@ mod test {
         component::Resource,
         system,
         system::Join,
-        world::{ReadData, ReadWriteData, ReadResource, ReadWriteResource, World},
+        world::{ReadComponent, ReadWriteComponent, ReadResource, ReadWriteResource, World},
     };
 
     #[derive(Clone,Debug,Default)]
@@ -231,8 +231,8 @@ mod test {
 
     struct Physics;
     impl<'a> system::System<'a> for Physics {
-        type SystemData = ( ReadWriteData<'a, Position>
-                          , ReadData<'a, Velocity>
+        type SystemData = ( ReadWriteComponent<'a, Position>
+                          , ReadComponent<'a, Velocity>
                           , ReadResource<'a, Delta>
                           , ReadWriteResource<'a, PhysicsStatus>);
 

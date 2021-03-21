@@ -15,27 +15,27 @@ use crate::resourcemap::{
 use crate::entity;
 use crate::component;
 
-pub struct ReadData<'a, T: component::Component> {
+pub struct ReadComponent<'a, T: component::Component> {
     world: &'a World,
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T: component::Component> ReadData<'a, T> {
-    pub fn iter(&self) -> ReadDataIter<'a, T> {
+impl<'a, T: component::Component> ReadComponent<'a, T> {
+    pub fn iter(&self) -> ReadComponentIter<'a, T> {
         let cm = self.world.components.get(&component::component_id::<T>());
-        ReadDataIter {
+        ReadComponentIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter().unwrap() ),
         }
     }
 }
 
-pub struct ReadDataIter<'a, T: component::Component> {
+pub struct ReadComponentIter<'a, T: component::Component> {
     phantom: PhantomData<&'a T>,
     iter: Option<ComponentMapIter<'a>>,
 }
 
-impl <'a, T: component::Component> Iterator for ReadDataIter<'a, T> {
+impl <'a, T: component::Component> Iterator for ReadComponentIter<'a, T> {
     type Item = (entity::ID, &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -53,27 +53,27 @@ impl <'a, T: component::Component> Iterator for ReadDataIter<'a, T> {
     }
 }
 
-pub struct ReadWriteData<'a, T: component::Component> {
+pub struct ReadWriteComponent<'a, T: component::Component> {
     world: &'a World,
     phantom: PhantomData<&'a T>,
 }
 
-impl<'a, T: component::Component> ReadWriteData<'a, T> {
-    pub fn iter_mut(&self) -> ReadWriteDataIter<'a, T> {
+impl<'a, T: component::Component> ReadWriteComponent<'a, T> {
+    pub fn iter_mut(&self) -> ReadWriteComponentIter<'a, T> {
         let cm = self.world.components.get(&component::component_id::<T>());
-        ReadWriteDataIter {
+        ReadWriteComponentIter {
             phantom: PhantomData,
             iter: cm.map(|e| e.try_iter_mut().unwrap() ),
         }
     }
 }
 
-pub struct ReadWriteDataIter<'a, T: component::Component> {
+pub struct ReadWriteComponentIter<'a, T: component::Component> {
     phantom: PhantomData<&'a T>,
     iter: Option<ComponentMapIterMut<'a>>,
 }
 
-impl <'a, T: component::Component> Iterator for ReadWriteDataIter<'a, T> {
+impl <'a, T: component::Component> Iterator for ReadWriteComponentIter<'a, T> {
     type Item = (entity::ID, &'a mut T);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -144,15 +144,15 @@ impl World {
         map.insert(e.id(), c).unwrap();
     }
 
-    pub fn components<'a, T: component::Component>(&'a self) -> ReadData<'a, T> {
-        ReadData {
+    pub fn components<'a, T: component::Component>(&'a self) -> ReadComponent<'a, T> {
+        ReadComponent {
             world: self,
             phantom: PhantomData,
         }
     }
 
-    pub fn components_mut<'a, T: component::Component>(&'a self) -> ReadWriteData<'a, T> {
-        ReadWriteData {
+    pub fn components_mut<'a, T: component::Component>(&'a self) -> ReadWriteComponent<'a, T> {
+        ReadWriteComponent {
             world: self,
             phantom: PhantomData,
         }
