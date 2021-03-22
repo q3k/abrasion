@@ -51,6 +51,9 @@ rust_binary(
         "@com_github_q3k_q3d//:q3d_rs",
         "@rules_rust//tools/runfiles",
     ],
+    proc_macro_deps = [
+        "//lib/ecs_macros",
+    ],
     data = [
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",

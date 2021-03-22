@@ -26,6 +26,7 @@ mod util;
 mod physics;
 
 use ecs::{Component, World, Processor};
+use ecs_macros::Access;
 use render::vulkan::data;
 use render::material::{Texture, PBRMaterialBuilder};
 use render::{Light, Material, Mesh, Transform, Renderable};
@@ -153,13 +154,17 @@ impl Main {
     }
 }
 
+#[derive(Access)]
+struct MainData<'a> {
+    scene_info: ecs::ReadWriteGlobal<'a, render::SceneInfo>,
+    time: ecs::ReadGlobal<'a, Time>,
+    transforms: ecs::ReadWriteComponent<'a, Transform>,
+}
+
 impl<'a> ecs::System <'a> for Main {
-    type SystemData = ( ecs::ReadWriteGlobal<'a, render::SceneInfo>
-                      , ecs::ReadGlobal<'a, Time>
-                      , ecs::ReadWriteComponent<'a, Transform>
-                      );
-    fn run(&mut self, (scene_info, time, transforms): Self::SystemData) {
-        let position = (time.get().instant() / 10.0) * 3.14 * 2.0;
+    type SystemData = MainData<'a>;
+    fn run(&mut self, sd: Self::SystemData) {
+        let position = (sd.time.get().instant() / 10.0) * 3.14 * 2.0;
 
         let camera = cgm::Point3::new(
             7.0 + (position / 4.0).sin(),
@@ -173,16 +178,16 @@ impl<'a> ecs::System <'a> for Main {
             cgm::Vector3::new(0.0, 0.0, 1.0)
         );
 
-        scene_info.get().camera = camera;
-        scene_info.get().view = view;
+        sd.scene_info.get().camera = camera;
+        sd.scene_info.get().view = view;
 
-        *transforms.get_mut(self.light1).unwrap() = Transform::at(
+        *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(
             -0.0 + (position*3.0).sin() * 4.0,
             -0.0 + (position*4.0).cos() * 4.0,
             -0.0 + (position*2.0).sin() * 3.0,
         );
 
-        *transforms.get_mut(self.light2).unwrap() = Transform::at(
+        *sd.transforms.get_mut(self.light2).unwrap() = Transform::at(
             -0.0 + (position*3.0).cos() * 4.0,
             -0.0 + (position*4.0).sin() * 4.0,
             -0.0 + (position*2.0).cos() * 3.0,

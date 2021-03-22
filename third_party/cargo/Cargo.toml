@@ -16,6 +16,8 @@ winit = "0.24.0"
 cgmath = "0.18.0"
 #openvr = "0.6.0"
 flatbuffers = "0.6.1"
+quote = "1.0.8"
+syn = "1.0.58"
 
 [workspace.metadata.raze]
 workspace_path = "//third_party/cargo"
@@ -71,4 +73,7 @@ gen_buildrs = true
 gen_buildrs = true
 
 [workspace.metadata.raze.crates.winapi.'0.3.9']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.proc-macro2.'1.0.24']
 gen_buildrs = true
