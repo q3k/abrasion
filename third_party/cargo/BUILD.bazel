@@ -58,6 +58,33 @@ alias(
 )
 
 alias(
+    name = "proc_macro2",
+    actual = "//third_party/cargo/vendor/proc-macro2-1.0.24:proc_macro2",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+)
+
+alias(
+    name = "quote",
+    actual = "//third_party/cargo/vendor/quote-1.0.8:quote",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+)
+
+alias(
+    name = "syn",
+    actual = "//third_party/cargo/vendor/syn-1.0.58:syn",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+)
+
+alias(
     name = "vulkano",
     actual = "//third_party/cargo/vendor/vulkano-0.20.0:vulkano",
     tags = [
