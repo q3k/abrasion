@@ -39,9 +39,10 @@ out gl_PerVertex {
 
 void main() {
     vec4 world = model * vec4(pos, 1.0);
+    vec4 normal4 = model * vec4(normal, 1.0);
 
     fragTexCoord = tex;
-    fragNormal = normal;
+    fragNormal = normal4.xyz / normal4.w;
     fragWorldPos = world.xyz / world.w;
 
     gl_Position = pco.view * world;
