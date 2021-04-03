@@ -2,5 +2,5 @@ cc_library(
     name = "libloading_global_static",
     srcs = ["libloading/global_static.c"],
     copts = ["-fPIC"],
-    visibility = ["//third_party/cargo/vendor/libloading-0.6.6:__pkg__"],
+    visibility = ["//third_party/cargo/vendor:__subpackages__"],
 )

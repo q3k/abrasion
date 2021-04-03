@@ -54,8 +54,8 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
-        "//third_party/cargo/vendor/libc-0.2.82:libc",
-        "//third_party/cargo/vendor/log-0.4.11:log",
+        "//third_party/cargo/vendor/libc-0.2.92:libc",
+        "//third_party/cargo/vendor/log-0.4.14:log",
         "//third_party/cargo/vendor/ndk-0.2.1:ndk",
         "//third_party/cargo/vendor/ndk-sys-0.2.1:ndk_sys",
     ],

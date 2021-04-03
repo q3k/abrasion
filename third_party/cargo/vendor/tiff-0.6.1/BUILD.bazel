@@ -36,7 +36,7 @@ rust_library(
     name = "tiff",
     srcs = glob(["**/*.rs"]),
     aliases = {
-        "//third_party/cargo/vendor/jpeg-decoder-0.1.20:jpeg_decoder": "jpeg",
+        "//third_party/cargo/vendor/jpeg-decoder-0.1.22:jpeg_decoder": "jpeg",
     },
     crate_features = [
     ],
@@ -54,9 +54,9 @@ rust_library(
     version = "0.6.1",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/jpeg-decoder-0.1.20:jpeg_decoder",
-        "//third_party/cargo/vendor/miniz_oxide-0.4.3:miniz_oxide",
-        "//third_party/cargo/vendor/weezl-0.1.3:weezl",
+        "//third_party/cargo/vendor/jpeg-decoder-0.1.22:jpeg_decoder",
+        "//third_party/cargo/vendor/miniz_oxide-0.4.4:miniz_oxide",
+        "//third_party/cargo/vendor/weezl-0.1.4:weezl",
     ],
 )
 

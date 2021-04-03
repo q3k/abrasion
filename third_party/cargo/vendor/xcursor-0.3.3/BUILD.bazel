@@ -49,6 +49,6 @@ rust_library(
     version = "0.3.3",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/nom-6.0.1:nom",
+        "//third_party/cargo/vendor/nom-6.1.2:nom",
     ],
 )

@@ -51,8 +51,8 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/proc-macro-crate-0.1.5:proc_macro_crate",
-        "//third_party/cargo/vendor/proc-macro2-1.0.24:proc_macro2",
-        "//third_party/cargo/vendor/quote-1.0.8:quote",
-        "//third_party/cargo/vendor/syn-1.0.58:syn",
+        "//third_party/cargo/vendor/proc-macro2-1.0.26:proc_macro2",
+        "//third_party/cargo/vendor/quote-1.0.9:quote",
+        "//third_party/cargo/vendor/syn-1.0.68:syn",
     ],
 )

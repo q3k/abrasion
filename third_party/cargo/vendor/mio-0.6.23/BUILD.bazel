@@ -55,7 +55,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/cfg-if-0.1.10:cfg_if",
         "//third_party/cargo/vendor/iovec-0.1.4:iovec",
-        "//third_party/cargo/vendor/log-0.4.11:log",
+        "//third_party/cargo/vendor/log-0.4.14:log",
         "//third_party/cargo/vendor/net2-0.2.37:net2",
         "//third_party/cargo/vendor/slab-0.4.2:slab",
     ] + selects.with_or({
@@ -63,7 +63,7 @@ rust_library(
         (
             "@rules_rust//rust/platform:x86_64-unknown-linux-gnu",
         ): [
-            "//third_party/cargo/vendor/libc-0.2.82:libc",
+            "//third_party/cargo/vendor/libc-0.2.92:libc",
         ],
         "//conditions:default": [],
     }) + selects.with_or({

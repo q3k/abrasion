@@ -52,6 +52,6 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/adler32-1.2.0:adler32",
-        "//third_party/cargo/vendor/byteorder-1.3.4:byteorder",
+        "//third_party/cargo/vendor/byteorder-1.4.3:byteorder",
     ],
 )

@@ -34,7 +34,6 @@ rust_library(
     name = "dlib",
     srcs = glob(["**/*.rs"]),
     crate_features = [
-        "dlopen",
     ],
     crate_root = "src/lib.rs",
     crate_type = "lib",
@@ -50,6 +49,6 @@ rust_library(
     version = "0.4.2",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/libloading-0.6.6:libloading",
+        "//third_party/cargo/vendor/libloading-0.6.7:libloading",
     ],
 )

@@ -51,6 +51,6 @@ rust_library(
     version = "1.13.0",
     # buildifier: leave-alone
     deps = [
-        "//third_party/cargo/vendor/libc-0.2.82:libc",
+        "//third_party/cargo/vendor/libc-0.2.92:libc",
     ],
 )

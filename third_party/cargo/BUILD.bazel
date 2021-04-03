@@ -41,7 +41,7 @@ alias(
 
 alias(
     name = "image",
-    actual = "//third_party/cargo/vendor/image-0.23.12:image",
+    actual = "//third_party/cargo/vendor/image-0.23.14:image",
     tags = [
         "cargo-raze",
         "manual",
@@ -50,7 +50,7 @@ alias(
 
 alias(
     name = "log",
-    actual = "//third_party/cargo/vendor/log-0.4.11:log",
+    actual = "//third_party/cargo/vendor/log-0.4.14:log",
     tags = [
         "cargo-raze",
         "manual",
@@ -59,7 +59,7 @@ alias(
 
 alias(
     name = "proc_macro2",
-    actual = "//third_party/cargo/vendor/proc-macro2-1.0.24:proc_macro2",
+    actual = "//third_party/cargo/vendor/proc-macro2-1.0.26:proc_macro2",
     tags = [
         "cargo-raze",
         "manual",
@@ -68,7 +68,7 @@ alias(
 
 alias(
     name = "quote",
-    actual = "//third_party/cargo/vendor/quote-1.0.8:quote",
+    actual = "//third_party/cargo/vendor/quote-1.0.9:quote",
     tags = [
         "cargo-raze",
         "manual",
@@ -77,7 +77,7 @@ alias(
 
 alias(
     name = "syn",
-    actual = "//third_party/cargo/vendor/syn-1.0.58:syn",
+    actual = "//third_party/cargo/vendor/syn-1.0.68:syn",
     tags = [
         "cargo-raze",
         "manual",

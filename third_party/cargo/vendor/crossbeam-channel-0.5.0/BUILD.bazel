@@ -61,7 +61,7 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/cfg-if-1.0.0:cfg_if",
-        "//third_party/cargo/vendor/crossbeam-utils-0.8.1:crossbeam_utils",
+        "//third_party/cargo/vendor/crossbeam-utils-0.8.3:crossbeam_utils",
     ],
 )
 

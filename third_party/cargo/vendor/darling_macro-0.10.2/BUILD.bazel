@@ -50,7 +50,7 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/darling_core-0.10.2:darling_core",
-        "//third_party/cargo/vendor/quote-1.0.8:quote",
-        "//third_party/cargo/vendor/syn-1.0.58:syn",
+        "//third_party/cargo/vendor/quote-1.0.9:quote",
+        "//third_party/cargo/vendor/syn-1.0.68:syn",
     ],
 )

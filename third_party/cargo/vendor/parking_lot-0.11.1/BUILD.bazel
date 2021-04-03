@@ -52,8 +52,8 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/instant-0.1.9:instant",
-        "//third_party/cargo/vendor/lock_api-0.4.2:lock_api",
-        "//third_party/cargo/vendor/parking_lot_core-0.8.2:parking_lot_core",
+        "//third_party/cargo/vendor/lock_api-0.4.3:lock_api",
+        "//third_party/cargo/vendor/parking_lot_core-0.8.3:parking_lot_core",
     ],
 )
 

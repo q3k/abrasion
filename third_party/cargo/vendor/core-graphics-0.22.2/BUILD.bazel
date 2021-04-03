@@ -54,6 +54,6 @@ rust_library(
         "//third_party/cargo/vendor/core-foundation-0.9.1:core_foundation",
         "//third_party/cargo/vendor/core-graphics-types-0.1.1:core_graphics_types",
         "//third_party/cargo/vendor/foreign-types-0.3.2:foreign_types",
-        "//third_party/cargo/vendor/libc-0.2.82:libc",
+        "//third_party/cargo/vendor/libc-0.2.92:libc",
     ],
 )

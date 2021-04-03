@@ -52,9 +52,9 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
-        "//third_party/cargo/vendor/rusttype-0.9.2:rusttype",
-        "//third_party/cargo/vendor/walkdir-2.3.1:walkdir",
+        "//third_party/cargo/vendor/walkdir-2.3.2:walkdir",
         "//third_party/cargo/vendor/xdg-2.2.0:xdg",
         "//third_party/cargo/vendor/xml-rs-0.8.3:xml_rs",
+        "//third_party/cargo/vendor/rusttype-0.9.2:rusttype",
     ],
 )

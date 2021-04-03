@@ -59,7 +59,7 @@ rust_library(
         (
             "@rules_rust//rust/platform:x86_64-unknown-linux-gnu",
         ): [
-            "//third_party/cargo/vendor/libc-0.2.82:libc",
+            "//third_party/cargo/vendor/libc-0.2.92:libc",
         ],
         "//conditions:default": [],
     }) + selects.with_or({

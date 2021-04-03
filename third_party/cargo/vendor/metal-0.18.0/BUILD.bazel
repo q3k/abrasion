@@ -73,7 +73,7 @@ rust_library(
         "//third_party/cargo/vendor/cocoa-0.20.2:cocoa",
         "//third_party/cargo/vendor/core-graphics-0.19.2:core_graphics",
         "//third_party/cargo/vendor/foreign-types-0.3.2:foreign_types",
-        "//third_party/cargo/vendor/log-0.4.11:log",
+        "//third_party/cargo/vendor/log-0.4.14:log",
         "//third_party/cargo/vendor/objc-0.2.7:objc",
     ],
 )

@@ -55,6 +55,6 @@ rust_library(
         "//third_party/cargo/vendor/jni-sys-0.3.0:jni_sys",
         "//third_party/cargo/vendor/ndk-sys-0.2.1:ndk_sys",
         "//third_party/cargo/vendor/num_enum-0.4.3:num_enum",
-        "//third_party/cargo/vendor/thiserror-1.0.23:thiserror",
+        "//third_party/cargo/vendor/thiserror-1.0.24:thiserror",
     ],
 )

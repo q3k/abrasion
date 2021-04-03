@@ -55,7 +55,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/bitflags-1.2.1:bitflags",
         "//third_party/cargo/vendor/cfg-if-0.1.10:cfg_if",
-        "//third_party/cargo/vendor/libc-0.2.82:libc",
+        "//third_party/cargo/vendor/libc-0.2.92:libc",
     ] + selects.with_or({
         # cfg(any(target_os = "android", target_os = "linux"))
         (

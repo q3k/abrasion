@@ -55,7 +55,7 @@ rust_library(
     deps = [
         "//third_party/cargo/vendor/crossbeam-channel-0.5.0:crossbeam_channel",
         "//third_party/cargo/vendor/crossbeam-deque-0.8.0:crossbeam_deque",
-        "//third_party/cargo/vendor/crossbeam-utils-0.8.1:crossbeam_utils",
+        "//third_party/cargo/vendor/crossbeam-utils-0.8.3:crossbeam_utils",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/num_cpus-1.13.0:num_cpus",
     ] + selects.with_or({

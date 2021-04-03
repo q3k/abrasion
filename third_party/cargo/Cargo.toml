@@ -18,6 +18,7 @@ cgmath = "0.18.0"
 flatbuffers = "0.6.1"
 quote = "1.0.8"
 syn = "1.0.58"
+proc-macro2 = "1"
 
 [workspace.metadata.raze]
 workspace_path = "//third_party/cargo"
@@ -30,50 +31,44 @@ rust_rules_workspace_name = "rules_rust"
 package_aliases_dir = "."
 default_gen_buildrs = false
 
-[workspace.metadata.raze.crates.andrew.'0.2.1']
-skipped_deps = ['rusttype-0.7.9']
-additional_deps = ['//third_party/cargo/vendor/rusttype-0.8.3:rusttype']
+[workspace.metadata.raze.crates.andrew.'0.3.1']
+skipped_deps = ['rusttype-0.9.2']
+additional_deps = ['//third_party/cargo/vendor/rusttype-0.9.2:rusttype']
 
 [workspace.metadata.raze.crates.x11-dl.'2.18.5']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.wayland-client.'0.23.6']
+[workspace.metadata.raze.crates.wayland-client.'0.28.5']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.wayland-protocols.'0.23.6']
+[workspace.metadata.raze.crates.wayland-protocols.'0.28.5']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.log.'0.4.8']
+[workspace.metadata.raze.crates.log.'0.4.14']
 additional_flags = [
     "--cfg=atomic_cas"
 ]
 
-[workspace.metadata.raze.crates.libloading.'0.6.6']
+[workspace.metadata.raze.crates.libloading.'0.7.0']
 additional_deps = ['//third_party/cargo/patches:libloading_global_static']
 
 [workspace.metadata.raze.crates.cgmath.'0.18.0']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.image.'0.23.12']
+[workspace.metadata.raze.crates.image.'0.23.14']
 gen_buildrs = true
 
 [workspace.metadata.raze.crates.num-rational.'0.3.2']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.libc.'0.2.82']
-gen_buildrs = true
-
-[workspace.metadata.raze.crates.wayland-client.'0.28.3']
-gen_buildrs = true
-
-[workspace.metadata.raze.crates.wayland-protocols.'0.28.3']
+[workspace.metadata.raze.crates.libc.'0.2.92']
 gen_buildrs = true
 
 [workspace.metadata.raze.crates.maybe-uninit.'2.0.0']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.winapi.'0.3.9']
+[workspace.metadata.raze.crates.winapi.'0.4.0']
 gen_buildrs = true
 
-[workspace.metadata.raze.crates.proc-macro2.'1.0.24']
+[workspace.metadata.raze.crates.proc-macro2.'1.0.26']
 gen_buildrs = true
