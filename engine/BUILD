@@ -8,6 +8,7 @@ rust_binary(
         "-C", "opt-level=3",
         "-C", "overflow-checks=n",
         "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
     ],
     srcs = [
         "src/main.rs",
@@ -58,6 +59,7 @@ rust_binary(
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
         "//assets:test-128px.png",
+        "//assets:test-128px-roughness.png",
     ],
 )
 
@@ -69,6 +71,7 @@ pkg_tar(
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
         "//assets:test-128px.png",
+        "//assets:test-128px-roughness.png",
     ],
     strip_prefix = '/',
     package_dir = 'demo',
