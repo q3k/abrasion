@@ -19,6 +19,7 @@ flatbuffers = "0.6.1"
 quote = "1.0.8"
 syn = "1.0.58"
 proc-macro2 = "1"
+mlua = { version = "0.5", features = [ "luajit" ] }
 
 [workspace.metadata.raze]
 workspace_path = "//third_party/cargo"
@@ -71,4 +72,7 @@ gen_buildrs = true
 gen_buildrs = true
 
 [workspace.metadata.raze.crates.proc-macro2.'1.0.26']
+gen_buildrs = true
+
+[workspace.metadata.raze.crates.mlua.'0.5.3']
 gen_buildrs = true

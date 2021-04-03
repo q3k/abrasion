@@ -58,6 +58,15 @@ alias(
 )
 
 alias(
+    name = "mlua",
+    actual = "//third_party/cargo/vendor/mlua-0.5.3:mlua",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+)
+
+alias(
     name = "proc_macro2",
     actual = "//third_party/cargo/vendor/proc-macro2-1.0.26:proc_macro2",
     tags = [

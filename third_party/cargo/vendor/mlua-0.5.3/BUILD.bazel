@@ -1,0 +1,135 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load(
+    "@rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
+# buildifier: disable=load-on-top
+load(
+    "@rules_rust//cargo:cargo_build_script.bzl",
+    "cargo_build_script",
+)
+
+cargo_build_script(
+    name = "mlua_build_script",
+    srcs = glob(["**/*.rs"]),
+    build_script_env = {
+    },
+    crate_features = [
+        "luajit",
+    ],
+    crate_root = "build/main.rs",
+    data = glob(["**"]),
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.5.3",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/cargo/vendor/cc-1.0.67:cc",
+        "//third_party/cargo/vendor/pkg-config-0.3.19:pkg_config",
+    ],
+)
+
+# Unsupported target "benchmark" with type "bench" omitted
+
+# Unsupported target "async_http_client" with type "example" omitted
+
+# Unsupported target "async_http_reqwest" with type "example" omitted
+
+# Unsupported target "async_http_server" with type "example" omitted
+
+# Unsupported target "async_tcp_server" with type "example" omitted
+
+# Unsupported target "guided_tour" with type "example" omitted
+
+# Unsupported target "repl" with type "example" omitted
+
+# Unsupported target "serialize" with type "example" omitted
+
+rust_library(
+    name = "mlua",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+        "luajit",
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.5.3",
+    # buildifier: leave-alone
+    deps = [
+        ":mlua_build_script",
+        "//third_party/cargo/vendor/bstr-0.2.15:bstr",
+        "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
+        "//third_party/cargo/vendor/num-traits-0.2.14:num_traits",
+    ],
+)
+
+# Unsupported target "async" with type "test" omitted
+
+# Unsupported target "byte_string" with type "test" omitted
+
+# Unsupported target "compile" with type "test" omitted
+
+# Unsupported target "function" with type "test" omitted
+
+# Unsupported target "hooks" with type "test" omitted
+
+# Unsupported target "memory" with type "test" omitted
+
+# Unsupported target "scope" with type "test" omitted
+
+# Unsupported target "serde" with type "test" omitted
+
+# Unsupported target "string" with type "test" omitted
+
+# Unsupported target "table" with type "test" omitted
+
+# Unsupported target "tests" with type "test" omitted
+
+# Unsupported target "thread" with type "test" omitted
+
+# Unsupported target "types" with type "test" omitted
+
+# Unsupported target "userdata" with type "test" omitted
+
+# Unsupported target "value" with type "test" omitted
