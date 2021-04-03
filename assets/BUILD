@@ -1,1 +1,4 @@
-exports_files(["test-128px.png"])
+exports_files([
+    "test-128px.png",
+    "test-128px-roughness.png",
+])
