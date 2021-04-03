@@ -190,7 +190,7 @@ impl ChannelLayoutVulkan for color::LinearF32 {
         }, "linearf32 texture must be 8-bit grayscale");
         let gray = image.to_luma();
 
-        mipmapped_from_iter(width, height, vf::Format::R8G8B8A8Unorm, gray.into_raw().iter().cloned(), graphics_queue)
+        mipmapped_from_iter(width, height, vf::Format::R8Unorm, gray.into_raw().iter().cloned(), graphics_queue)
     }
 
     fn vulkan_from_value(
