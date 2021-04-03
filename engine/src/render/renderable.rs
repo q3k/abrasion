@@ -23,7 +23,7 @@ use ecs::Component;
 use crate::render::{Light, Mesh, Material};
 use crate::render::resource::{ResourceID};
 
-pub struct Transform(cgm::Matrix4<f32>);
+pub struct Transform(pub cgm::Matrix4<f32>);
 
 impl Component for Transform {}
 
