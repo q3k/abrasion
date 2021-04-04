@@ -168,6 +168,10 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         self.armed = true;
     }
 
+    pub fn swapchain_dimensions(&self) -> Option<[u32; 2]> {
+        Some(self.swapchain_binding.as_ref()?.chain.dimensions())
+    }
+
     fn make_graphics_commands(
         &mut self,
         profiler: &mut Profiler,

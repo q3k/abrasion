@@ -64,6 +64,7 @@ pub struct Renderer {
 pub struct Status {
     pub closed: bool,
     pub input_device_id: u64,
+    pub resolution: [u32; 2],
 }
 impl ecs::Global for Status {}
 
@@ -114,10 +115,16 @@ impl<'a> ecs::System<'a> for Renderer {
         let view = &scene.get().view;
         self.instance.flip(camera, view, &rd, &self.rm);
 
+        match self.instance.swapchain_dimensions() {
+            Some(res) => {
+                status.resolution = res.clone()
+            },
+            None => (),
+        }
+
         if status.input_device_id == 0 {
             status.input_device_id = input.allocate_device();
         }
-
         let (close, events) = self.poll_close();
         if close {
             status.closed = true;
@@ -129,8 +136,11 @@ impl<'a> ecs::System<'a> for Renderer {
                         InternalEvent::MousePressed(button) => cursor.set_mouse_pressed(button),
                         InternalEvent::MouseReleased(button) => cursor.set_mouse_released(button),
                         InternalEvent::MouseMoved(x, y) => {
-                            cursor.x = x as f32;
-                            cursor.y = y as f32;
+                            let (rx, ry) = (status.resolution[0], status.resolution[1]);
+                            if rx != 0 && ry != 0 {
+                                cursor.x = (x as f32) / (rx as f32);
+                                cursor.y = (y as f32) / (ry as f32);
+                            }
                         },
                     }
                 }
@@ -155,6 +165,7 @@ impl Renderer {
         world.set_global(Status {
             closed: false,
             input_device_id: 0,
+            resolution: [0u32; 2],
         });
 
         let mut instance = vulkan::Instance::new("abrasion".to_string());

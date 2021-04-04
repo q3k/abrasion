@@ -167,7 +167,7 @@ impl<'a> ecs::System <'a> for Main {
     type SystemData = MainData<'a>;
     fn run(&mut self, sd: Self::SystemData) {
         let position: f32 = match sd.input.get().mouse_cursor() {
-            Some(cursor) => cursor.x,
+            Some(cursor) => cursor.x * 3.14 * 2.0,
             _ => (sd.time.get().instant() / 10.0) * 3.14 * 2.0,
         };
 
