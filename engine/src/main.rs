@@ -25,6 +25,7 @@ pub mod input;
 mod render;
 mod util;
 mod physics;
+mod scripting;
 
 use ecs::{Component, World, Processor};
 use ecs_macros::Access;
@@ -216,6 +217,9 @@ fn main() {
     let mut world = World::new();
     let mut renderer = render::Renderer::initialize(&mut world);
     let main = Main::new(&mut world, &mut renderer);
+
+    let context = scripting::WorldContext::new();
+    context.eval("print(\"Hello, Lua!\", 1337)").unwrap();
 
     log::info!("Starting...");
 

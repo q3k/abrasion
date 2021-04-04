@@ -14,6 +14,7 @@ rust_binary(
         "src/main.rs",
 
         "src/input.rs",
+        "src/scripting.rs",
 
         "src/physics/mod.rs",
         "src/physics/color.rs",
@@ -46,6 +47,7 @@ rust_binary(
         "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:image",
+        "//third_party/cargo:mlua",
         "//third_party/cargo:winit",
         "//third_party/cargo:log",
         "//third_party/cargo:env_logger",
