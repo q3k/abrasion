@@ -14,6 +14,9 @@ rust_library(
         "src/system.rs",
         "src/world.rs",
     ],
+    deps = [
+        "//third_party/cargo:log",
+    ],
     visibility = ["//engine:__subpackages__"],
 )
 

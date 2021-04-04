@@ -2,6 +2,9 @@ pub type ID = std::any::TypeId;
 
 
 pub trait Component: 'static {
+    fn id(&self) -> &'static str {
+        ""
+    }
 }
 
 pub fn component_id<T: Component>() -> ID {

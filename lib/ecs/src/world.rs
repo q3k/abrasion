@@ -159,7 +159,12 @@ impl World {
         c: Box<dyn component::Component>,
         e: entity::Entity
     ) {
-        let map = self.components.entry(cid).or_insert(ComponentMap::new());
+        let map = self.components.entry(cid).or_insert_with(|| {
+            if c.id() == "" {
+                log::warn!("Component type {:?} has no .id() defined, will not be accessible from scripting.", cid);
+            }
+            ComponentMap::new()
+        });
         map.insert(e.id(), c).unwrap();
     }
 

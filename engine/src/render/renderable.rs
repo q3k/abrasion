@@ -25,7 +25,11 @@ use crate::render::resource::{ResourceID};
 
 pub struct Transform(pub cgm::Matrix4<f32>);
 
-impl Component for Transform {}
+impl Component for Transform {
+    fn id(&self) -> &'static str {
+        "Transform"
+    }
+}
 
 impl Transform {
     pub fn at(x: f32, y: f32, z: f32) -> Self {
@@ -48,4 +52,8 @@ pub enum Renderable {
     Mesh(ResourceID<Mesh>, ResourceID<Material>),
 }
 
-impl Component for Renderable {}
+impl Component for Renderable {
+    fn id(&self) -> &'static str {
+        "Renderable"
+    }
+}
