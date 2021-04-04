@@ -185,6 +185,7 @@ impl<'a> ecs::System <'a> for Main {
 
         sd.scene_info.get().camera = camera;
         sd.scene_info.get().view = view;
+        sd.scene_info.get().lock_cursor = true;
 
         *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(
             -0.0 + (position*3.0).sin() * 4.0,

@@ -56,7 +56,10 @@ const HEIGHT: u32 = 600;
 pub struct Renderer {
     instance: vulkan::Instance<Window>,
     events_loop: EventLoop<()>,
+    surface: Arc<vs::Surface<Window>>,
     rm: resource::Manager,
+
+    cursor_locked: bool,
 }
 
 
@@ -72,6 +75,8 @@ impl ecs::Global for Status {}
 pub struct SceneInfo {
     pub camera: cgm::Point3<f32>,
     pub view: cgm::Matrix4<f32>,
+
+    pub lock_cursor: bool,
 }
 impl ecs::Global for SceneInfo {}
 
@@ -94,7 +99,9 @@ impl<'a> ecs::System<'a> for Renderer {
         let transformedRenderables = (transforms, renderables);
         let mut input = input.get();
         let mut status = status.get();
+        let scene = scene.get();
 
+        // Render sceneinfo and renderables.
         let mut rd = vulkan::RenderData {
             meshes: BTreeMap::new(),
             lights: Vec::new(),
@@ -110,11 +117,11 @@ impl<'a> ecs::System<'a> for Renderer {
                 _ => (),
             }
         }
-
-        let camera = &scene.get().camera;
-        let view = &scene.get().view;
+        let camera = &scene.camera;
+        let view = &scene.view;
         self.instance.flip(camera, view, &rd, &self.rm);
 
+        // Retrieve current resolution into status.
         match self.instance.swapchain_dimensions() {
             Some(res) => {
                 status.resolution = res.clone()
@@ -122,6 +129,7 @@ impl<'a> ecs::System<'a> for Renderer {
             None => (),
         }
 
+        // Process events.
         if status.input_device_id == 0 {
             status.input_device_id = input.allocate_device();
         }
@@ -146,6 +154,25 @@ impl<'a> ecs::System<'a> for Renderer {
                 }
             }
         }
+
+        let window = self.surface.window();
+        if self.cursor_locked {
+            if let Some(res) = self.instance.swapchain_dimensions() {
+                let (x, y) = (res[0], res[1]);
+                window.set_cursor_position(winit::dpi::PhysicalPosition::new(x / 2, y / 2));
+            }
+        }
+
+        // Lock cursor, if requested.
+        if scene.lock_cursor && !self.cursor_locked {
+            window.set_cursor_visible(false);
+            window.set_cursor_grab(true);
+            self.cursor_locked = true;
+        } else if self.cursor_locked && !scene.lock_cursor {
+            window.set_cursor_visible(true);
+            window.set_cursor_grab(false);
+            self.cursor_locked = false;
+        }
     }
 }
 
@@ -161,6 +188,7 @@ impl Renderer {
         world.set_global(SceneInfo {
             camera: cgm::Point3::new(0.0, 0.0, 0.0),
             view: cgm::Matrix4::identity(),
+            lock_cursor: false,
         });
         world.set_global(Status {
             closed: false,
@@ -175,7 +203,10 @@ impl Renderer {
         Self {
             instance,
             events_loop,
+            surface,
             rm: resource::Manager::new(),
+
+            cursor_locked: false,
         }
     }
 
