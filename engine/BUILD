@@ -13,6 +13,8 @@ rust_binary(
     srcs = [
         "src/main.rs",
 
+        "src/input.rs",
+
         "src/physics/mod.rs",
         "src/physics/color.rs",
 

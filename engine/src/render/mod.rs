@@ -48,6 +48,8 @@ pub use mesh::Mesh;
 pub use renderable::{Transform, Renderable};
 pub use resource::{Resource, ResourceID};
 
+use crate::input;
+
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
@@ -57,9 +59,11 @@ pub struct Renderer {
     rm: resource::Manager,
 }
 
+
 #[derive(Clone, Debug)]
 pub struct Status {
     pub closed: bool,
+    pub input_device_id: u64,
 }
 impl ecs::Global for Status {}
 
@@ -76,15 +80,19 @@ impl<'a> ecs::System<'a> for Renderer {
         ecs::ReadComponent<'a, Renderable>,
         ecs::ReadWriteGlobal<'a, Status>,
         ecs::ReadGlobal<'a, SceneInfo>,
+        ecs::ReadWriteGlobal<'a, input::Input>,
     );
 
     fn run(&mut self,
         ( transforms
         , renderables
         , status
-        , scene): Self::SystemData,
+        , scene
+        , input): Self::SystemData,
     ) {
         let transformedRenderables = (transforms, renderables);
+        let mut input = input.get();
+        let mut status = status.get();
 
         let mut rd = vulkan::RenderData {
             meshes: BTreeMap::new(),
@@ -106,10 +114,36 @@ impl<'a> ecs::System<'a> for Renderer {
         let view = &scene.get().view;
         self.instance.flip(camera, view, &rd, &self.rm);
 
-        if self.poll_close() {
-            status.get().closed = true;
+        if status.input_device_id == 0 {
+            status.input_device_id = input.allocate_device();
+        }
+
+        let (close, events) = self.poll_close();
+        if close {
+            status.closed = true;
+        } else {
+            let mut device = input.devices.entry(status.input_device_id).or_insert(input::Device::MouseCursor(input::MouseCursor::new()));
+            if let &mut input::Device::MouseCursor(cursor) = &mut device {
+                for event in events {
+                    match event {
+                        InternalEvent::MousePressed(button) => cursor.set_mouse_pressed(button),
+                        InternalEvent::MouseReleased(button) => cursor.set_mouse_released(button),
+                        InternalEvent::MouseMoved(x, y) => {
+                            cursor.x = x as f32;
+                            cursor.y = y as f32;
+                        },
+                    }
+                }
+            }
         }
     }
+}
+
+#[derive(Clone,Debug)]
+enum InternalEvent {
+    MousePressed(input::MouseButton),
+    MouseReleased(input::MouseButton),
+    MouseMoved(f64, f64),
 }
 
 impl Renderer {
@@ -120,6 +154,7 @@ impl Renderer {
         });
         world.set_global(Status {
             closed: false,
+            input_device_id: 0,
         });
 
         let mut instance = vulkan::Instance::new("abrasion".to_string());
@@ -143,16 +178,53 @@ impl Renderer {
         (events_loop, surface)
     }
 
-    fn poll_close(&mut self) -> bool {
+    fn poll_close(&mut self) -> (bool, Vec<InternalEvent>) {
         let mut close = false;
+
+        let mut events = vec![];
         // TODO(q3k): migrate to EventLoop::run
         self.events_loop.run_return(|ev, _, control_flow| {
-            if let Event::WindowEvent { event: WindowEvent::CloseRequested, .. } = ev {
-                close = true;
+            match ev {
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => {
+                    close = true;
+                },
+                Event::MainEventsCleared => {
+                    *control_flow = winit::event_loop::ControlFlow::Exit;
+                },
+                Event::WindowEvent {
+                    event:  WindowEvent::CursorMoved { position, .. },
+                    ..
+                } => {
+                    events.push(InternalEvent::MouseMoved(position.x, position.y));
+                },
+                Event::WindowEvent { 
+                    event:  WindowEvent::MouseInput { state, button, .. },
+                    ..
+                } => {
+                    let button = match button {
+                        winit::event::MouseButton::Left => input::MouseButton::Left,
+                        winit::event::MouseButton::Middle => input::MouseButton::Middle,
+                        winit::event::MouseButton::Right => input::MouseButton::Right,
+                        _ => input::MouseButton::Other,
+                    };
+                    match state {
+                        winit::event::ElementState::Pressed => {
+                            events.push(InternalEvent::MousePressed(button));
+                        },
+                        winit::event::ElementState::Released => {
+                            events.push(InternalEvent::MouseReleased(button));
+                        },
+                    }
+                },
+                _ => {
+                    *control_flow = winit::event_loop::ControlFlow::Poll;
+                },
             }
-            *control_flow = winit::event_loop::ControlFlow::Exit;
         });
-        return close;
+        return (close, events);
     }
 
     pub fn add_resource<T: Resource>(&mut self, r: T) -> ResourceID<T> {

@@ -21,6 +21,7 @@ use std::time;
 
 use cgmath as cgm;
 
+pub mod input;
 mod render;
 mod util;
 mod physics;
@@ -158,13 +159,17 @@ impl Main {
 struct MainData<'a> {
     scene_info: ecs::ReadWriteGlobal<'a, render::SceneInfo>,
     time: ecs::ReadGlobal<'a, Time>,
+    input: ecs::ReadGlobal<'a, input::Input>,
     transforms: ecs::ReadWriteComponent<'a, Transform>,
 }
 
 impl<'a> ecs::System <'a> for Main {
     type SystemData = MainData<'a>;
     fn run(&mut self, sd: Self::SystemData) {
-        let position = (sd.time.get().instant() / 10.0) * 3.14 * 2.0;
+        let position: f32 = match sd.input.get().mouse_cursor() {
+            Some(cursor) => cursor.x,
+            _ => (sd.time.get().instant() / 10.0) * 3.14 * 2.0,
+        };
 
         let camera = cgm::Point3::new(
             7.0 + (position / 4.0).sin(),
@@ -209,10 +214,11 @@ fn main() {
     p.add_system(renderer);
 
     let start = time::Instant::now();
-    world.set_global(Time{
+    world.set_global(Time {
         start,
         now: start,
     });
+    world.set_global(input::Input::new());
     loop {
         world.global_mut::<Time>().get().now = time::Instant::now();
 
