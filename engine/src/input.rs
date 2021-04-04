@@ -39,6 +39,10 @@ pub struct MouseCursor {
     pub x: f32,
     pub y: f32,
 
+    // delta x and y of mouse movement per frame.
+    pub dx: f32,
+    pub dy: f32,
+
     pressed: BTreeSet<MouseButton>,
 }
 
@@ -46,6 +50,7 @@ impl MouseCursor {
     pub fn new() -> Self {
         Self {
             x: 0., y: 0.,
+            dx: 0., dy: 0.,
             pressed: BTreeSet::new(),
         }
     }

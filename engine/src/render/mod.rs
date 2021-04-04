@@ -139,18 +139,40 @@ impl<'a> ecs::System<'a> for Renderer {
         } else {
             let mut device = input.devices.entry(status.input_device_id).or_insert(input::Device::MouseCursor(input::MouseCursor::new()));
             if let &mut input::Device::MouseCursor(cursor) = &mut device {
+
+                let mut per_axis: BTreeMap<u32, Vec<f32>> = BTreeMap::new();
+                let (rx, ry) = (status.resolution[0], status.resolution[1]);
+
                 for event in events {
                     match event {
                         InternalEvent::MousePressed(button) => cursor.set_mouse_pressed(button),
                         InternalEvent::MouseReleased(button) => cursor.set_mouse_released(button),
                         InternalEvent::MouseMoved(x, y) => {
-                            let (rx, ry) = (status.resolution[0], status.resolution[1]);
                             if rx != 0 && ry != 0 {
                                 cursor.x = (x as f32) / (rx as f32);
                                 cursor.y = (y as f32) / (ry as f32);
                             }
                         },
+                        InternalEvent::AxisMotion(axis, delta) => {
+                            per_axis.entry(axis).or_insert(vec![]).push(delta as f32);
+                        },
                     }
+                }
+
+                // Has there been movement in any axis 0 (x) or 1 (y)? This happens if we receive
+                // multiple AxisMotion events for a given axis in a single frame.
+                let mut dx = 0f32;
+                let mut dy = 0f32;
+                if let Some(ldx) = per_axis.get(&0) {
+                    dx = ldx.last().unwrap() - ldx.first().unwrap();
+                }
+                if let Some(ldy) = per_axis.get(&1) {
+                    dy = ldy.last().unwrap() - ldy.first().unwrap();
+                }
+
+                if rx != 0 && ry != 0 {
+                    cursor.dx = dx / (rx as f32);
+                    cursor.dy = dy / (ry as f32);
                 }
             }
         }
@@ -181,6 +203,7 @@ enum InternalEvent {
     MousePressed(input::MouseButton),
     MouseReleased(input::MouseButton),
     MouseMoved(f64, f64),
+    AxisMotion(u32, f64),
 }
 
 impl Renderer {
@@ -226,24 +249,29 @@ impl Renderer {
         let mut events = vec![];
         // TODO(q3k): migrate to EventLoop::run
         self.events_loop.run_return(|ev, _, control_flow| {
+            *control_flow = winit::event_loop::ControlFlow::Poll;
             match ev {
                 Event::WindowEvent {
                     event: WindowEvent::CloseRequested,
                     ..
                 } => {
                     close = true;
+                    *control_flow = winit::event_loop::ControlFlow::Exit;
                 },
+
                 Event::MainEventsCleared => {
                     *control_flow = winit::event_loop::ControlFlow::Exit;
                 },
+
                 Event::WindowEvent {
-                    event:  WindowEvent::CursorMoved { position, .. },
+                    event: WindowEvent::CursorMoved { position, .. },
                     ..
                 } => {
                     events.push(InternalEvent::MouseMoved(position.x, position.y));
                 },
+
                 Event::WindowEvent { 
-                    event:  WindowEvent::MouseInput { state, button, .. },
+                    event: WindowEvent::MouseInput { state, button, .. },
                     ..
                 } => {
                     let button = match button {
@@ -261,9 +289,15 @@ impl Renderer {
                         },
                     }
                 },
-                _ => {
-                    *control_flow = winit::event_loop::ControlFlow::Poll;
+
+                Event::WindowEvent {
+                    event: WindowEvent::AxisMotion { axis, value, .. },
+                    ..
+                } => {
+                    events.push(InternalEvent::AxisMotion(axis, value));
                 },
+
+                _ => {},
             }
         });
         return (close, events);

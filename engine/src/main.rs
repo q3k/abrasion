@@ -51,6 +51,9 @@ impl Time {
 struct Main {
     light1: ecs::EntityID,
     light2: ecs::EntityID,
+
+    cx: f32,
+    cy: f32,
 }
 
 impl Main {
@@ -150,7 +153,9 @@ impl Main {
             .build();
 
         Self {
-            light1, light2
+            light1, light2,
+            cx: 0.,
+            cy: 0.,
         }
     }
 }
@@ -166,15 +171,19 @@ struct MainData<'a> {
 impl<'a> ecs::System <'a> for Main {
     type SystemData = MainData<'a>;
     fn run(&mut self, sd: Self::SystemData) {
-        let position: f32 = match sd.input.get().mouse_cursor() {
-            Some(cursor) => cursor.x * 3.14 * 2.0,
-            _ => (sd.time.get().instant() / 10.0) * 3.14 * 2.0,
+
+        let ts: f32 = (sd.time.get().instant() / 10.0) * 3.14 * 2.0;
+        let (dx, dy) = match sd.input.get().mouse_cursor() {
+            Some(cursor) => (cursor.dx, cursor.dy),
+            _ => (0.0, 0.0),
         };
+        self.cx += (dx);
+        self.cy += (dy);
 
         let camera = cgm::Point3::new(
-            7.0 + (position / 4.0).sin(),
-            12.0 + (position / 4.0).cos(),
-            3.0
+            self.cx.sin() * 10.0,
+            (self.cx.cos()*self.cy.cos()) * 10.0,
+            self.cy.sin() * 10.0,
         );
 
         let view = cgm::Matrix4::look_at(
@@ -188,15 +197,15 @@ impl<'a> ecs::System <'a> for Main {
         sd.scene_info.get().lock_cursor = true;
 
         *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(
-            -0.0 + (position*3.0).sin() * 4.0,
-            -0.0 + (position*4.0).cos() * 4.0,
-            -0.0 + (position*2.0).sin() * 3.0,
+            -0.0 + (ts*3.0).sin() * 4.0,
+            -0.0 + (ts*4.0).cos() * 4.0,
+            -0.0 + (ts*2.0).sin() * 3.0,
         );
 
         *sd.transforms.get_mut(self.light2).unwrap() = Transform::at(
-            -0.0 + (position*3.0).cos() * 4.0,
-            -0.0 + (position*4.0).sin() * 4.0,
-            -0.0 + (position*2.0).cos() * 3.0,
+            -0.0 + (ts*3.0).cos() * 4.0,
+            -0.0 + (ts*4.0).sin() * 4.0,
+            -0.0 + (ts*2.0).cos() * 3.0,
         );
 
     }
