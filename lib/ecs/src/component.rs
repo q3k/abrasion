@@ -1,9 +1,13 @@
 pub type ID = std::any::TypeId;
 
+pub trait LuaBindings {
+    fn globals<'a>(&self, lua: &'a mlua::Lua) -> mlua::Table<'a>;
+    fn id(&self) -> &'static str;
+}
 
 pub trait Component: 'static {
-    fn id(&self) -> &'static str {
-        ""
+    fn lua_bindings(&self) -> Option<Box<dyn LuaBindings>> {
+        None
     }
 }
 

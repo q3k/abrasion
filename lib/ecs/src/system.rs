@@ -7,6 +7,7 @@ use crate::{
         ReadComponent, ReadComponentIter,
         ReadWriteComponent, ReadWriteComponentIter,
         ReadGlobal, ReadWriteGlobal,
+        ReadWriteAll,
         World,
     }
 };
@@ -78,6 +79,12 @@ impl<'a, T: component::Global> Access<'a> for ReadGlobal<'a, T> {
 impl<'a, T: component::Global> Access<'a> for ReadWriteGlobal<'a, T> {
     fn fetch(world: &'a World) -> Self {
         world.global_mut()
+    }
+}
+
+impl<'a> Access<'a> for ReadWriteAll<'a> {
+    fn fetch(world: &'a World) -> Self {
+        world.all()
     }
 }
 
@@ -181,7 +188,12 @@ mod test {
         component::Global,
         system,
         system::Join,
-        world::{ReadComponent, ReadWriteComponent, ReadGlobal, ReadWriteGlobal, World},
+        world::{
+            ReadComponent, ReadWriteComponent,
+            ReadGlobal, ReadWriteGlobal,
+            ReadWriteAll,
+            World,
+        },
     };
 
     #[derive(Clone,Debug,Default)]

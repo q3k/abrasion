@@ -214,17 +214,58 @@ impl<'a> ecs::System <'a> for Main {
 
 fn main() {
     env_logger::init();
+
     let mut world = World::new();
     let mut renderer = render::Renderer::initialize(&mut world);
     let main = Main::new(&mut world, &mut renderer);
 
-    let context = scripting::WorldContext::new();
-    context.eval("print(\"Hello, Lua!\", 1337)").unwrap();
+    let context = scripting::WorldContext::new(&world);
+    context.eval_init(r#"
+        print("Hello, Lua!")
+        --for k,v in pairs(components) do
+        --    print("Component", k, v)
+        --end
+
+        local sent = {}
+        sent.register = function (name, cls)
+            if cls.__sent_class_id ~= nil then
+                print("Attempting to re-register " .. name)
+                return
+            end
+            local sent_class_id = __sent_register(name, cls)
+            cls.__sent_class_id = sent_class_id
+            cls.new = function(...) 
+                local arg = {...}
+                local res = __sent_new(sent_class_id)
+                if res.init ~= nil then
+                    res:init(unpack(arg))
+                end
+                return res
+            end
+        end
+
+        local Test = {}
+
+        function Test:init(val)
+            self.val = val
+        end
+
+        function Test:tick()
+            print("tick! " .. tostring(self.val))
+        end
+
+        sent.register("Test", Test)
+        local t1 = Test.new(123)
+        t1:tick()
+        local t2 = Test.new(234)
+        t2:tick()
+    "#).unwrap();
 
     log::info!("Starting...");
 
     let mut p = Processor::new(&world);
     p.add_system(main);
+    p.add_system(context);
     p.add_system(renderer);
 
     let start = time::Instant::now();

@@ -16,6 +16,7 @@ rust_library(
     ],
     deps = [
         "//third_party/cargo:log",
+        "//third_party/cargo:mlua",
     ],
     visibility = ["//engine:__subpackages__"],
 )

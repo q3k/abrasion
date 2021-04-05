@@ -132,8 +132,21 @@ impl<'a, T: component::Global> ReadWriteGlobal<'a, T> {
     }
 }
 
+/// ReadWriteAll gives access to all components/entities/globals within a world. Using it in a
+/// system means that no other system can run in parallel, and limits performance. This should only
+/// be used when absolutely necessary (eg. for scripting systems).
+pub struct ReadWriteAll<'a> {
+    world: &'a World,
+}
+
+impl<'a> ReadWriteAll<'a> {
+}
+
+
 pub struct World {
     components: BTreeMap<component::ID, ComponentMap>,
+    component_by_idstr: BTreeMap<&'static str, component::ID>,
+    component_lua_bindings: BTreeMap<component::ID, Box<dyn component::LuaBindings>>,
     globals: GlobalMap,
     next_id: entity::ID,
 }
@@ -142,6 +155,8 @@ impl World {
     pub fn new() -> Self {
         Self {
             components: BTreeMap::new(),
+            component_by_idstr: BTreeMap::new(),
+            component_lua_bindings: BTreeMap::new(),
             globals: GlobalMap::new(),
             next_id: 1u64,
         }
@@ -159,9 +174,16 @@ impl World {
         c: Box<dyn component::Component>,
         e: entity::Entity
     ) {
+        if let Some(bindings) = c.lua_bindings() {
+            // TODO(q3k): optimize this to not happen on every registration.
+            self.component_by_idstr.insert(bindings.id(), cid);
+            self.component_lua_bindings.insert(cid, bindings);
+        }
         let map = self.components.entry(cid).or_insert_with(|| {
-            if c.id() == "" {
-                log::warn!("Component type {:?} has no .id() defined, will not be accessible from scripting.", cid);
+            if let Some(bindings) = c.lua_bindings() {
+                log::info!("Registered component {}", bindings.id());
+            } else {
+                log::warn!("Component {:?} has no .lua_bindings() defined, will not be accessible from scripting.", cid);
             }
             ComponentMap::new()
         });
@@ -196,8 +218,18 @@ impl World {
         }
     }
 
+    pub fn all<'a>(&'a self) -> ReadWriteAll<'a> {
+        ReadWriteAll {
+            world: self,
+        }
+    }
+
     pub fn set_global<T: component::Global>(&self, r: T) {
         self.globals.set(r).unwrap();
+    }
+
+    pub fn lua_components(&self) -> &BTreeMap<component::ID, Box<dyn component::LuaBindings>> {
+        &self.component_lua_bindings
     }
 }
 

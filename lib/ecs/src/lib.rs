@@ -8,10 +8,12 @@ pub mod world;
 
 pub use entity::ID as EntityID;
 pub use component::{Component, Global};
+pub use component::LuaBindings as ComponentLuaBindings;
 pub use world::{
     World,
     ReadComponent, ReadWriteComponent,
     ReadGlobal, ReadWriteGlobal,
+    ReadWriteAll,
 };
 pub use system::{
     System, Join, Processor,

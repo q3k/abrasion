@@ -25,9 +25,49 @@ use crate::render::resource::{ResourceID};
 
 pub struct Transform(pub cgm::Matrix4<f32>);
 
-impl Component for Transform {
+pub struct TransformBindings {}
+
+impl ecs::ComponentLuaBindings for TransformBindings {
+    fn globals<'a>(&self, lua: &'a mlua::Lua) -> mlua::Table<'a> {
+        let res = lua.create_table().unwrap();
+        res.set("new", lua.create_function(|_, args: mlua::Variadic<mlua::Number>| {
+            let args: Vec<f32> = args.iter().map(|el| *el as f32).collect();
+            let t = match args.len() {
+                0 => Transform::at(0., 0., 0.),
+                3 => Transform::at(args[0], args[1], args[2]),
+                16 => Transform(cgm::Matrix4::new(
+                    // Matrix4::new takes column-wise arguments, this api takes them row-wise.
+                    args[0], args[4], args[8], args[12],
+                    args[1], args[5], args[9], args[13],
+                    args[2], args[6], args[10], args[14],
+                    args[3], args[7], args[11], args[15],
+                )),
+                _ => {
+                    return Err(mlua::prelude::LuaError::RuntimeError("Transform.new must be called with 0, 3 ,or 16 arguments".to_string()));
+                },
+            };
+            Ok(t)
+        }).unwrap()).unwrap();
+        res
+    }
     fn id(&self) -> &'static str {
         "Transform"
+    }
+}
+
+impl Component for Transform {
+    fn lua_bindings(&self) -> Option<Box<dyn ecs::ComponentLuaBindings>> {
+        Some(Box::new(TransformBindings{}))
+    }
+}
+
+impl mlua::UserData for Transform {
+    fn add_methods<'lua, M: mlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+        methods.add_method("xyzw", |_, this, _: ()| {
+            // TODO(q3k): lua wrappers for cgmath
+            let xyzw = this.xyzw();
+            Ok(vec![xyzw.z, xyzw.y, xyzw.z, xyzw.w])
+        });
     }
 }
 
@@ -53,7 +93,4 @@ pub enum Renderable {
 }
 
 impl Component for Renderable {
-    fn id(&self) -> &'static str {
-        "Renderable"
-    }
 }
