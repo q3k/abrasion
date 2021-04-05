@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::path;
+use std::io::Read;
 
 use runfiles::Runfiles;
 
@@ -30,6 +30,14 @@ type Result<T> = std::result::Result<T, ResourceError>;
 
 pub enum Resource {
     File(std::io::BufReader<std::fs::File>),
+}
+
+impl Resource {
+    pub fn string(&mut self) -> std::io::Result<String> {
+        let mut contents = String::new();
+        self.read_to_string(&mut contents);
+        Ok(contents)
+    }
 }
 
 impl std::io::Read for Resource {
@@ -61,8 +69,11 @@ impl std::io::Seek for Resource {
     }
 }
 
-pub fn resource(name: String) -> Result<Resource>
+pub fn resource<T>(name: T) -> Result<Resource>
+where
+    T: Into<String>
 {
+    let name: String = name.into();
     // Ensure name has //-prefix.
     let rel = name.strip_prefix("//").ok_or(ResourceError::InvalidPath)?;
     // Ensure no / prefix or suffix.

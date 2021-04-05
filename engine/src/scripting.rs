@@ -141,12 +141,14 @@ impl WorldContext {
         Ok(())
     }
 
-    pub fn eval_init(&self, val: &str) -> mlua::Result<()>
+    pub fn eval_init<T>(&self, val: T) -> mlua::Result<()>
     where
+        T: Into<String>
     {
+        let val: String = val.into();
         self.lua.scope(|scope| {
             self.scope_sent(scope)?;
-            self.lua.load(val).exec()
+            self.lua.load(&val).exec()
         })
     }
 }

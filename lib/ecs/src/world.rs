@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::iter::Iterator;
+use std::cell::RefCell;
 
 use crate::componentmap::{
     AccessError,
@@ -147,6 +148,7 @@ pub struct World {
     components: BTreeMap<component::ID, ComponentMap>,
     component_by_idstr: BTreeMap<&'static str, component::ID>,
     component_lua_bindings: BTreeMap<component::ID, Box<dyn component::LuaBindings>>,
+    component_queue: RefCell<Vec<(component::ID, Box<dyn component::Component>, entity::Entity)>>,
     globals: GlobalMap,
     next_id: entity::ID,
 }
@@ -157,6 +159,7 @@ impl World {
             components: BTreeMap::new(),
             component_by_idstr: BTreeMap::new(),
             component_lua_bindings: BTreeMap::new(),
+            component_queue: RefCell::new(Vec::new()),
             globals: GlobalMap::new(),
             next_id: 1u64,
         }
@@ -188,6 +191,23 @@ impl World {
             ComponentMap::new()
         });
         map.insert(e.id(), c).unwrap();
+    }
+
+    pub fn enqueue_register_component_entity(
+        &self,
+        cid: component::ID,
+        c: Box<dyn component::Component>,
+        e: entity::Entity
+    ) {
+        self.component_queue.borrow_mut().push((cid, c, e));
+    }
+
+    pub fn queue_drain(
+        &mut self,
+    ) {
+        for (cid, c, e) in self.component_queue.replace(Vec::new()).into_iter() {
+            self.register_component_entity(cid, c, e);
+        }
     }
 
     pub fn components<'a, T: component::Component>(&'a self) -> ReadComponent<'a, T> {

@@ -9,6 +9,8 @@ rust_binary(
         "-C", "overflow-checks=n",
         "-C", "force-frame-pointers=y",
         "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
     ],
     srcs = [
         "src/main.rs",
@@ -60,10 +62,11 @@ rust_binary(
         "//lib/ecs_macros",
     ],
     data = [
-        "//engine/shaders:forward_vert",
-        "//engine/shaders:forward_frag",
         "//assets:test-128px.png",
         "//assets:test-128px-roughness.png",
+        "//engine/shaders:forward_vert",
+        "//engine/shaders:forward_frag",
+        ":init.lua",
     ],
 )
 

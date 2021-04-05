@@ -13,7 +13,11 @@ http_archive(
 )
 
 load("@rules_rust//rust:repositories.bzl", "rust_repositories")
-rust_repositories()
+rust_repositories(
+    version = "nightly",
+    iso_date = "2020-12-31",
+    edition = "2018",
+)
 
 load("//third_party/shaderc:deps.bzl", "shaderc_deps")
 shaderc_deps()
