@@ -18,23 +18,75 @@ use std::path;
 
 use runfiles::Runfiles;
 
-pub fn resource_path(name: String) -> path::PathBuf {
-    fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
+#[derive(Debug)]
+pub enum ResourceError {
+    InvalidPath,
+    NotFound,
+    NoRunfiles,
+    Other(std::io::Error),
+}
 
-    match Runfiles::create().map_err(stringify) {
-        Err(_) => {
-            let exe = std::env::current_exe().unwrap();
-            let p = exe.parent().unwrap().join("..").join(name.clone());
-            //let p = path::Path::new(".").join(name.clone());
-            if !p.exists() {
-                panic!("Could not load resource '{}', not found in runfiles or bare files (at {:?})", name, p);
-            }
-            log::info!("Loaded resource from bare file: {}", name);
-            p
-        },
-        Ok(r) => {
-            log::info!("Loaded resource from runfiles: {}", name.clone());
-            r.rlocation(format!("abrasion/{}", name))
+type Result<T> = std::result::Result<T, ResourceError>;
+
+pub enum Resource {
+    File(std::io::BufReader<std::fs::File>),
+}
+
+impl std::io::Read for Resource {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Resource::File(r) => r.read(buf)
         }
+    }
+}
+
+impl std::io::BufRead for Resource {
+    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
+        match self {
+            Resource::File(r) => r.fill_buf()
+        }
+    }
+    fn consume(&mut self, amt: usize) {
+        match self {
+            Resource::File(r) => r.consume(amt)
+        }
+    }
+}
+
+impl std::io::Seek for Resource {
+    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+        match self {
+            Resource::File(r) => r.seek(pos)
+        }
+    }
+}
+
+pub fn resource(name: String) -> Result<Resource>
+{
+    // Ensure name has //-prefix.
+    let rel = name.strip_prefix("//").ok_or(ResourceError::InvalidPath)?;
+    // Ensure no / prefix or suffix.
+    if rel.starts_with("/") || rel.ends_with("/") {
+        return Err(ResourceError::InvalidPath);
+    }
+    // Ensure no double slash elsewhere in the path.
+    if rel.contains("//") {
+        return Err(ResourceError::InvalidPath);
+    }
+    
+    if let Ok(r) = Runfiles::create() {
+        // TODO(q3k): unhardcode workspace name?
+        let workspace = format!("abrasion/{}",  rel);
+        let loc = r.rlocation(workspace);
+        std::fs::File::open(loc).map_err(|e| {
+            match e.kind() {
+                std::io::ErrorKind::NotFound => ResourceError::NotFound,
+                _ => ResourceError::Other(e),
+            }
+        }).map(|f| {
+            Resource::File(std::io::BufReader::new(f))
+        })
+    } else {
+        return Err(ResourceError::NoRunfiles);
     }
 }

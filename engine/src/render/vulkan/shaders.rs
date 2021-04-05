@@ -24,6 +24,8 @@ use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
 use vulkano::pipeline::shader as vps;
 
+use crate::util::file;
+
 pub struct ShaderDefinition {
     pub name: String,
     pub ty: vps::GraphicsShaderType,
@@ -33,14 +35,31 @@ pub struct ShaderDefinition {
     pub push_constants: Vec<vdp::PipelineLayoutDescPcRange>,
 }
 
-impl ShaderDefinition {
-    pub fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader, String> {
-        fn stringify(x: std::io::Error) -> String { format!("IO error: {}", x) }
+#[derive(Debug)]
+pub enum ShaderError {
+    ResourceError(file::ResourceError),
+    IOError(std::io::Error),
+}
 
-        let path = &crate::util::file::resource_path(self.name.clone());
-        let mut f = File::open(path).map_err(stringify)?;
+impl From<file::ResourceError> for ShaderError {
+    fn from(v: file::ResourceError) -> Self {
+        ShaderError::ResourceError(v)
+    }
+}
+
+impl From<std::io::Error> for ShaderError {
+    fn from(v: std::io::Error) -> Self {
+        ShaderError::IOError(v)
+    }
+}
+
+type Result<T> = std::result::Result<T, ShaderError>;
+
+impl ShaderDefinition {
+    pub fn load_into(self, device: Arc<vd::Device>) -> Result<LoadedShader> {
+        let mut r = file::resource(self.name.clone())?;
         let mut v = vec![];
-        f.read_to_end(&mut v).map_err(stringify)?;
+        r.read_to_end(&mut v)?;
 
         let module = unsafe {
             vps::ShaderModule::new(device.clone(), &v).unwrap()

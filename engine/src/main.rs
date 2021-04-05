@@ -107,8 +107,8 @@ impl Main {
         };
 
         let material = renderer.add_resource(PBRMaterialBuilder {
-            diffuse: Texture::from_image(String::from("assets/test-128px.png")),
-            roughness: Texture::from_image(String::from("assets/test-128px-roughness.png")),
+            diffuse: Texture::from_image(String::from("//assets/test-128px.png")),
+            roughness: Texture::from_image(String::from("//assets/test-128px-roughness.png")),
         }.build());
 
         for x in -20..20 {

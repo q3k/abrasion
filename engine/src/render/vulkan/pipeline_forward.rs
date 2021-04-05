@@ -47,7 +47,7 @@ impl Forward {
         render_pass: Arc<dyn vf::RenderPassAbstract + Send + Sync>,
     ) -> Forward {
         let vertex_shader = shaders::ShaderDefinition {
-            name: "engine/shaders/forward_vert.spv".to_string(),
+            name: "//engine/shaders/forward_vert.spv".to_string(),
             ty: vps::GraphicsShaderType::Vertex,
             inputs: vec![
                 vps::ShaderInterfaceDefEntry {
@@ -95,7 +95,7 @@ impl Forward {
         }.load_into(device.clone()).expect("could not load vertex shader");
 
         let fragment_shader = shaders::ShaderDefinition {
-            name: "engine/shaders/forward_frag.spv".to_string(),
+            name: "//engine/shaders/forward_frag.spv".to_string(),
             ty: vps::GraphicsShaderType::Fragment,
             inputs: vec![
                 vps::ShaderInterfaceDefEntry {

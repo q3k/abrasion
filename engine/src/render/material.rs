@@ -38,8 +38,9 @@ impl<T: ChannelLayoutVulkan> Texture<T> {
         match self {
             Texture::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
             Texture::<T>::ImageRef(r) => {
-                let path = &file::resource_path(r.clone());
-                let img = Arc::new(image::open(path).unwrap());
+                let format = image::ImageFormat::from_path(r).unwrap();
+                let r = file::resource(r.clone()).unwrap();
+                let img = Arc::new(image::load(r, format).unwrap());
                 T::vulkan_from_image(img, graphics_queue)
             },
         }
