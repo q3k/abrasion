@@ -18,15 +18,15 @@ pub trait System<'a> {
     fn run(&mut self, sd: Self::SystemData);
 }
 
-trait WorldRunner<'a> {
-    fn run_world(&mut self, w: &'a World);
+trait WorldRunner {
+    fn run_world(&mut self, w: &World);
 }
 
-impl<'a, T> WorldRunner<'a> for T
+impl<T> WorldRunner for T
 where
-    T: System<'a>,
+    T: for<'a> System<'a>
 {
-    fn run_world(&mut self, world: &'a  World) {
+    fn run_world(&mut self, world: &World) {
         let data = T::SystemData::fetch(world);
         self.run(data);
     }
@@ -111,25 +111,26 @@ impl_access_tuple!(A, B, C, D, E, F, G, H);
 impl_access_tuple!(A, B, C, D, E, F, G, H, I);
 impl_access_tuple!(A, B, C, D, E, F, G, H, I, J);
 
-pub struct Processor<'a> {
-    world: &'a  World,
-    runners: Vec<Box<dyn WorldRunner<'a>>>,
+pub struct Processor {
+    runners: Vec<Box<dyn WorldRunner>>,
 }
 
-impl<'a> Processor<'a> {
-    pub fn new(world: &'a World) -> Self {
+impl Processor {
+    pub fn new() -> Self {
         Self {
-            world,
             runners: Vec::new(),
         }
     }
-    pub fn add_system<T: System<'a> + 'static>(&mut self, system: T) {
+    pub fn add_system<T>(&mut self, system: T)
+    where
+        T: for<'c> System<'c> + 'static
+    {
         self.runners.push(Box::new(system));
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, world: &World) {
         for runner in &mut self.runners {
-            runner.run_world(self.world);
+            runner.run_world(world);
         }
     }
 }

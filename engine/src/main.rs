@@ -225,7 +225,7 @@ fn main() {
 
     log::info!("Starting...");
 
-    let mut p = Processor::new(&world);
+    let mut p = Processor::new();
     p.add_system(main);
     p.add_system(context);
     p.add_system(renderer);
@@ -237,10 +237,10 @@ fn main() {
     });
     world.set_global(input::Input::new());
     loop {
-        //world.queue_drain();
+        world.queue_drain();
         world.global_mut::<Time>().get().now = time::Instant::now();
 
-        p.run();
+        p.run(&world);
         let status = world.global::<render::Status>().get();
         if status.closed {
             log::info!("Renderer closed, exiting.");
