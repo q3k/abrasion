@@ -9,19 +9,6 @@ fn debug_str(v: &mlua::Value) -> String {
     }
 }
 
-pub struct WorldContext {
-    // TODO(q3k): this leaks memory, right?
-    lua: &'static mlua::Lua,
-    classes: Arc<Mutex<BTreeMap<String, ScriptedEntityClass>>>,
-    instances: Arc<Mutex<InstanceData>>,
-}
-
-#[derive(Debug)]
-struct InstanceData {
-    ecs: BTreeMap<ecs::EntityID, ScriptedEntity>,
-    queue: Vec<ScriptedEntity>,
-}
-
 #[derive(Debug)]
 struct ScriptedEntityClass {
     name: String,
@@ -46,7 +33,6 @@ struct ScriptedEntity {
 
 #[derive(Debug)]
 struct ScriptedEntityID {
-    ecs_id: Option<ecs::EntityID>,
     internal_id: u64,
 }
 impl mlua::UserData for ScriptedEntityID {}
@@ -63,6 +49,20 @@ impl ScriptedEntity {
     }
 }
 
+pub struct WorldContext {
+    // TODO(q3k): this leaks memory, right?
+    lua: &'static mlua::Lua,
+    classes: Arc<Mutex<BTreeMap<String, ScriptedEntityClass>>>,
+    instances: Arc<Mutex<InstanceData>>,
+}
+
+#[derive(Debug)]
+struct InstanceData {
+    ecs: BTreeMap<ecs::EntityID, ScriptedEntity>,
+    internal_to_ecs: BTreeMap<u64, ecs::EntityID>,
+    queue: Vec<ScriptedEntity>,
+}
+
 impl WorldContext {
     pub fn new(world: &ecs::World) -> Self {
         let lua = mlua::Lua::new().into_static();
@@ -76,6 +76,7 @@ impl WorldContext {
         let classes = Arc::new(Mutex::new(BTreeMap::new()));
         let instances = Arc::new(Mutex::new(InstanceData {
             ecs: BTreeMap::new(),
+            internal_to_ecs: BTreeMap::new(),
             queue: Vec::new(),
         }));
 
@@ -122,14 +123,41 @@ impl WorldContext {
                 };
                 let cls: mlua::Table = lua.registry_value(&sec.table)?;
 
+                // (meta)table tree for entity objects:
+                //
+                // table: { }
+                //   | metatable
+                //   V
+                // metatable: { __index }
+                //                 |
+                //   .-------------'
+                //   V
+                // dispatch: { components.{...}, ... }
+                //   | metadata
+                //   V
+                // metametatable: { __index }
+                //                     |
+                //   .-----------------'
+                //   V
+                // cls: { init, tick, ... }
+
                 let table = lua.create_table()?;
                 let meta = lua.create_table()?;
-                meta.set("__index", cls)?;
-                table.set_metatable(Some(meta));
+                let dispatch = lua.create_table()?;
+                let metameta = lua.create_table()?;
+
+                table.set_metatable(Some(meta.clone()));
+                meta.set("__index", dispatch.clone())?;
+                dispatch.set_metatable(Some(metameta.clone()));
+                metameta.set("__index", cls)?;
+
+                let components = lua.create_table()?;
+                dispatch.set("components", components.clone());
+                let components_meta = lua.create_table()?;
+                components.set_metatable(Some(components_meta));
 
                 let sent = ScriptedEntity::new(secid.name.clone(), lua.create_registry_value(table.clone())?);
                 table.set("__sent_id", ScriptedEntityID {
-                    ecs_id: sent.ecs_id,
                     internal_id: sent.internal_id,
                 });
                 instances.lock().unwrap().queue.push(sent);
@@ -156,5 +184,18 @@ impl WorldContext {
 impl <'system> ecs::System<'system> for WorldContext {
     type SystemData = ecs::ReadWriteAll<'system>;
     fn run(&mut self, sd: Self::SystemData) {
+        let mut instances = self.instances.lock().unwrap();
+
+        // Lazily create enqueued entities.
+        if instances.queue.len() > 0 {
+            let mut queue = std::mem::replace(&mut instances.queue, Vec::new());
+            for mut el in queue.into_iter() {
+                let ecsid = sd.new_entity_lazy().build(&sd);
+                el.ecs_id = Some(ecsid);
+                instances.internal_to_ecs.insert(el.internal_id, ecsid);
+                log::debug!("Created sent of type {} with ECS ID {} and internal ID {}", el.class_name, ecsid, el.internal_id);
+                instances.ecs.insert(ecsid, el);
+            }
+        }
     }
 }

@@ -29,6 +29,7 @@ end
 
 function Test:tick()
     print("tick! " .. tostring(self.val))
+    print("components " .. tostring(self.components))
 end
 
 sent.register("Test", Test)

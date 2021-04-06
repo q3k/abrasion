@@ -140,7 +140,13 @@ pub struct ReadWriteAll<'a> {
     world: &'a World,
 }
 
-impl<'a> ReadWriteAll<'a> {
+impl<'a> ReadWriteAll<'a> {}
+
+impl<'a> std::ops::Deref for ReadWriteAll<'a> {
+    type Target = World;
+    fn deref(&self) -> &Self::Target {
+        self.world
+    }
 }
 
 
@@ -150,7 +156,7 @@ pub struct World {
     component_lua_bindings: BTreeMap<component::ID, Box<dyn component::LuaBindings>>,
     component_queue: RefCell<Vec<(component::ID, Box<dyn component::Component>, entity::Entity)>>,
     globals: GlobalMap,
-    next_id: entity::ID,
+    next_id: RefCell<entity::ID>,
 }
 
 impl World {
@@ -161,14 +167,23 @@ impl World {
             component_lua_bindings: BTreeMap::new(),
             component_queue: RefCell::new(Vec::new()),
             globals: GlobalMap::new(),
-            next_id: 1u64,
+            next_id: RefCell::new(1u64),
         }
     }
 
+    fn allocate_next_id(&self) -> entity::ID {
+        let res = self.next_id.borrow().clone();
+        let mut nid = self.next_id.borrow_mut();
+        *nid = *nid + 1;
+        res
+    }
+
     pub fn new_entity(&mut self) -> entity::EntityBuilder {
-        let id = self.next_id;
-        self.next_id += 1;
-        entity::EntityBuilder::new(self, id)
+        entity::EntityBuilder::new(self, self.allocate_next_id())
+    }
+
+    pub fn new_entity_lazy(&self) -> entity::LazyEntityBuilder {
+        entity::LazyEntityBuilder::new(self.allocate_next_id())
     }
 
     pub fn register_component_entity(

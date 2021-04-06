@@ -34,3 +34,29 @@ impl<'a> EntityBuilder<'a> {
         self.ent.id()
     }
 }
+
+pub struct LazyEntityBuilder {
+    components: Vec<(component::ID, Box<dyn component::Component>)>,
+    ent: Entity,
+}
+
+impl LazyEntityBuilder {
+    pub fn new(id: ID) -> Self {
+        Self {
+            components: Vec::new(),
+            ent: Entity(id),
+        }
+    }
+
+    pub fn with<T: component::Component>(mut self, c: T) -> Self {
+        self.components.push((component::component_id::<T>(), Box::new(c)));
+        self
+    }
+
+    pub fn build(self, w: &world::World) -> ID {
+        for (cid, c) in self.components.into_iter() {
+            w.enqueue_register_component_entity(cid, c, self.ent);
+        }
+        self.ent.id()
+    }
+}
