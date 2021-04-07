@@ -67,6 +67,7 @@ rust_binary(
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
         ":init.lua",
+        ":scene.lua",
     ],
 )
 

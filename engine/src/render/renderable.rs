@@ -132,8 +132,8 @@ struct RenderableBindings;
 impl ComponentLuaBindings for RenderableBindings {
     fn globals<'a>(&self, lua: &'a mlua::Lua) -> mlua::Table<'a> {
         let res = lua.create_table().unwrap();
-        res.set("new_mesh", lua.create_function(|_, args: (ResourceID<Mesh>, ResourceID<Light>)| {
-            Ok(1337)
+        res.set("new_mesh", lua.create_function(|_, args: (ResourceID<Mesh>, ResourceID<Material>)| {
+            Ok(Renderable::Mesh(args.0, args.1))
         }).unwrap()).unwrap();
         res
     }

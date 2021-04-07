@@ -114,7 +114,7 @@ impl Main {
 
         for x in -20..20 {
             for y in -20..20 {
-                for z in -20..20 {
+                for z in -20..-10 {
                     world.new_entity()
                         .with(Transform::at((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0))
                         .with(Renderable::Mesh(mesh, material))

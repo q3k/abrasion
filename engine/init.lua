@@ -1,9 +1,4 @@
-print("Hello, Lua!")
-for k,v in pairs(components) do
-    print("Lua Component", k, v)
-end
-
-local sent = {}
+sent = {}
 sent.register = function (cfg)
     if cfg.name == nil then
         error("sent.register: needs name")
@@ -39,26 +34,4 @@ sent.register = function (cfg)
     end
 end
 
-local Test = {}
-
-function Test:init(val)
-    self.val = val
-end
-
-function Test:tick()
-    print("tick! " .. tostring(self.val))
-    print("components " .. tostring(self.components))
-end
-
-sent.register({
-    name = "Test",
-    cls = Test,
-    components = {
-        components.Transform.new(0, 0, 0),
-    },
-})
-
-local t1 = Test.new(123)
-t1:tick()
-local t2 = Test.new(234)
-t2:tick()
+require("//engine/scene.lua")

@@ -1,7 +1,12 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, atomic};
+use std::io::Read;
+
+use crate::render;
+use crate::util;
 
 use mlua::prelude::LuaError::RuntimeError;
+use mlua::ToLua;
 
 fn debug_str(v: &mlua::Value) -> String {
     match v {
@@ -99,6 +104,23 @@ impl WorldContext {
 
         lua.globals().set("sent", lua.create_table().unwrap()).unwrap();
 
+        let loaders = lua.create_table().unwrap();
+        loaders.set(1, lua.create_function(move |lua, name: String| -> mlua::Result<mlua::Value> {
+            log::debug!("require({})", name);
+            let path = name.clone();
+            match util::file::resource(path.clone()) {
+                Err(e) => Ok(format!("util::file::resource({}) failed: {:?}", path, e).to_lua(&lua)?),
+                Ok(mut reader) => {
+                    let mut data: Vec<u8> = Vec::new();
+                    match reader.read_to_end(&mut data) {
+                        Err(e) => Ok(format!("util::file::reasource read failed: {:?}", e).to_lua(&lua)?),
+                        Ok(_) => lua.load(&data).set_name(&path)?.into_function()?.to_lua(&lua),
+                    }
+                },
+            }
+        }).unwrap()).unwrap();
+        lua.globals().get::<_, mlua::Table>("package").unwrap().set("loaders", loaders).unwrap();
+
         Self {
             lua,
             classes,
@@ -124,6 +146,43 @@ impl WorldContext {
                 idstr: idstr.clone(),
             });
             components.set(idstr, methods);
+        }
+        Ok(())
+    }
+
+    /// Registers resourcemanager global in Lua, scoped to scope.
+    // TODO(q3k): make this generic for all ECS globals.
+    fn scope_resourcemanager<'a, 'lua, 'scope>(
+        &self,
+        scope: &mlua::Scope<'lua, 'scope>,
+        world: &'a ecs::World,
+    ) -> mlua::Result<()>
+    where
+        'a: 'scope
+    {
+        let globals = self.lua.globals();
+        let resourcemanager = self.lua.create_table()?;
+        globals.set("resourcemanager", resourcemanager.clone());
+
+        {
+            let rm = world.global::<render::resource::Manager>();
+            let rm = rm.get();
+            resourcemanager.set("get_mesh", scope.create_function(move |lua, name: String| -> mlua::Result<mlua::Value> {
+                match rm.by_label::<render::Mesh, _>(&name) {
+                    None => Ok(mlua::Value::Nil),
+                    Some(r) => Ok(r.to_lua(&lua)?),
+                }
+            })?)?;
+        }
+        {
+            let rm = world.global::<render::resource::Manager>();
+            let rm = rm.get();
+            resourcemanager.set("get_material", scope.create_function(move |lua, name: String| -> mlua::Result<mlua::Value> {
+                match rm.by_label::<render::Material, _>(&name) {
+                    None => Ok(mlua::Value::Nil),
+                    Some(r) => Ok(r.to_lua(&lua)?),
+                }
+            })?)?;
         }
         Ok(())
     }
@@ -239,6 +298,7 @@ impl WorldContext {
         self.lua.scope(|scope| {
             self.global_set_components(world)?;
             self.scope_sent(scope, world)?;
+            self.scope_resourcemanager(scope, world)?;
             self.lua.load(&val).exec()
         })
     }

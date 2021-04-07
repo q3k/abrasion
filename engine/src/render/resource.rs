@@ -46,14 +46,17 @@ impl Manager {
         id
     }
 
-    pub fn by_label<T: Resource, S: ToString>(&self, label: S) -> Option<&T> {
+    pub fn by_label<T: Resource, S: ToString>(&self, label: S) -> Option<ResourceID<T>> {
         let label = label.to_string();
         let numeric = self.label_to_numeric.get(&label)?.clone();
         let rid = ResourceID {
             numeric,
             phantom: std::marker::PhantomData,
         };
-        T::map(self).get(&rid)
+        if let None = T::map(self).get(&rid) {
+            return None
+        }
+        Some(rid)
     }
 }
 
@@ -81,7 +84,9 @@ pub struct ResourceID<T: Resource> {
     phantom: std::marker::PhantomData<T>,
 }
 
-impl <T: Resource> mlua::UserData for ResourceID<T> {}
+impl mlua::UserData for ResourceID<Light> {}
+impl mlua::UserData for ResourceID<Mesh> {}
+impl mlua::UserData for ResourceID<Material> {}
 
 impl <T: Resource> Clone for  ResourceID<T> {
     fn clone(&self) -> ResourceID<T> {
