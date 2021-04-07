@@ -186,25 +186,40 @@ impl World {
         entity::LazyEntityBuilder::new(self.allocate_next_id())
     }
 
+    pub fn register_component_lua_bindings(
+        &mut self,
+        bindings: Box<dyn component::LuaBindings>,
+    ) {
+        let idstr = bindings.idstr();
+        let cid = bindings.id();
+        if let Some(_) = self.component_by_idstr.get(idstr) {
+            log::warn!("Ignored attempted re-registration of Lua bindings for component {} (duplicate idstr)", idstr);
+            return
+        }
+        if let Some(_) = self.component_lua_bindings.get(&cid) {
+            log::warn!("Ignored attempted re-registration of Lua bindings for component {} (duplicate ID)", idstr);
+            return
+        }
+        self.component_by_idstr.insert(idstr, cid);
+        self.component_lua_bindings.insert(cid, bindings);
+    }
+
+    pub fn lua_any_into_dyn<'a, 'b>(&'a self, ud: &'a mlua::AnyUserData) -> Option<Box<dyn component::Component>> {
+        for (_, bindings) in self.component_lua_bindings.iter() {
+            if let Some(b) = bindings.any_into_dyn(ud) {
+                return Some(b);
+            }
+        }
+        None
+    }
+
     pub fn register_component_entity(
         &mut self,
         cid: component::ID,
         c: Box<dyn component::Component>,
         e: entity::Entity
     ) {
-        if let Some(bindings) = c.lua_bindings() {
-            // TODO(q3k): optimize this to not happen on every registration.
-            self.component_by_idstr.insert(bindings.id(), cid);
-            self.component_lua_bindings.insert(cid, bindings);
-        }
-        let map = self.components.entry(cid).or_insert_with(|| {
-            if let Some(bindings) = c.lua_bindings() {
-                log::info!("Registered component {}", bindings.id());
-            } else {
-                log::warn!("Component {:?} has no .lua_bindings() defined, will not be accessible from scripting.", cid);
-            }
-            ComponentMap::new()
-        });
+        let map = self.components.entry(cid).or_insert(ComponentMap::new());
         map.insert(e.id(), c).unwrap();
     }
 
@@ -223,6 +238,15 @@ impl World {
         for (cid, c, e) in self.component_queue.replace(Vec::new()).into_iter() {
             self.register_component_entity(cid, c, e);
         }
+    }
+
+    pub fn get_component_lua_bindings(
+        &self,
+    ) -> Vec<(String, component::ID, &Box<dyn component::LuaBindings>)> {
+        self.component_by_idstr.iter().filter_map(|(idstr, cid)| {
+            let bindings = self.component_lua_bindings.get(cid)?;
+            Some((idstr.to_string(), *cid, bindings))
+        }).collect()
     }
 
     pub fn components<'a, T: component::Component>(&'a self) -> ReadComponent<'a, T> {

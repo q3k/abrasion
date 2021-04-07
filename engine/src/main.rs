@@ -216,12 +216,13 @@ fn main() {
     env_logger::init();
 
     let mut world = World::new();
+    world.register_component_lua_bindings(Transform::bindings());
     let mut renderer = render::Renderer::initialize(&mut world);
     let main = Main::new(&mut world, &mut renderer);
 
     let context = scripting::WorldContext::new(&world);
     let init = util::file::resource("//engine/init.lua").unwrap().string().unwrap();
-    context.eval_init(init).unwrap();
+    context.eval_init(&world, init).unwrap();
 
     log::info!("Starting...");
 

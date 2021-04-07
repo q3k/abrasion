@@ -16,18 +16,29 @@
 
 use std::collections::HashMap;
 use std::hash;
+use std::cell::Ref;
 
 use cgmath as cgm;
 
-use ecs::Component;
+use ecs::{Component, ComponentLuaBindings};
 use crate::render::{Light, Mesh, Material};
 use crate::render::resource::{ResourceID};
 
+#[derive(Clone, Debug)]
 pub struct Transform(pub cgm::Matrix4<f32>);
 
-pub struct TransformBindings {}
+impl Component for Transform {
+    fn id(&self) -> ecs::component::ID {
+        ecs::component::component_id::<Transform>()
+    }
+    fn clone_dyn(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+}
 
-impl ecs::ComponentLuaBindings for TransformBindings {
+struct TransformBindings;
+
+impl ComponentLuaBindings for TransformBindings {
     fn globals<'a>(&self, lua: &'a mlua::Lua) -> mlua::Table<'a> {
         let res = lua.create_table().unwrap();
         res.set("new", lua.create_function(|_, args: mlua::Variadic<mlua::Number>| {
@@ -50,16 +61,20 @@ impl ecs::ComponentLuaBindings for TransformBindings {
         }).unwrap()).unwrap();
         res
     }
-    fn id(&self) -> &'static str {
+    fn idstr(&self) -> &'static str {
         "Transform"
+    }
+    fn id(&self) -> ecs::component::ID {
+        ecs::component::component_id::<Transform>()
+    }
+    fn any_into_dyn<'a>(&self, ud: &'a mlua::AnyUserData) -> Option<Box<dyn Component>> {
+        match ud.borrow::<Transform>() {
+            Ok(v) => Some(Box::new(Transform::clone(&v))),
+            Err(_) => None,
+        }
     }
 }
 
-impl Component for Transform {
-    fn lua_bindings(&self) -> Option<Box<dyn ecs::ComponentLuaBindings>> {
-        Some(Box::new(TransformBindings{}))
-    }
-}
 
 impl mlua::UserData for Transform {
     fn add_methods<'lua, M: mlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
@@ -85,12 +100,22 @@ impl Transform {
     pub fn m4(&self) -> &cgm::Matrix4<f32> {
         &self.0
     }
+    pub fn bindings() -> Box<dyn ComponentLuaBindings> {
+        Box::new(TransformBindings)
+    }
 }
 
+#[derive(Clone, Debug)]
 pub enum Renderable {
     Light(ResourceID<Light>),
     Mesh(ResourceID<Mesh>, ResourceID<Material>),
 }
 
 impl Component for Renderable {
+    fn id(&self) -> ecs::component::ID {
+        ecs::component::component_id::<Renderable>()
+    }
+    fn clone_dyn(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
 }

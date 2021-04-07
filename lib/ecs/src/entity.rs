@@ -53,6 +53,11 @@ impl LazyEntityBuilder {
         self
     }
 
+    pub fn with_dyn(mut self, c: Box<dyn component::Component>) -> Self {
+        self.components.push((c.id(), c));
+        self
+    }
+
     pub fn build(self, w: &world::World) -> ID {
         for (cid, c) in self.components.into_iter() {
             w.enqueue_register_component_entity(cid, c, self.ent);

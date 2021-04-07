@@ -35,6 +35,7 @@ impl XYZ {
     }
 }
 
+#[derive(Debug)]
 pub struct LinearF32 {
     pub d: f32,
 }

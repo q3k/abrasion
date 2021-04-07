@@ -24,6 +24,7 @@ use vulkano::sync::GpuFuture;
 
 use crate::render::vulkan::data;
 
+#[derive(Debug)]
 pub struct Mesh {
     vertices: Arc<Vec<data::Vertex>>,
     indices: Arc<Vec<u16>>,

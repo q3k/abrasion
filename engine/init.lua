@@ -1,15 +1,33 @@
-print("Hello, Lua2!")
---for k,v in pairs(components) do
---    print("Component", k, v)
---end
+print("Hello, Lua!")
+for k,v in pairs(components) do
+    print("Lua Component", k, v)
+end
 
 local sent = {}
-sent.register = function (name, cls)
+sent.register = function (cfg)
+    if cfg.name == nil then
+        error("sent.register: needs name")
+    end
+    if cfg.cls == nil then
+        error("sent.register: needs cls")
+    end
+    local name = cfg.name
+    local cls = cfg.cls
+    local components = cfg.components or {}
+
     if cls.__sent_class_id ~= nil then
-        print("Attempting to re-register " .. name)
+        error(string.format("sent.register: %s already registered", name))
         return
     end
-    local sent_class_id = __sent_register(name, cls)
+
+    -- Recreate config when calling native function, to ensure no metatable
+    -- fuckery.
+    local sent_class_id = __sent_register({
+        name = name,
+        cls = cls,
+        components = components,
+    })
+
     cls.__sent_class_id = sent_class_id
     cls.new = function(...) 
         local arg = {...}
@@ -32,7 +50,14 @@ function Test:tick()
     print("components " .. tostring(self.components))
 end
 
-sent.register("Test", Test)
+sent.register({
+    name = "Test",
+    cls = Test,
+    components = {
+        components.Transform.new(0, 0, 0),
+    },
+})
+
 local t1 = Test.new(123)
 t1:tick()
 local t2 = Test.new(234)

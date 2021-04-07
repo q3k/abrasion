@@ -23,6 +23,7 @@ use crate::render::vulkan::data;
 
 /// An Omni point light, with position in 3d space, and 'color' defined in lumens per CIE XYZ
 /// color channel.
+#[derive(Debug)]
 pub struct Omni {
     /// Luminour power/flux defined as lumens per XYZ color channel.
     pub color: color::XYZ,
@@ -57,6 +58,7 @@ impl Omni {
     }
 }
 
+#[derive(Debug)]
 pub enum Light {
     Omni(Omni),
 }

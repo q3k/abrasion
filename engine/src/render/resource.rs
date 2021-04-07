@@ -56,6 +56,7 @@ impl Resource for Material {
     fn map_mut(rm: &mut Manager) -> &mut Map<Self> { &mut rm.materials }
 }
 
+#[derive(Debug)]
 pub struct ResourceID<T: Resource> {
     numerical: u64,
     phantom: std::marker::PhantomData<T>,

@@ -22,7 +22,7 @@ use vulkano::format::Format;
 
 use cgmath as cgm;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Vertex {
     pos: [f32; 3],
     normal: [f32; 3],
@@ -70,7 +70,7 @@ pub struct FragmentUniformBufferObject {
     pub omni_lights: [OmniLight; 4],
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Textures {
     // diffuse: RGB
     pub diffuse: Arc<vm::ImmutableImage<Format>>,
@@ -81,4 +81,10 @@ pub struct Textures {
 pub struct VertexData {
     pub vbuffer: Arc<vb::ImmutableBuffer<[Vertex]>>,
     pub ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
+}
+
+impl std::fmt::Debug for VertexData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VertexData").finish()
+    }
 }

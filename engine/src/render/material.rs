@@ -28,6 +28,7 @@ use crate::render::vulkan::data;
 use crate::render::vulkan::material::ChannelLayoutVulkan;
 use crate::util::file;
 
+#[derive(Debug)]
 pub enum Texture<T: ChannelLayoutVulkan> {
     Color(T),
     ImageRef(String),
@@ -55,6 +56,7 @@ impl<T: ChannelLayoutVulkan> Texture<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct Material {
     diffuse: Texture<color::XYZ>,
     roughness: Texture<color::LinearF32>,
