@@ -57,8 +57,6 @@ pub struct Renderer {
     instance: vulkan::Instance<Window>,
     events_loop: EventLoop<()>,
     surface: Arc<vs::Surface<Window>>,
-    rm: resource::Manager,
-
     cursor_locked: bool,
 }
 
@@ -86,6 +84,7 @@ impl<'a> ecs::System<'a> for Renderer {
         ecs::ReadComponent<'a, Renderable>,
         ecs::ReadWriteGlobal<'a, Status>,
         ecs::ReadGlobal<'a, SceneInfo>,
+        ecs::ReadGlobal<'a, resource::Manager>,
         ecs::ReadWriteGlobal<'a, input::Input>,
     );
 
@@ -94,6 +93,7 @@ impl<'a> ecs::System<'a> for Renderer {
         , renderables
         , status
         , scene
+        , rm
         , input): Self::SystemData,
     ) {
         let transformedRenderables = (transforms, renderables);
@@ -119,7 +119,7 @@ impl<'a> ecs::System<'a> for Renderer {
         }
         let camera = &scene.camera;
         let view = &scene.view;
-        self.instance.flip(camera, view, &rd, &self.rm);
+        self.instance.flip(camera, view, &rd, &rm.get());
 
         // Retrieve current resolution into status.
         match self.instance.swapchain_dimensions() {
@@ -227,7 +227,6 @@ impl Renderer {
             instance,
             events_loop,
             surface,
-            rm: resource::Manager::new(),
 
             cursor_locked: false,
         }
@@ -301,9 +300,5 @@ impl Renderer {
             }
         });
         return (close, events);
-    }
-
-    pub fn add_resource<T: Resource, S: ToString>(&mut self, r: T, label: Option<S>) -> ResourceID<T> {
-        self.rm.add(r, label)
     }
 }

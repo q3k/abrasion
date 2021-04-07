@@ -112,6 +112,12 @@ pub enum Renderable {
 }
 impl mlua::UserData for Renderable {}
 
+impl Renderable {
+    pub fn bindings() -> Box<dyn ComponentLuaBindings> {
+        Box::new(RenderableBindings)
+    }
+}
+
 impl Component for Renderable {
     fn id(&self) -> ecs::component::ID {
         ecs::component::component_id::<Renderable>()

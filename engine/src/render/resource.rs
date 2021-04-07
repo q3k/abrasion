@@ -13,6 +13,7 @@ pub struct Manager {
     label_to_numeric: BTreeMap<String, u64>,
     counter: u64,
 }
+impl ecs::Global for Manager {}
 
 impl Manager {
     pub fn new() -> Self {

@@ -59,6 +59,7 @@ struct Main {
 
 impl Main {
     pub fn new(world: &mut World, renderer: &mut render::Renderer) -> Self {
+        let mut rm = render::resource::Manager::new();
         let mesh = {
             let vertices = Arc::new(vec![
                 data::Vertex::new([-0.5, -0.5,  0.5], [ 0.0,  0.0,  1.0], [1.0, 0.0]),
@@ -103,10 +104,10 @@ impl Main {
                 20, 22, 21, 22, 20, 23,
 
             ]);
-            renderer.add_resource(Mesh::new(vertices, indices), Some("cube"))
+            rm.add(Mesh::new(vertices, indices), Some("cube"))
         };
 
-        let material = renderer.add_resource(PBRMaterialBuilder {
+        let material = rm.add(PBRMaterialBuilder {
             diffuse: Texture::from_image(String::from("//assets/test-128px.png")),
             roughness: Texture::from_image(String::from("//assets/test-128px-roughness.png")),
         }.build(), Some("test-128px"));
@@ -122,7 +123,7 @@ impl Main {
             }
         }
 
-        let light = renderer.add_resource(Light::omni_test(), Some("omni"));
+        let light = rm.add(Light::omni_test(), Some("omni"));
 
         // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
         // these are negligible at this scale.
@@ -135,7 +136,7 @@ impl Main {
         let sun_lumen: f32 = sun_luminous_emittance * (4.0 * 3.14159 * sun_distance * sun_distance);
 
         let sun_color = color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0);
-        let sun = renderer.add_resource(Light::omni_with_color(sun_color), Some("sun"));
+        let sun = rm.add(Light::omni_with_color(sun_color), Some("sun"));
 
         // In our scene, the sun at a 30 degree zenith.
         let sun_angle: f32 = (3.14159 * 2.0) / (360.0 / 30.0);
@@ -152,6 +153,8 @@ impl Main {
             .with(Transform::at(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance))
             .with(Renderable::Light(sun))
             .build();
+
+        world.set_global(rm);
 
         Self {
             light1, light2,
@@ -217,6 +220,7 @@ fn main() {
 
     let mut world = World::new();
     world.register_component_lua_bindings(Transform::bindings());
+    world.register_component_lua_bindings(Renderable::bindings());
     let mut renderer = render::Renderer::initialize(&mut world);
     let main = Main::new(&mut world, &mut renderer);
 
