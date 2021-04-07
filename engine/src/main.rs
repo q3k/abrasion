@@ -103,13 +103,13 @@ impl Main {
                 20, 22, 21, 22, 20, 23,
 
             ]);
-            renderer.add_resource(Mesh::new(vertices, indices))
+            renderer.add_resource(Mesh::new(vertices, indices), Some("cube"))
         };
 
         let material = renderer.add_resource(PBRMaterialBuilder {
             diffuse: Texture::from_image(String::from("//assets/test-128px.png")),
             roughness: Texture::from_image(String::from("//assets/test-128px-roughness.png")),
-        }.build());
+        }.build(), Some("test-128px"));
 
         for x in -20..20 {
             for y in -20..20 {
@@ -122,7 +122,7 @@ impl Main {
             }
         }
 
-        let light = renderer.add_resource(Light::omni_test());
+        let light = renderer.add_resource(Light::omni_test(), Some("omni"));
 
         // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
         // these are negligible at this scale.
@@ -135,7 +135,7 @@ impl Main {
         let sun_lumen: f32 = sun_luminous_emittance * (4.0 * 3.14159 * sun_distance * sun_distance);
 
         let sun_color = color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0);
-        let sun = renderer.add_resource(Light::omni_with_color(sun_color));
+        let sun = renderer.add_resource(Light::omni_with_color(sun_color), Some("sun"));
 
         // In our scene, the sun at a 30 degree zenith.
         let sun_angle: f32 = (3.14159 * 2.0) / (360.0 / 30.0);

@@ -303,7 +303,7 @@ impl Renderer {
         return (close, events);
     }
 
-    pub fn add_resource<T: Resource>(&mut self, r: T) -> ResourceID<T> {
-        self.rm.add(r)
+    pub fn add_resource<T: Resource, S: ToString>(&mut self, r: T, label: Option<S>) -> ResourceID<T> {
+        self.rm.add(r, label)
     }
 }
