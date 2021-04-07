@@ -110,6 +110,7 @@ pub enum Renderable {
     Light(ResourceID<Light>),
     Mesh(ResourceID<Mesh>, ResourceID<Material>),
 }
+impl mlua::UserData for Renderable {}
 
 impl Component for Renderable {
     fn id(&self) -> ecs::component::ID {
@@ -117,5 +118,29 @@ impl Component for Renderable {
     }
     fn clone_dyn(&self) -> Box<dyn Component> {
         Box::new(self.clone())
+    }
+}
+
+struct RenderableBindings;
+
+impl ComponentLuaBindings for RenderableBindings {
+    fn globals<'a>(&self, lua: &'a mlua::Lua) -> mlua::Table<'a> {
+        let res = lua.create_table().unwrap();
+        res.set("new_mesh", lua.create_function(|_, args: (ResourceID<Mesh>, ResourceID<Light>)| {
+            Ok(1337)
+        }).unwrap()).unwrap();
+        res
+    }
+    fn idstr(&self) -> &'static str {
+        "Renderable"
+    }
+    fn id(&self) -> ecs::component::ID {
+        ecs::component::component_id::<Renderable>()
+    }
+    fn any_into_dyn<'a>(&self, ud: &'a mlua::AnyUserData) -> Option<Box<dyn Component>> {
+        match ud.borrow::<Renderable>() {
+            Ok(v) => Some(Box::new(Renderable::clone(&v))),
+            Err(_) => None,
+        }
     }
 }

@@ -80,6 +80,8 @@ pub struct ResourceID<T: Resource> {
     phantom: std::marker::PhantomData<T>,
 }
 
+impl <T: Resource> mlua::UserData for ResourceID<T> {}
+
 impl <T: Resource> Clone for  ResourceID<T> {
     fn clone(&self) -> ResourceID<T> {
         ResourceID {
