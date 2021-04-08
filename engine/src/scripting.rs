@@ -503,19 +503,12 @@ where
                                 continue;
                             }
                         };
-                        let tick: mlua::Function = match table.get("tick") {
+                        let cb: mlua::Function = match table.raw_get("__sent_tick") {
                             Ok(tick) => tick,
                             Err(err) => {
                                 log::warn!("Entity {}/{} tick failed: getting tick function failed: {:?}", ecsid, sent.internal_id, err);
                                 continue;
                             }
-                        };
-                        let cb = match tick.bind(table) {
-                            Ok(cb) => cb,
-                            Err(err) => {
-                                log::warn!("Entity {}/{} tick failed: could not bind: {:?}", ecsid, sent.internal_id, err);
-                                continue;
-                            },
                         };
                         tickers.push((*ecsid, cb));
                     }

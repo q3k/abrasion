@@ -32,6 +32,14 @@ sent.register = function (cfg)
         local sent_id = __sent_new(table, sent_class_id)
         table.__sent_id = sent_id
 
+        -- Make 'tick' trampoline, used by runtime to do fast call into ticker
+        -- without bind/argument push.
+        table.__sent_tick = function()
+            if table.tick ~= nil then
+                table:tick()
+            end
+        end
+
         -- Configure components dispatcher.
         table.components = {}
         table.components.__sent_id = sent_id
