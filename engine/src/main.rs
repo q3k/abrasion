@@ -51,7 +51,7 @@ impl Time {
 
 struct Main {
     light1: ecs::EntityID,
-    light2: ecs::EntityID,
+    cube1: ecs::EntityID,
 
     cx: f32,
     cy: f32,
@@ -112,17 +112,6 @@ impl Main {
             roughness: Texture::from_image(String::from("//assets/test-128px-roughness.png")),
         }.build(), Some("test-128px"));
 
-        for x in -20..20 {
-            for y in -20..20 {
-                for z in -20..-10 {
-                    world.new_entity()
-                        .with(Transform::at((x as f32)*4.0, (y as f32)*4.0, (z as f32)*4.0))
-                        .with(Renderable::Mesh(mesh, material))
-                        .build();
-                }
-            }
-        }
-
         let light = rm.add(Light::omni_test(), Some("omni"));
 
         // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
@@ -145,9 +134,9 @@ impl Main {
             .with(Transform::at(-10.0, -10.0, -5.0))
             .with(Renderable::Light(light))
             .build();
-        let light2 = world.new_entity()
+        let cube1 = world.new_entity()
             .with(Transform::at(-10.0, -10.0, -5.0))
-            .with(Renderable::Light(light))
+            .with(Renderable::Mesh(mesh, material))
             .build();
         world.new_entity()
             .with(Transform::at(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance))
@@ -157,7 +146,7 @@ impl Main {
         world.set_global(rm);
 
         Self {
-            light1, light2,
+            light1, cube1,
             cx: 0.,
             cy: 0.,
         }
@@ -185,9 +174,9 @@ impl<'a> ecs::System <'a> for Main {
         self.cy += (dy);
 
         let camera = cgm::Point3::new(
-            self.cx.sin() * 10.0,
-            (self.cx.cos()*self.cy.cos()) * 10.0,
-            self.cy.sin() * 10.0,
+            self.cx.sin() * 20.0,
+            (self.cx.cos()*self.cy.cos()) * 20.0,
+            self.cy.sin() * 20.0,
         );
 
         let view = cgm::Matrix4::look_at(
@@ -200,18 +189,14 @@ impl<'a> ecs::System <'a> for Main {
         sd.scene_info.get().view = view;
         sd.scene_info.get().lock_cursor = true;
 
-        *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(
-            -0.0 + (ts*3.0).sin() * 4.0,
-            -0.0 + (ts*4.0).cos() * 4.0,
-            -0.0 + (ts*2.0).sin() * 3.0,
-        );
+        let lx = 0.0;
+        let ly = 4.0;
+        let lz = -0.0 + (ts*2.0).sin() * 4.0;
 
-        *sd.transforms.get_mut(self.light2).unwrap() = Transform::at(
-            -0.0 + (ts*3.0).cos() * 4.0,
-            -0.0 + (ts*4.0).sin() * 4.0,
-            -0.0 + (ts*2.0).cos() * 3.0,
-        );
-
+        *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(lx, ly, lz);
+        let mut ctransform = Transform::at(lx, ly, lz);
+        ctransform.0 = ctransform.0 * cgmath::Matrix4::from_scale(0.1);
+        *sd.transforms.get_mut(self.cube1).unwrap() = ctransform;
     }
 }
 

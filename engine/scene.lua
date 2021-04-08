@@ -23,7 +23,8 @@ sent.register({
 for x=-2,2 do
     for y=-2,2 do
         for z=-2,2 do
-            if z > -2 and z < 2 and x > -2 and x < 2 then
+            --if z > -2 and z < 2 and x > -2 and x < 2 and y > 0 then
+            if x <= 0 and y <= 0 and z <= 0 then
             else
                 Cube.new(x, y, z)
             end

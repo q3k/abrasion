@@ -75,9 +75,7 @@ void main() {
     F0 = mix(F0, albedo, metallic);
 
     vec3 Lo = BRDFIlluminance(N, V, F0, albedo, dielectric, roughness);
-    // Add 500 nits ambient light.
-    vec3 ambient = vec3(500.00) * albedo;
-    vec3 color = XYZ_TO_SRGB * ((ambient + Lo) * CAMERA_EXPOSURE);
+    vec3 color = XYZ_TO_SRGB * (Lo * CAMERA_EXPOSURE);
 
     outColor = vec4(GammaCorrect(color.x), GammaCorrect(color.y), GammaCorrect(color.z), 1.0);
 }

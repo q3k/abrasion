@@ -40,7 +40,7 @@ impl Omni {
     // M. Krystek. 1985. "An algorithm to calculate correlated color temperature"
     // Color Research & Application, 10 (1), 38–40.
     pub fn test() -> Self {
-        Self::with_color(color::XYZ::new(234.7*100.0, 214.1*100.0, 207.9*100.0))
+        Self::with_color(color::XYZ::new(234.7*200.0, 214.1*200.0, 207.9*200.0))
     }
 
     pub fn with_color(color: color::XYZ) -> Self{
