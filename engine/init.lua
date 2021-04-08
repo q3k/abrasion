@@ -1,4 +1,10 @@
 sent = {}
+sent.newindex = function(t, k, v)
+    return __sent_components_newindex(t, k, v)
+end
+sent.index = function(t, k)
+    return __sent_components_index(t, k)
+end
 sent.register = function (cfg)
     if cfg.name == nil then
         error("sent.register: needs name")

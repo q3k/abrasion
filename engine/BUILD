@@ -15,6 +15,7 @@ rust_binary(
     srcs = [
         "src/main.rs",
 
+        "src/globals.rs",
         "src/input.rs",
         "src/scripting.rs",
 

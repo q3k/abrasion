@@ -17,10 +17,10 @@
 use log;
 use env_logger;
 use std::sync::Arc;
-use std::time;
 
 use cgmath as cgm;
 
+pub mod globals;
 pub mod input;
 mod render;
 mod util;
@@ -33,20 +33,6 @@ use render::vulkan::data;
 use render::material::{Texture, PBRMaterialBuilder};
 use render::{Light, Material, Mesh, Transform, Renderable};
 use physics::color;
-
-struct Time {
-    start: time::Instant,
-    now: time::Instant,
-}
-impl ecs::Global for Time {}
-
-impl Time {
-    pub fn instant(&self) -> f32  {
-        let instant_ns = self.now.duration_since(self.start).as_nanos() as u64;
-        let instant = ((instant_ns/1000) as f32) / 1_000_000.0;
-        instant
-    }
-}
 
 
 struct Main {
@@ -156,7 +142,7 @@ impl Main {
 #[derive(Access)]
 struct MainData<'a> {
     scene_info: ecs::ReadWriteGlobal<'a, render::SceneInfo>,
-    time: ecs::ReadGlobal<'a, Time>,
+    time: ecs::ReadGlobal<'a, globals::Time>,
     input: ecs::ReadGlobal<'a, input::Input>,
     transforms: ecs::ReadWriteComponent<'a, Transform>,
 }
@@ -220,15 +206,11 @@ fn main() {
     p.add_system(context);
     p.add_system(renderer);
 
-    let start = time::Instant::now();
-    world.set_global(Time {
-        start,
-        now: start,
-    });
+    world.set_global(globals::Time::new());
     world.set_global(input::Input::new());
     loop {
         world.queue_drain();
-        world.global_mut::<Time>().get().now = time::Instant::now();
+        world.global_mut::<globals::Time>().get().update();
 
         p.run(&world);
         let status = world.global::<render::Status>().get();

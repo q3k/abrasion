@@ -66,6 +66,28 @@ impl ComponentMap {
         }
     }
 
+    pub fn get_dyn<'a>(&'a self, e: entity::ID) -> Result<RefDyn<'a>, AccessError> {
+        unsafe {
+            match borrow::Ref::new(&self.borrow) {
+                None => Err(AccessError("already borrowed mutably".to_string())),
+                Some(b) => {
+                    let map = &*self.value.get();
+                    match map.get(&e) {
+                        None => Err(AccessError("no such entity".to_string())),
+                        Some(component) => {
+                            let component = component.as_ref();
+                            let val = component as *const (dyn component::Component);
+                            Ok(RefDyn {
+                                val,
+                                borrow: Some(b),
+                            })
+                        },
+                    }
+                }
+            }
+        }
+    }
+
     pub unsafe fn get<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<Ref<'a, T>, AccessError> {
         match borrow::Ref::new(&self.borrow) {
             None => Err(AccessError("already borrowed mutably".to_string())),
@@ -103,6 +125,27 @@ impl ComponentMap {
                     },
                 }
             }
+        }
+    }
+}
+
+pub struct RefDyn<'a> {
+    val: *const (dyn component::Component),
+    borrow: Option<borrow::Ref<'a>>,
+}
+
+impl <'a> Drop for RefDyn<'a> {
+    fn drop(&mut self) {
+        self.borrow = None;
+    }
+}
+
+impl <'a> Deref for RefDyn<'a> {
+    type Target = dyn component::Component;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            &(*self.val)
         }
     }
 }

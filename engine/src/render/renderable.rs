@@ -99,7 +99,7 @@ impl mlua::UserData for Transform {
         methods.add_method("xyzw", |_, this, _: ()| {
             // TODO(q3k): lua wrappers for cgmath
             let xyzw = this.xyzw();
-            Ok(vec![xyzw.z, xyzw.y, xyzw.z, xyzw.w])
+            Ok(vec![xyzw.x, xyzw.y, xyzw.z, xyzw.w])
         });
     }
 }

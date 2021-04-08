@@ -5,10 +5,19 @@ local cube_material = rm.get_material("test-128px")
 local Cube = {}
 
 function Cube:init(x, y, z)
+    self.name = string.format("%d %d %d", x, y, z)
     self.components.Transform = components.Transform.new(x, y, z)
 end
 
 function Cube:tick()
+    local xyzw = self.components.Transform:xyzw();
+    local x = xyzw[1];
+    local y = xyzw[2];
+    local dist = math.sqrt(x*x + y*y)
+    local z = math.sin(time*2+dist)*math.max(10-dist, 0)/10
+    local new = components.Transform.new(x, y, z);
+    --print(self.name, x, y, z, new:xyzw()[1], new:xyzw()[2], new:xyzw()[3])
+    self.components.Transform = new
 end
 
 sent.register({
@@ -20,14 +29,9 @@ sent.register({
     },
 })
 
-for x=-2,2 do
-    for y=-2,2 do
-        for z=-2,2 do
-            --if z > -2 and z < 2 and x > -2 and x < 2 and y > 0 then
-            if x <= 0 and y <= 0 and z <= 0 then
-            else
-                Cube.new(x, y, z)
-            end
-        end
+local z = 0
+for x=-8,8 do
+    for y=-8,8 do
+        Cube.new(x, y, z)
     end
 end

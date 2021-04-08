@@ -140,6 +140,12 @@ pub struct ReadWriteAll<'a> {
     world: &'a World,
 }
 
+impl<'a> ReadWriteAll<'a> {
+    pub fn world(self) -> &'a World {
+        self.world
+    }
+}
+
 impl<'a> ReadWriteAll<'a> {}
 
 impl<'a> std::ops::Deref for ReadWriteAll<'a> {
@@ -260,6 +266,28 @@ impl World {
         ReadWriteComponent {
             world: self,
             phantom: PhantomData,
+        }
+    }
+
+    pub fn component_get_dyn_cloned<'a>(
+        &'a self,
+        e: entity::ID,
+        cid: component::ID,
+    ) -> Option<Box<dyn component::Component>> {
+        let map = self.components.get(&cid)?;
+        match map.get_dyn(e) {
+            Ok(val) => Some(val.clone_dyn()),
+            Err(err) => {
+                // Attempt to get from queue.
+                let cq = self.component_queue.borrow();
+                for (qcid, qc, qe) in cq.iter() {
+                    if qe.id() == e && *qcid == cid {
+                        return Some(qc.clone_dyn());
+                    }
+                }
+                // TODO(q3k): better error handling
+                panic!("get_dyn({:?}): not in queue and ecs said: {:?}", e, err);
+            }
         }
     }
 

@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex, atomic};
+use std::sync::{Arc, Mutex, RwLock, atomic};
 use std::io::Read;
 
 use crate::render;
 use crate::util;
+use crate::globals::Time;
 
 use mlua::prelude::LuaError::RuntimeError;
 use mlua::ToLua;
@@ -117,11 +118,11 @@ impl ScriptedEntity {
         let componentsmeta = lua.create_table()?;
         componentsmeta.set(
             "__index",
-            lua.globals().get::<_, mlua::Function>("__sent_components_index")?,
+            lua.globals().get::<_, mlua::Table>("sent")?.get::<_, mlua::Function>("index")?,
         )?;
         componentsmeta.set(
             "__newindex",
-            lua.globals().get::<_, mlua::Function>("__sent_components_newindex")?,
+            lua.globals().get::<_, mlua::Table>("sent")?.get::<_, mlua::Function>("newindex")?,
         )?;
         components.set_metatable(Some(componentsmeta));
         components.raw_set("__sent_id", ScriptedEntityID {
@@ -142,7 +143,7 @@ pub struct WorldContext {
     // TODO(q3k): this leaks memory, right?
     lua: &'static mlua::Lua,
     classes: Arc<Mutex<BTreeMap<String, ScriptedEntityClass>>>,
-    instances: Arc<Mutex<InstanceData>>,
+    instances: Arc<RwLock<InstanceData>>,
 }
 
 #[derive(Debug)]
@@ -198,7 +199,7 @@ impl WorldContext {
         }).unwrap()).unwrap();
 
         let classes = Arc::new(Mutex::new(BTreeMap::new()));
-        let instances = Arc::new(Mutex::new(InstanceData {
+        let instances = Arc::new(RwLock::new(InstanceData {
             ecs: BTreeMap::new(),
             internal_to_ecs: BTreeMap::new(),
             queue: Vec::new(),
@@ -290,6 +291,21 @@ impl WorldContext {
         Ok(())
     }
 
+    fn scope_time<'a, 'world, 'lua, 'scope>(
+        &'a self,
+        scope: &'a mlua::Scope<'lua, 'scope>,
+        world: &'world ecs::World,
+    ) -> mlua::Result<()>
+    where
+        'world: 'scope,
+        'scope: 'a,
+    {
+        let globals = self.lua.globals();
+        let time = world.global::<Time>();
+        globals.set("time", time.get().instant());
+        Ok(())
+    }
+
     fn scope_sent<'a, 'world, 'lua, 'scope>(
         &'a self,
         scope: &'a mlua::Scope<'lua, 'scope>,
@@ -349,7 +365,7 @@ impl WorldContext {
                 let seid: ScriptedEntityID = table.raw_get("__sent_id")?;
 
                 let classes = classes.lock().unwrap();
-                let instances = instances.lock().unwrap();
+                let instances = instances.read().unwrap();
 
                 // Get ScriptedEntity that the user requested this component for.
                 let se = match instances.get(seid.internal_id) {
@@ -362,28 +378,29 @@ impl WorldContext {
                         return Err(RuntimeError(format!("unknown entity {}", seid.internal_id)));
                     }
                 };
-
-                // Now retrieve the ScriptedEntityClass, which contains information about the
-                // components that this entity has.
-                let sec = match classes.get(&se.class_name) {
-                    Some(sec) => sec,
-                    None => {
-                        log::warn!("Lua code requested components for entity {} with unknown class {}", seid.internal_id, se.class_name);
-                        return Err(RuntimeError(format!("unknown class {}", se.class_name)));
-                    }
-                };
-
-                // And retrieve the component.
-                let component: &Box<dyn ecs::Component> = match sec.components.get(&key) {
-                    Some(c) => c,
-                    None => return Ok(mlua::Value::Nil),
-                };
-
-                let ud: mlua::Value = match component.lua_userdata(lua) {
-                    Some(ud) => ud,
-                    None => return Err(RuntimeError(format!("unimplemented lua_userdata"))),
-                };
-                Ok(ud)
+                match &se.status {
+                    ScriptedEntityStatus::QueuedForCreation(c) => match c.get(&key) {
+                        Some(component) => component.clone().lua_userdata(&lua).ok_or(RuntimeError(format!("lua_userdata not implemented"))),
+                        None => Err(RuntimeError(format!("unknown component {} in queued entity", key))),
+                    },
+                    ScriptedEntityStatus::Exists(ecsid) =>  match classes.get(&se.class_name) {
+                        Some(sec) => match sec.components.get(&key) {
+                            Some(component) => {
+                                let cid = component.id();
+                                let component = match world.component_get_dyn_cloned(*ecsid, cid) {
+                                    Some(component) => component,
+                                    None => {
+                                        return Err(RuntimeError(format!("unknown component {:?} in ecs entity {}", cid, ecsid)));
+                                    },
+                                };
+                                component.lua_userdata(&lua).ok_or(RuntimeError(format!("lua_userdata not implemented")))
+                            },
+                            None => Err(RuntimeError(format!("unknown component {} in class", key))),
+                        },
+                        None => Err(RuntimeError(format!("unknown class {}", se.class_name))),
+                    },
+                    ScriptedEntityStatus::FailedToCreate => return Err(RuntimeError(format!("cannot get component on failed entity"))),
+                }
             })?)?;
         }
         {
@@ -399,7 +416,7 @@ impl WorldContext {
                 let seid: ScriptedEntityID = table.raw_get("__sent_id")?;
 
                 let classes = classes.lock().unwrap();
-                let mut instances = instances.lock().unwrap();
+                let mut instances = instances.write().unwrap();
 
                 let se = match instances.get_mut(seid.internal_id) {
                     Some(se) => se,
@@ -440,7 +457,6 @@ impl WorldContext {
                     Some(cv) => cv,
                     None => return Err(RuntimeError(format!("unimplemented lua_fromuserdata"))),
                 };
-                log::info!("component_value: {:?}", component_value);
                 world.component_set_dyn(ecsid, component_value);
 
                 Ok(mlua::Value::Nil)
@@ -472,7 +488,7 @@ impl WorldContext {
                 );
                 sent.set_metatable(lua, world)?;
 
-                instances.lock().unwrap().queue.push(sent);
+                instances.write().unwrap().queue.push(sent);
 
                 Ok(table)
             })?)?;
@@ -495,32 +511,89 @@ impl WorldContext {
     }
 }
 
-impl <'system> ecs::System<'system> for WorldContext {
+impl <'system, 'lua, 'scope> ecs::System<'system> for WorldContext 
+where
+    'lua: 'scope,
+    'system: 'scope,
+{
     type SystemData = ecs::ReadWriteAll<'system>;
     fn run(&mut self, sd: Self::SystemData) {
-        let mut instances = self.instances.lock().unwrap();
-        let classes = self.classes.lock().unwrap();
+        {
+            let instances = self.instances.clone();
+            let classes = self.classes.clone();
+            let mut instances = instances.write().unwrap();
+            let classes = classes.lock().unwrap();
+            // Lazily create enqueued entities.
+            if instances.queue.len() > 0 {
+                let queue = std::mem::replace(&mut instances.queue, Vec::new());
 
-        // Lazily create enqueued entities.
-        if instances.queue.len() > 0 {
-            let queue = std::mem::replace(&mut instances.queue, Vec::new());
-
-            for mut el in queue.into_iter() {
-                match el.status {
-                    ScriptedEntityStatus::QueuedForCreation(components) => {
-                        let mut entity = sd.new_entity_lazy();
-                        for (_, component) in components.into_iter() {
-                            entity = entity.with_dyn(component);
+                for mut el in queue.into_iter() {
+                    match el.status {
+                        ScriptedEntityStatus::QueuedForCreation(components) => {
+                            let mut entity = sd.new_entity_lazy();
+                            for (_, component) in components.into_iter() {
+                                entity = entity.with_dyn(component);
+                            }
+                            let ecsid = entity.build(&sd);
+                            el.status = ScriptedEntityStatus::Exists(ecsid);
+                            log::debug!("Created sent of type {} with ECS ID {} and internal ID {}", el.class_name, ecsid, el.internal_id);
+                            instances.internal_to_ecs.insert(el.internal_id, ecsid);
+                            instances.ecs.insert(ecsid, el);
                         }
-                        let ecsid = entity.build(&sd);
-                        el.status = ScriptedEntityStatus::Exists(ecsid);
-                        log::debug!("Created sent of type {} with ECS ID {} and internal ID {}", el.class_name, ecsid, el.internal_id);
-                        instances.internal_to_ecs.insert(el.internal_id, ecsid);
-                        instances.ecs.insert(ecsid, el);
+                        o => panic!("ScriptedEntity in queue with unexpected status {:?}", o),
                     }
-                    o => panic!("ScriptedEntity in queue with unexpected status {:?}", o),
                 }
             }
+        }
+
+        let world: &'system ecs::World = sd.world();
+        {
+            let instances = self.instances.clone();
+            // Run tick functions in all entities.
+            self.lua.scope::<'lua, 'scope>(move |scope| {
+                self.global_set_components(world)?;
+                self.scope_sent(scope, world)?;
+                self.scope_resourcemanager(scope, world)?;
+                self.scope_time(scope, world)?;
+                // Copy out functions refs to release lock.
+                let mut to_run: Vec<(ecs::EntityID, mlua::Function)> = vec![];
+                {
+                    let instances = instances.read().unwrap();
+                    for (ecsid, sent) in instances.ecs.iter() {
+                        let table: mlua::Table = match self.lua.registry_value(&sent.table) {
+                            Ok(table) => table,
+                            Err(err) => {
+                                log::warn!("Entity {}/{} tick failed: getting tick failed: {:?}", ecsid, sent.internal_id, err);
+                                continue;
+                            }
+                        };
+                        let tick: mlua::Function = match table.get("tick") {
+                            Ok(tick) => tick,
+                            Err(err) => {
+                                log::warn!("Entity {}/{} tick failed: getting tick function failed: {:?}", ecsid, sent.internal_id, err);
+                                continue;
+                            }
+                        };
+                        let cb = match tick.bind(table) {
+                            Ok(cb) => cb,
+                            Err(err) => {
+                                log::warn!("Entity {}/{} tick failed: could not bind: {:?}", ecsid, sent.internal_id, err);
+                                continue;
+                            },
+                        };
+                        to_run.push((*ecsid, cb));
+                    }
+                }
+                for (ecsid, cb) in to_run.into_iter() {
+                    match cb.call::<mlua::Value, mlua::Value>(mlua::Value::Nil) {
+                        Ok(_) => (),
+                        Err(err) => {
+                                log::warn!("Entity {} tick failed: {:?}", ecsid,  err);
+                        },
+                    }
+                }
+                Ok(())
+            });
         }
     }
 }
