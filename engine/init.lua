@@ -1,10 +1,4 @@
 sent = {}
-sent.newindex = function(t, k, v)
-    return __sent_components_newindex(t, k, v)
-end
-sent.index = function(t, k)
-    return __sent_components_index(t, k)
-end
 sent.register = function (cfg)
     if cfg.name == nil then
         error("sent.register: needs name")
@@ -32,11 +26,35 @@ sent.register = function (cfg)
     cls.__sent_class_id = sent_class_id
     cls.new = function(...) 
         local arg = {...}
-        local res = __sent_new(sent_class_id)
-        if res.init ~= nil then
-            res:init(unpack(arg))
+
+        -- Make object table, instantiate with runtime.
+        local table = {}
+        local sent_id = __sent_new(table, sent_class_id)
+        table.__sent_id = sent_id
+
+        -- Configure components dispatcher.
+        table.components = {}
+        table.components.__sent_id = sent_id
+        local components_meta = {}
+        components_meta.__index = function(t, k)
+            return __sent_components_index(t, k)
         end
-        return res
+        components_meta.__newindex = function(t, k, v)
+            return __sent_components_newindex(t, k, v)
+        end
+        setmetatable(table.components, components_meta)
+
+        -- Make table deref via table to class.
+        local metatable = {}
+        metatable.__index = cls
+        setmetatable(table, metatable)
+
+        -- Call initializer, if present.
+        if table.init ~= nil then
+            table:init(unpack(arg))
+        end
+
+        return table
     end
 end
 

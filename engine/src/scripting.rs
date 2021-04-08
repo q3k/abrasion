@@ -52,14 +52,12 @@ struct ScriptedEntity {
     internal_id: u64,
     status: ScriptedEntityStatus,
     table: mlua::RegistryKey,
-    cls: mlua::RegistryKey,
 }
 
 impl ScriptedEntity {
     fn new(
         class_name: String,
         table: mlua::RegistryKey,
-        cls: mlua::RegistryKey,
         components: BTreeMap<String, Box<dyn ecs::Component>>,
     ) -> Self {
         let internal_id = GLOBAL_SCRIPTED_ENTITY_ID.fetch_add(1, atomic::Ordering::SeqCst) + 1;
@@ -68,68 +66,7 @@ impl ScriptedEntity {
             internal_id,
             status: ScriptedEntityStatus::QueuedForCreation(components),
             table,
-            cls,
         }
-    }
-
-    fn set_metatable(
-        &self,
-        lua: &mlua::Lua,
-        world: &ecs::World,
-    ) -> mlua::Result<()>
-    {
-        // (meta)table tree for entity objects:
-        //
-        // table: { }
-        //   | metatable
-        //   V
-        // metatable: { __index }
-        //                 |
-        //   .-------------'
-        //   V
-        // dispatch: { components.{...}, ... }
-        //   | metadata
-        //   V
-        // metametatable: { __index }
-        //                     |
-        //   .-----------------'
-        //   V
-        // cls: { init, tick, ... }
-
-        let table: mlua::Table = lua.registry_value(&self.table)?;
-        let cls: mlua::Table = lua.registry_value(&self.cls)?;
-
-        let meta = lua.create_table()?;
-        let dispatch = lua.create_table()?;
-        let metameta = lua.create_table()?;
-
-        table.set_metatable(Some(meta.clone()));
-        meta.set("__index", dispatch.clone())?;
-        dispatch.set_metatable(Some(metameta.clone()));
-        metameta.set("__index", cls)?;
-
-        table.set("__sent_id", ScriptedEntityID {
-            internal_id: self.internal_id,
-        });
-
-        let components = lua.create_table()?;
-        dispatch.set("components", components.clone())?;
-
-        let componentsmeta = lua.create_table()?;
-        componentsmeta.set(
-            "__index",
-            lua.globals().get::<_, mlua::Table>("sent")?.get::<_, mlua::Function>("index")?,
-        )?;
-        componentsmeta.set(
-            "__newindex",
-            lua.globals().get::<_, mlua::Table>("sent")?.get::<_, mlua::Function>("newindex")?,
-        )?;
-        components.set_metatable(Some(componentsmeta));
-        components.raw_set("__sent_id", ScriptedEntityID {
-            internal_id: self.internal_id,
-        });
-
-        Ok(())
     }
 }
 
@@ -465,17 +402,16 @@ impl WorldContext {
         {
             let classes = self.classes.clone();
             let instances = self.instances.clone();
-            globals.set("__sent_new", scope.create_function(move |lua, args: mlua::AnyUserData| {
+            globals.set("__sent_new", scope.create_function(move |lua, args: (mlua::Table, mlua::AnyUserData)| {
                 let classes = classes.lock().unwrap();
 
-                let secid = args.borrow::<ScriptedEntityClassID>()?;
+                let table = args.0;
+                let secid = args.1.borrow::<ScriptedEntityClassID>()?;
+
                 let sec = match classes.get(&secid.name) {
                     Some(el) => el,
                     None => return Err(RuntimeError(format!("lost secid {:?}", secid.name))),
                 };
-
-                let cls: mlua::Table = lua.registry_value(&sec.cls)?;
-                let table = lua.create_table()?;
 
                 let components: BTreeMap<String, Box<dyn ecs::Component>> = sec.components.iter().map(|(k, v)| {
                     (k.clone(), v.clone_dyn())
@@ -483,14 +419,14 @@ impl WorldContext {
                 let sent = ScriptedEntity::new(
                     secid.name.clone(),
                     lua.create_registry_value(table.clone())?,
-                    lua.create_registry_value(cls.clone())?,
                     components,
                 );
-                sent.set_metatable(lua, world)?;
-
+                let seid = ScriptedEntityID {
+                    internal_id: sent.internal_id,
+                };
                 instances.write().unwrap().queue.push(sent);
 
-                Ok(table)
+                Ok(seid)
             })?)?;
         }
 
@@ -556,7 +492,7 @@ where
                 self.scope_resourcemanager(scope, world)?;
                 self.scope_time(scope, world)?;
                 // Copy out functions refs to release lock.
-                let mut to_run: Vec<(ecs::EntityID, mlua::Function)> = vec![];
+                let mut tickers: Vec<(ecs::EntityID, mlua::Function)> = vec![];
                 {
                     let instances = instances.read().unwrap();
                     for (ecsid, sent) in instances.ecs.iter() {
@@ -581,10 +517,11 @@ where
                                 continue;
                             },
                         };
-                        to_run.push((*ecsid, cb));
+                        tickers.push((*ecsid, cb));
                     }
                 }
-                for (ecsid, cb) in to_run.into_iter() {
+
+                for (ecsid, cb) in tickers.into_iter() {
                     match cb.call::<mlua::Value, mlua::Value>(mlua::Value::Nil) {
                         Ok(_) => (),
                         Err(err) => {
