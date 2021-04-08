@@ -24,6 +24,8 @@ use ecs::{Component, ComponentLuaBindings};
 use crate::render::{Light, Mesh, Material};
 use crate::render::resource::{ResourceID};
 
+use mlua::ToLua;
+
 #[derive(Clone, Debug)]
 pub struct Transform(pub cgm::Matrix4<f32>);
 
@@ -33,6 +35,22 @@ impl Component for Transform {
     }
     fn clone_dyn(&self) -> Box<dyn Component> {
         Box::new(self.clone())
+    }
+    fn lua_userdata<'access, 'lua>(
+        &'access self,
+        lua: &'lua mlua::Lua,
+    ) -> Option<mlua::Value<'lua>> {
+        let ud: mlua::Value<'lua> = self.clone().to_lua(lua).unwrap();
+        Some(ud)
+    }
+    fn lua_fromuserdata<'a>(
+        &self,
+        ud: &'a mlua::AnyUserData,
+    ) -> Option<Box<dyn Component>> {
+        match ud.borrow::<Transform>() {
+            Ok(v) => Some(Box::new(Transform::clone(&v))),
+            Err(_) => None,
+        }
     }
 }
 

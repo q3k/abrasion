@@ -204,10 +204,10 @@ impl World {
         self.component_lua_bindings.insert(cid, bindings);
     }
 
-    pub fn lua_any_into_dyn<'a, 'b>(&'a self, ud: &'a mlua::AnyUserData) -> Option<Box<dyn component::Component>> {
+    pub fn lua_any_into_dyn<'a, 'b>(&'a self, ud: &'a mlua::AnyUserData) -> Option<(String, Box<dyn component::Component>)> {
         for (_, bindings) in self.component_lua_bindings.iter() {
             if let Some(b) = bindings.any_into_dyn(ud) {
-                return Some(b);
+                return Some((bindings.idstr().into(), b));
             }
         }
         None
@@ -260,6 +260,20 @@ impl World {
         ReadWriteComponent {
             world: self,
             phantom: PhantomData,
+        }
+    }
+
+    pub fn component_set_dyn<'a>(
+        &'a self,
+        e: entity::ID,
+        c: Box<dyn component::Component>
+    ) {
+        // TODO(q3k): error handling
+        // TODO(q3k): do not insert component data if it's missing? That can happen if we attempt
+        // to set_dyn before the entity/components are registered.
+        match self.components.get(&c.id()) {
+            None => panic!("Component {:?} not found", c),
+            Some(map) => map.insert(e, c).unwrap(),
         }
     }
 
