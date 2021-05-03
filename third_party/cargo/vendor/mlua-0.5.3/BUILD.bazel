@@ -6,15 +6,15 @@ DO NOT EDIT! Replaced on runs of cargo-raze
 """
 
 # buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
 load(
     "@rules_rust//rust:rust.bzl",
     "rust_binary",
     "rust_library",
     "rust_test",
 )
-
-# buildifier: disable=load
-load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(default_visibility = [
     # Public for visibility by "@raze__crate__version//" targets.
@@ -29,6 +29,7 @@ licenses([
 ])
 
 # Generated Targets
+# buildifier: disable=out-of-order-load
 # buildifier: disable=load-on-top
 load(
     "@rules_rust//cargo:cargo_build_script.bzl",
@@ -42,10 +43,12 @@ cargo_build_script(
     },
     crate_features = [
         "luajit",
+        "vendored",
     ],
     crate_root = "build/main.rs",
     data = glob(["**"]),
     edition = "2018",
+    links = "lua",
     rustc_flags = [
         "--cap-lints=allow",
     ],
@@ -97,10 +100,10 @@ rust_library(
     version = "0.5.3",
     # buildifier: leave-alone
     deps = [
-        ":mlua_build_script",
         "//third_party/cargo/vendor/bstr-0.2.15:bstr",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/num-traits-0.2.14:num_traits",
+        ":mlua_build_script",
     ],
 )
 

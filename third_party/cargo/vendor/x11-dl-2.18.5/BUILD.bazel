@@ -6,15 +6,15 @@ DO NOT EDIT! Replaced on runs of cargo-raze
 """
 
 # buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
 load(
     "@rules_rust//rust:rust.bzl",
     "rust_binary",
     "rust_library",
     "rust_test",
 )
-
-# buildifier: disable=load
-load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(default_visibility = [
     # Public for visibility by "@raze__crate__version//" targets.
@@ -29,6 +29,7 @@ licenses([
 ])
 
 # Generated Targets
+# buildifier: disable=out-of-order-load
 # buildifier: disable=load-on-top
 load(
     "@rules_rust//cargo:cargo_build_script.bzl",
@@ -80,9 +81,9 @@ rust_library(
     version = "2.18.5",
     # buildifier: leave-alone
     deps = [
-        ":x11_dl_build_script",
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/libc-0.2.92:libc",
         "//third_party/cargo/vendor/maybe-uninit-2.0.0:maybe_uninit",
+        ":x11_dl_build_script",
     ],
 )

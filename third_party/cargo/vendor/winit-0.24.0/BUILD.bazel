@@ -6,15 +6,15 @@ DO NOT EDIT! Replaced on runs of cargo-raze
 """
 
 # buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
 load(
     "@rules_rust//rust:rust.bzl",
     "rust_binary",
     "rust_library",
     "rust_test",
 )
-
-# buildifier: disable=load
-load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(default_visibility = [
     # Public for visibility by "@raze__crate__version//" targets.
@@ -113,6 +113,7 @@ rust_library(
         "//third_party/cargo/vendor/lazy_static-1.4.0:lazy_static",
         "//third_party/cargo/vendor/libc-0.2.92:libc",
         "//third_party/cargo/vendor/log-0.4.14:log",
+        "//third_party/cargo/vendor/parking_lot-0.11.1:parking_lot",
         "//third_party/cargo/vendor/raw-window-handle-0.3.3:raw_window_handle",
     ] + selects.with_or({
         # cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))
@@ -121,7 +122,6 @@ rust_library(
         ): [
             "//third_party/cargo/vendor/mio-0.6.23:mio",
             "//third_party/cargo/vendor/mio-extras-2.0.6:mio_extras",
-            "//third_party/cargo/vendor/parking_lot-0.11.1:parking_lot",
             "//third_party/cargo/vendor/percent-encoding-2.1.0:percent_encoding",
             "//third_party/cargo/vendor/smithay-client-toolkit-0.12.3:smithay_client_toolkit",
             "//third_party/cargo/vendor/wayland-client-0.28.5:wayland_client",
