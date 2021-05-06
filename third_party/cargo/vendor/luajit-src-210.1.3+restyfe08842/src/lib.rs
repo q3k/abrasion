@@ -147,6 +147,8 @@ impl Build {
         msvcbuild.current_dir(build_dir.join("src"));
         msvcbuild.arg("static");
 
+        // HACK: without this, the MSVC COM DLL used to find cl.exe/link.exe/... fails.
+        std::env::set_var("ProgramData", "C:\\ProgramData");
         let cl = cc::windows_registry::find_tool(&target, "cl.exe").expect("failed to find cl");
         for (k, v) in cl.env() {
             msvcbuild.env(k, v);
