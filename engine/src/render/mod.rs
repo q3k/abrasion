@@ -26,6 +26,7 @@ use winit::{
     window::WindowBuilder,
     event_loop::EventLoop,
     event::Event,
+    event::DeviceEvent,
     event::WindowEvent,
     platform::run_return::EventLoopExtRunReturn,
 };
@@ -143,47 +144,36 @@ impl<'a> ecs::System<'a> for Renderer {
                 let mut per_axis: BTreeMap<u32, Vec<f32>> = BTreeMap::new();
                 let (rx, ry) = (status.resolution[0], status.resolution[1]);
 
+                // Always reset cursor delta at each frame.
+                cursor.dx = 0.0;
+                cursor.dy = 0.0;
+
                 for event in events {
                     match event {
                         InternalEvent::MousePressed(button) => cursor.set_mouse_pressed(button),
                         InternalEvent::MouseReleased(button) => cursor.set_mouse_released(button),
-                        InternalEvent::MouseMoved(x, y) => {
+                        InternalEvent::CursorMoved(x, y) => {
                             if rx != 0 && ry != 0 {
                                 cursor.x = (x as f32) / (rx as f32);
                                 cursor.y = (y as f32) / (ry as f32);
                             }
                         },
+                        // TODO(q3k): do something better than hardcode a sensitivity
+                        InternalEvent::MouseMoved(dx, dy) => {
+                            cursor.dx = (dx as f32) / 200.0;
+                            cursor.dy = (dy as f32) / 200.0;
+                        }
                         InternalEvent::AxisMotion(axis, delta) => {
                             per_axis.entry(axis).or_insert(vec![]).push(delta as f32);
                         },
                     }
                 }
 
-                // Has there been movement in any axis 0 (x) or 1 (y)? This happens if we receive
-                // multiple AxisMotion events for a given axis in a single frame.
-                let mut dx = 0f32;
-                let mut dy = 0f32;
-                if let Some(ldx) = per_axis.get(&0) {
-                    dx = ldx.last().unwrap() - ldx.first().unwrap();
-                }
-                if let Some(ldy) = per_axis.get(&1) {
-                    dy = ldy.last().unwrap() - ldy.first().unwrap();
-                }
-
-                if rx != 0 && ry != 0 {
-                    cursor.dx = dx / (rx as f32);
-                    cursor.dy = dy / (ry as f32);
-                }
+                // TODO(q3k): handle per_axis/AxisMotion. This might be needed for some platforms?
             }
         }
 
         let window = self.surface.window();
-        if self.cursor_locked {
-            if let Some(res) = self.instance.swapchain_dimensions() {
-                let (x, y) = (res[0], res[1]);
-                window.set_cursor_position(winit::dpi::PhysicalPosition::new(x / 2, y / 2));
-            }
-        }
 
         // Lock cursor, if requested.
         if scene.lock_cursor && !self.cursor_locked {
@@ -202,6 +192,7 @@ impl<'a> ecs::System<'a> for Renderer {
 enum InternalEvent {
     MousePressed(input::MouseButton),
     MouseReleased(input::MouseButton),
+    CursorMoved(f64, f64),
     MouseMoved(f64, f64),
     AxisMotion(u32, f64),
 }
@@ -266,7 +257,7 @@ impl Renderer {
                     event: WindowEvent::CursorMoved { position, .. },
                     ..
                 } => {
-                    events.push(InternalEvent::MouseMoved(position.x, position.y));
+                    events.push(InternalEvent::CursorMoved(position.x, position.y));
                 },
 
                 Event::WindowEvent { 
@@ -288,6 +279,13 @@ impl Renderer {
                         },
                     }
                 },
+
+                Event::DeviceEvent {
+                    event: DeviceEvent::MouseMotion { delta, .. },
+                    ..
+                } => {
+                    events.push(InternalEvent::MouseMoved(delta.0, delta.1));
+                }
 
                 Event::WindowEvent {
                     event: WindowEvent::AxisMotion { axis, value, .. },
