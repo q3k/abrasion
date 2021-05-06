@@ -1,2 +1,9 @@
 startup --windows_enable_symlinks
 build --enable_runfiles
+
+# This is needed by cc::windows_registry::find_tool et. al. It calls out into a
+# MSVC COM DLL used to find MSVC installations, and that apparently relies on
+# the env var being set. For some reason, just doing --action_env=ProgramData
+# doesn't work, so we hardcode things to assume that it lives in C:\. We also
+# pollute non-Windows build envs with this, but whatever.
+build --action_env=ProgramData=C:\\ProgramData
