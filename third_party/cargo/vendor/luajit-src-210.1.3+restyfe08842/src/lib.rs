@@ -105,6 +105,13 @@ impl Build {
             make.env("CROSS", prefix);
         }
 
+        // HACK: the luajit Makefile wants `uname` to decuce this, but the Bazel sandbox on Linux
+        // doesn't provide that. Let's assume that if we ever get to `build_unix`, we're building
+        // on some generic Linux for some generic Linux. This might have to be fixed if that
+        // assumption ever changes.
+        make.env("TARGET_SYS", "Linux");
+        make.env("HOST_SYS", "Linux");
+
         make.env("BUILDMODE", "static");
         make.env("XCFLAGS", "-fPIC");
         self.run_command(make, "building LuaJIT");
