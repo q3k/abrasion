@@ -44,4 +44,4 @@ index 88792be4..b1ea4b79 100644
 +        cmd_ps = genrule_cmd_ps,
          compatible_with = compatible_with,
          restricted_to = restricted_to,
-         message = ""
+         message = "Generating flatbuffer files for %s:" % (name),

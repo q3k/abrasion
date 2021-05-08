@@ -42,7 +42,7 @@ http_archive(
     patches = [
         "//third_party/flatbuffers:bashless.diff",
     ],
-    patch_args = ["-p",  "1"],
+    patch_args = ["-p1"],
 )
 
 http_archive(
