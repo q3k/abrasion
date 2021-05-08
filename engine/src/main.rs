@@ -187,7 +187,7 @@ impl<'a> ecs::System <'a> for Main {
 }
 
 fn main() {
-    env_logger::init();
+    env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"));
 
     let mut world = World::new();
     world.register_component_lua_bindings(Transform::bindings());
