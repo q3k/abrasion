@@ -1,0 +1,12 @@
+name: build-actions
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+     - uses: actions/checkout@v2
+     - run: bazel build //engine
