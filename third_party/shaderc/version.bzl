@@ -6,8 +6,8 @@
 
 shaderc_version = {
     # dep: (version, GH remote ver, sha256)
-    "shaderc": ("2020.2", "v2020.2", "a4d5680d4f0199e29ab77b357c88c147c5704f9ee2ac0a2d117e640e6f87d030"),
-    "spirv_tools": ("2020.5", "969f0286479b89267b6c89f6d5223285c265e6ae", "6915b4bca8b2369e26812ffb3c1b726089bb9cd38d1cb7e9b8ef0d3bb7dd8162"),
-    "spirv_headers": ("2020.5", "979924c8bc839e4cb1b69d03d48398551f369ce7", "7ebc04ebb4602c051d4886c9544de684195adac2a179e949469d29beb1f034e4"),
-    "glslang": ("11.0.0-dev", "3ee5f2f1d3316e228916788b300d786bb574d337", "7b2f8b93958c7594942f730659c00dec0bffeafaa6853b67b5f72f915c287b1f"),
+    "shaderc": ("2021.0", "v2021.0", "99762c51b0ceddea4be9b8de3240a7dbf1de9131179eed94b568ce52a5496a8f"),
+    "spirv_tools": ("2021.1", "c2d5375fa7cc87c93f692e7200d5d974283d4391", "f60bdef464ffb7cba297675cc485d4fef0b1718968f0890e0639e2fb68600465"),
+    "spirv_headers": ("2021.1", "dafead1765f6c1a5f9f8a76387dcb2abe4e54acd", "e1c8530c95fc8c70fa6a7cbc269ebd1b10da3872efa0e3c6eb82452c3e180cda"),
+    "glslang": ("11.3.0-dev", "60ce877de03ff03bb87fb9ef6b744ee33d076034", "f9a0188d796e9e4fbc59f2543b6f87e9f8423933b4599a0fc2b9f0216aace26e"),
 }

@@ -19,4 +19,4 @@ def shaderc_deps():
     _http_archive("spirv_headers", "SPIRV-Headers-", "KhronosGroup/SPIRV-Headers")
     _http_archive("spirv_tools", "SPIRV-Tools-", "KhronosGroup/SPIRV-Tools")
     _http_archive("glslang", "glslang-", "KhronosGroup/glslang")
-    _http_archive("shaderc", "shaderc-2020.2", "google/shaderc", build_file="//third_party/shaderc:BUILD.external")
+    _http_archive("shaderc", "shaderc-2021.0", "google/shaderc", build_file="//third_party/shaderc:BUILD.external")
