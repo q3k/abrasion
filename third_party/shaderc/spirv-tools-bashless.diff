@@ -1,0 +1,182 @@
+Allow running under Windows without bash/msys.
+
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 52290cfb..84bae41e 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -74,7 +74,8 @@ genrule(
+     name = "gen_registry_tables",
+     srcs = ["@spirv_headers//:spirv_xml_registry"],
+     outs = ["generators.inc"],
+-    cmd = "$(location generate_registry_tables) --xml=$(location @spirv_headers//:spirv_xml_registry) --generator-output=$(location generators.inc)",
++    cmd_bash = "$(location generate_registry_tables) --xml=$(location @spirv_headers//:spirv_xml_registry) --generator-output=$(location generators.inc)",
++    cmd_ps = "$(location generate_registry_tables) --xml=$(location @spirv_headers//:spirv_xml_registry) --generator-output=$(location generators.inc)",
+     tools = [":generate_registry_tables"],
+ )
+ 
+@@ -87,7 +88,8 @@ genrule(
+     name = "gen_build_version",
+     srcs = ["CHANGES"],
+     outs = ["build-version.inc"],
+-    cmd = "SOURCE_DATE_EPOCH=0 $(location update_build_version) $$(dirname $(location CHANGES)) $(location build-version.inc)",
++    cmd_bash = "SOURCE_DATE_EPOCH=0 $(location update_build_version) $$(dirname $(location CHANGES)) $(location build-version.inc)",
++    cmd_ps = "$$env:SOURCE_DATE_EPOCH = \"0\"; $(location update_build_version) (get-item $(location CHANGES)).directory.fullname $(location build-version.inc)",
+     tools = [":update_build_version"],
+ )
+ 
+diff --git a/build_defs.bzl b/build_defs.bzl
+index 30af3bd6..8562bbbb 100644
+--- a/build_defs.bzl
++++ b/build_defs.bzl
+@@ -55,18 +55,20 @@ def generate_core_tables(version = None):
+         "operand.kinds-{}.inc".format(version),
+     ]
+     fmtargs = grammars + outs
++    cmd = (
++        "$(location :generate_grammar_tables) " +
++        "--spirv-core-grammar=$(location {0}) " +
++        "--extinst-debuginfo-grammar=$(location {1}) " +
++        "--extinst-cldebuginfo100-grammar=$(location {2}) " +
++        "--core-insts-output=$(location {3}) " +
++        "--operand-kinds-output=$(location {4})"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_core_tables_" + version,
+         srcs = grammars,
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_grammar_tables) " +
+-            "--spirv-core-grammar=$(location {0}) " +
+-            "--extinst-debuginfo-grammar=$(location {1}) " +
+-            "--extinst-cldebuginfo100-grammar=$(location {2}) " +
+-            "--core-insts-output=$(location {3}) " +
+-            "--operand-kinds-output=$(location {4})"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_grammar_tables"],
+         visibility = ["//visibility:private"],
+     )
+@@ -84,18 +86,20 @@ def generate_enum_string_mapping(version = None):
+         "enum_string_mapping.inc",
+     ]
+     fmtargs = grammars + outs
++    cmd = (
++        "$(location :generate_grammar_tables) " +
++        "--spirv-core-grammar=$(location {0}) " +
++        "--extinst-debuginfo-grammar=$(location {1}) " +
++        "--extinst-cldebuginfo100-grammar=$(location {2}) " +
++        "--extension-enum-output=$(location {3}) " +
++        "--enum-string-mapping-output=$(location {4})"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_enum_string_mapping",
+         srcs = grammars,
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_grammar_tables) " +
+-            "--spirv-core-grammar=$(location {0}) " +
+-            "--extinst-debuginfo-grammar=$(location {1}) " +
+-            "--extinst-cldebuginfo100-grammar=$(location {2}) " +
+-            "--extension-enum-output=$(location {3}) " +
+-            "--enum-string-mapping-output=$(location {4})"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_grammar_tables"],
+         visibility = ["//visibility:private"],
+     )
+@@ -108,15 +112,17 @@ def generate_opencl_tables(version = None):
+     ]
+     outs = ["opencl.std.insts.inc"]
+     fmtargs = grammars + outs
++    cmd = (
++        "$(location :generate_grammar_tables) " +
++        "--extinst-opencl-grammar=$(location {0}) " +
++        "--opencl-insts-output=$(location {1})"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_opencl_tables_" + version,
+         srcs = grammars,
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_grammar_tables) " +
+-            "--extinst-opencl-grammar=$(location {0}) " +
+-            "--opencl-insts-output=$(location {1})"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_grammar_tables"],
+         visibility = ["//visibility:private"],
+     )
+@@ -129,15 +135,17 @@ def generate_glsl_tables(version = None):
+     ]
+     outs = ["glsl.std.450.insts.inc"]
+     fmtargs = grammars + outs
++    cmd = (
++        "$(location :generate_grammar_tables) " +
++        "--extinst-glsl-grammar=$(location {0}) " +
++        "--glsl-insts-output=$(location {1})"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_glsl_tables_" + version,
+         srcs = grammars,
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_grammar_tables) " +
+-            "--extinst-glsl-grammar=$(location {0}) " +
+-            "--glsl-insts-output=$(location {1})"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_grammar_tables"],
+         visibility = ["//visibility:private"],
+     )
+@@ -150,16 +158,18 @@ def generate_vendor_tables(extension, operand_kind_prefix = ""):
+     outs = ["{}.insts.inc".format(extension)]
+     prefices = [operand_kind_prefix]
+     fmtargs = grammars + outs + prefices
++    cmd = (
++        "$(location :generate_grammar_tables) " +
++        "--extinst-vendor-grammar=$(location {0}) " +
++        "--vendor-insts-output=$(location {1}) " +
++        "--vendor-operand-kind-prefix={2}"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_vendor_tables_" + extension_rule,
+         srcs = grammars,
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_grammar_tables) " +
+-            "--extinst-vendor-grammar=$(location {0}) " +
+-            "--vendor-insts-output=$(location {1}) " +
+-            "--vendor-operand-kind-prefix={2}"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_grammar_tables"],
+         visibility = ["//visibility:private"],
+     )
+@@ -169,15 +179,17 @@ def generate_extinst_lang_headers(name, grammar = None):
+         fail("Must specify grammar", "grammar")
+     outs = [name + ".h"]
+     fmtargs = outs
++    cmd = (
++        "$(location :generate_language_headers) " +
++        "--extinst-grammar=$< " +
++        "--extinst-output-path=$(location {0})"
++    ).format(*fmtargs)
+     native.genrule(
+         name = "gen_extinst_lang_headers_" + name,
+         srcs = [grammar],
+         outs = outs,
+-        cmd = (
+-            "$(location :generate_language_headers) " +
+-            "--extinst-grammar=$< " +
+-            "--extinst-output-path=$(location {0})"
+-        ).format(*fmtargs),
++        cmd_bash = cmd,
++        cmd_ps = cmd,
+         tools = [":generate_language_headers"],
+         visibility = ["//visibility:private"],
+     )

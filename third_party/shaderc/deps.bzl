@@ -17,6 +17,9 @@ def _http_archive(name, strip_prefix, gh_name, **kw):
 
 def shaderc_deps():
     _http_archive("spirv_headers", "SPIRV-Headers-", "KhronosGroup/SPIRV-Headers")
-    _http_archive("spirv_tools", "SPIRV-Tools-", "KhronosGroup/SPIRV-Tools")
+    _http_archive("spirv_tools", "SPIRV-Tools-", "KhronosGroup/SPIRV-Tools",
+        patches = ["//third_party/shaderc:spirv-tools-bashless.diff"],
+        patch_args = ["-p1"],
+    )
     _http_archive("glslang", "glslang-", "KhronosGroup/glslang")
     _http_archive("shaderc", "shaderc-2021.0", "google/shaderc", build_file="//third_party/shaderc:BUILD.external")
