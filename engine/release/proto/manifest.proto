@@ -1,0 +1,18 @@
+syntax = "proto3";
+package abrasion.engine.release.proto;
+option go_package = "abrasion/engine/release/proto";
+
+message File {
+    string short_path = 1;
+    string path = 2;
+    bytes sha256 = 3;
+}
+
+message Manifest {
+    repeated File file = 1;
+    ReleaseInfo release_info = 2;
+}
+
+message ReleaseInfo {
+    string target = 1;
+}

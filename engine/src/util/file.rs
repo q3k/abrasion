@@ -69,6 +69,51 @@ impl std::io::Seek for Resource {
     }
 }
 
+/// ReleaseFiles is a file/resource accessible for abrasion releases build via
+/// //engine/release.
+struct ReleaseFiles {
+}
+
+impl ReleaseFiles {
+    fn new() -> Option<Self> {
+        let exec_path = match std::env::args().nth(0) {
+            Some(p) => p,
+            None => { 
+                log::warn!("Could not load release files: no argv 0.");
+                return None;
+            }
+        }.to_owned();
+
+        let mut exec_path = std::path::PathBuf::from(&exec_path);
+        exec_path.set_extension("manifest");
+        if !exec_path.is_file() {
+            return None;
+        }
+
+        Some(ReleaseFiles {
+        })
+    }
+
+    fn rlocation(&self, rel: &str) -> Option<String> {
+        Some(rel.to_string())
+    }
+}
+
+fn release_files() -> std::sync::Arc<Option<ReleaseFiles>> {
+    use std::sync::{Arc, Mutex, Once};
+    static mut SINGLETON: *const Arc<Option<ReleaseFiles>> = 0 as *const Arc<Option<ReleaseFiles>>;
+    static ONCE: Once = Once::new();
+
+    unsafe {
+        ONCE.call_once(|| {
+            let rf = ReleaseFiles::new();
+            SINGLETON = std::mem::transmute(Box::new(Arc::new(rf)));
+        });
+
+        (*SINGLETON).clone()
+    }
+}
+
 pub fn resource<T>(name: T) -> Result<Resource>
 where
     T: Into<String>
@@ -83,6 +128,21 @@ where
     // Ensure no double slash elsewhere in the path.
     if rel.contains("//") {
         return Err(ResourceError::InvalidPath);
+    }
+
+    if let Some(r) = &*release_files() {
+        let loc = match r.rlocation(rel) {
+            Some(loc) => Ok(loc),
+            None => Err(ResourceError::NotFound),
+        }?;
+        return std::fs::File::open(loc).map_err(|e| {
+            match e.kind() {
+                std::io::ErrorKind::NotFound => ResourceError::NotFound,
+                _ => ResourceError::Other(e),
+            }
+        }).map(|f| {
+            Resource::File(std::io::BufReader::new(f))
+        });
     }
     
     if let Ok(r) = Runfiles::create() {

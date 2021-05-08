@@ -72,19 +72,11 @@ rust_binary(
     ],
 )
 
-pkg_tar(
+load("//engine/release:defs.bzl", "abrasion_release")
+
+abrasion_release(
     name = "demo",
-    srcs = [
-        ":engine",
-        "dist_start.sh",
-        "//engine/shaders:forward_vert",
-        "//engine/shaders:forward_frag",
-        "//assets:test-128px.png",
-        "//assets:test-128px-roughness.png",
+    deps = [
+        ":engine"
     ],
-    strip_prefix = '/',
-    package_dir = 'demo',
-    remap_paths = {
-        "engine/dist_start.sh": "start.sh",
-    },
 )
