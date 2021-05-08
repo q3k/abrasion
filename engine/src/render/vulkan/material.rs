@@ -141,7 +141,7 @@ impl ChannelLayoutVulkan for color::XYZ {
         graphics_queue: Arc<vd::Queue>,
     ) -> Arc<vm::ImmutableImage<vf::Format>> {
         let (width, height) = (image.width(), image.height());
-        let rgba = image.to_rgba();
+        let rgba = image.to_rgba8();
 
         let mut xyz = Vec::new();
         for (_, _, color) in rgba.enumerate_pixels() {
@@ -188,7 +188,7 @@ impl ChannelLayoutVulkan for color::LinearF32 {
             image::ColorType::L16 => true,
             _ => false,
         }, "linearf32 texture must be 8-bit grayscale");
-        let gray = image.to_luma();
+        let gray = image.to_luma8();
 
         mipmapped_from_iter(width, height, vf::Format::R8Unorm, gray.into_raw().iter().cloned(), graphics_queue)
     }

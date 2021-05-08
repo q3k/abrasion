@@ -1,3 +1,15 @@
+components = {}
+local components_metatable = {}
+setmetatable(components, components_metatable)
+components_metatable.__index = function (_, idstr)
+    return function (...)
+        return __component_construct({
+            idstr = idstr,
+            args = {...},
+        })
+    end
+end
+
 sent = {}
 sent.register = function (cfg)
     if cfg.name == nil then
@@ -10,26 +22,29 @@ sent.register = function (cfg)
     local cls = cfg.cls
     local components = cfg.components or {}
 
-    if cls.__sent_class_id ~= nil then
+    if cls.__sent_class_name ~= nil then
         error(string.format("sent.register: %s already registered", name))
         return
     end
 
     -- Recreate config when calling native function, to ensure no metatable
     -- fuckery.
-    local sent_class_id = __sent_register({
+    __sent_class_register({
         name = name,
         cls = cls,
         components = components,
     })
 
-    cls.__sent_class_id = sent_class_id
-    cls.new = function(...) 
+    cls.__sent_class_name = name
+    cls.spawn = function(...) 
         local arg = {...}
 
         -- Make object table, instantiate with runtime.
         local table = {}
-        local sent_id = __sent_new(table, sent_class_id)
+        local sent_id = __sent_spawn({
+            class_name = name,
+            instance = table,
+        })
         table.__sent_id = sent_id
 
         -- Make 'tick' trampoline, used by runtime to do fast call into ticker
@@ -45,7 +60,7 @@ sent.register = function (cfg)
         table.components.__sent_id = sent_id
         local components_meta = {}
         components_meta.__index = function(t, k)
-            return __sent_components_index(t, k)
+            return __sent_components_index(sent_id, k)
         end
         components_meta.__newindex = function(t, k, v)
             return __sent_components_newindex(t, k, v)

@@ -17,7 +17,13 @@ pub struct ComponentMap {
 }
 
 #[derive(Clone,Debug)]
-pub struct AccessError(String);
+pub enum AccessError {
+    AlreadyBorrowedMutably,
+    NoSuchEntity,
+    NoSuchComponent,
+}
+
+pub type Result<T> = std::result::Result<T, AccessError>;
 
 impl ComponentMap {
     pub fn new() -> Self {
@@ -27,9 +33,9 @@ impl ComponentMap {
         }
     }
 
-    pub fn try_iter<'a>(&'a self) -> Result<ComponentMapIter<'a>, AccessError> {
+    pub fn try_iter<'a>(&'a self) -> Result<ComponentMapIter<'a>> {
         match borrow::Ref::new(&self.borrow) {
-            None => Err(AccessError("already borrowed mutably".to_string())),
+            None => Err(AccessError::AlreadyBorrowedMutably),
             Some(b) => Ok(ComponentMapIter {
                 iter: unsafe {
                     let map = &*self.value.get();
@@ -39,9 +45,9 @@ impl ComponentMap {
             }),
         }
     }
-    pub fn try_iter_mut<'a>(&'a self) -> Result<ComponentMapIterMut<'a>, AccessError> {
+    pub fn try_iter_mut<'a>(&'a self) -> Result<ComponentMapIterMut<'a>> {
         match borrow::RefMut::new(&self.borrow) {
-            None => Err(AccessError("already borrowed mutable".to_string())),
+            None => Err(AccessError::AlreadyBorrowedMutably),
             Some(b) => Ok(ComponentMapIterMut {
                 iter: unsafe {
                     let map = &mut *self.value.get();
@@ -52,9 +58,9 @@ impl ComponentMap {
         }
     }
 
-    pub fn insert(&self, e: entity::ID, c: Box<dyn component::Component>) -> Result<(), AccessError> {
+    pub fn insert(&self, e: entity::ID, c: Box<dyn component::Component>) -> Result<()> {
         match borrow::RefMut::new(&self.borrow) {
-            None => Err(AccessError("already borrow mutably".to_string())),
+            None => Err(AccessError::AlreadyBorrowedMutably),
             Some(b) => {
                 unsafe {
                     let map = &mut *self.value.get();
@@ -66,14 +72,14 @@ impl ComponentMap {
         }
     }
 
-    pub fn get_dyn<'a>(&'a self, e: entity::ID) -> Result<RefDyn<'a>, AccessError> {
+    pub fn get_dyn<'a>(&'a self, e: entity::ID) -> Result<RefDyn<'a>> {
         unsafe {
             match borrow::Ref::new(&self.borrow) {
-                None => Err(AccessError("already borrowed mutably".to_string())),
+                None => Err(AccessError::AlreadyBorrowedMutably),
                 Some(b) => {
                     let map = &*self.value.get();
                     match map.get(&e) {
-                        None => Err(AccessError("no such entity".to_string())),
+                        None => Err(AccessError::NoSuchEntity),
                         Some(component) => {
                             let component = component.as_ref();
                             let val = component as *const (dyn component::Component);
@@ -88,13 +94,13 @@ impl ComponentMap {
         }
     }
 
-    pub unsafe fn get<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<Ref<'a, T>, AccessError> {
+    pub unsafe fn get<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<Ref<'a, T>> {
         match borrow::Ref::new(&self.borrow) {
-            None => Err(AccessError("already borrowed mutably".to_string())),
+            None => Err(AccessError::AlreadyBorrowedMutably),
             Some(b) => {
                 let map = &*self.value.get();
                 match map.get(&e) {
-                    None => Err(AccessError("no such entity".to_string())),
+                    None => Err(AccessError::NoSuchEntity),
                     Some(component) => {
                         let component = component.as_ref();
                         let val = component as *const (dyn component::Component) as *const T;
@@ -108,13 +114,13 @@ impl ComponentMap {
         }
     }
 
-    pub unsafe fn get_mut<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<RefMut<'a, T>, AccessError> {
+    pub unsafe fn get_mut<'a, T: component::Component>(&'a self, e: entity::ID) -> Result<RefMut<'a, T>> {
         match borrow::RefMut::new(&self.borrow) {
-            None => Err(AccessError("already borrowed mutably".to_string())),
+            None => Err(AccessError::AlreadyBorrowedMutably),
             Some(b) => {
                 let map = &mut*self.value.get();
                 match map.get_mut(&e) {
-                    None => Err(AccessError("no such entity".to_string())),
+                    None => Err(AccessError::NoSuchEntity),
                     Some(component) => {
                         let component = component.as_mut();
                         let val = component as *mut (dyn component::Component) as *mut T;

@@ -15,7 +15,6 @@
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::ffi::CStr;
-use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
 

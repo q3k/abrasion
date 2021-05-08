@@ -10,6 +10,7 @@ use crate::componentmap::{
     ComponentMap,
     ComponentMapIter,
     ComponentMapIterMut,
+    Result,
 };
 use crate::globalmap::{
     GlobalMap,
@@ -33,7 +34,7 @@ impl<'a, T: component::Component> ReadComponent<'a, T> {
         }
     }
 
-    pub fn get(&self, e: entity::ID) -> Result<ComponentMapRef<'a, T>, AccessError> {
+    pub fn get(&self, e: entity::ID) -> Result<ComponentMapRef<'a, T>> {
         // TODO(q3k): fix the unwrap
         let cm = self.world.components.get(&component::component_id::<T>()).unwrap();
         unsafe {
@@ -79,7 +80,7 @@ impl<'a, T: component::Component> ReadWriteComponent<'a, T> {
         }
     }
 
-    pub fn get_mut(&self, e: entity::ID) -> Result<ComponentMapRefMut<'a, T>, AccessError> {
+    pub fn get_mut(&self, e: entity::ID) -> Result<ComponentMapRefMut<'a, T>> {
         // TODO(q3k): fix the unwrap
         let cm = self.world.components.get(&component::component_id::<T>()).unwrap();
         unsafe {
@@ -158,8 +159,6 @@ impl<'a> std::ops::Deref for ReadWriteAll<'a> {
 
 pub struct World {
     components: BTreeMap<component::ID, ComponentMap>,
-    component_by_idstr: BTreeMap<&'static str, component::ID>,
-    component_lua_bindings: BTreeMap<component::ID, Box<dyn component::LuaBindings>>,
     component_queue: RefCell<Vec<(component::ID, Box<dyn component::Component>, entity::Entity)>>,
     globals: GlobalMap,
     next_id: RefCell<entity::ID>,
@@ -169,8 +168,6 @@ impl World {
     pub fn new() -> Self {
         Self {
             components: BTreeMap::new(),
-            component_by_idstr: BTreeMap::new(),
-            component_lua_bindings: BTreeMap::new(),
             component_queue: RefCell::new(Vec::new()),
             globals: GlobalMap::new(),
             next_id: RefCell::new(1u64),
@@ -190,33 +187,6 @@ impl World {
 
     pub fn new_entity_lazy(&self) -> entity::LazyEntityBuilder {
         entity::LazyEntityBuilder::new(self.allocate_next_id())
-    }
-
-    pub fn register_component_lua_bindings(
-        &mut self,
-        bindings: Box<dyn component::LuaBindings>,
-    ) {
-        let idstr = bindings.idstr();
-        let cid = bindings.id();
-        if let Some(_) = self.component_by_idstr.get(idstr) {
-            log::warn!("Ignored attempted re-registration of Lua bindings for component {} (duplicate idstr)", idstr);
-            return
-        }
-        if let Some(_) = self.component_lua_bindings.get(&cid) {
-            log::warn!("Ignored attempted re-registration of Lua bindings for component {} (duplicate ID)", idstr);
-            return
-        }
-        self.component_by_idstr.insert(idstr, cid);
-        self.component_lua_bindings.insert(cid, bindings);
-    }
-
-    pub fn lua_any_into_dyn<'a, 'b>(&'a self, ud: &'a mlua::AnyUserData) -> Option<(String, Box<dyn component::Component>)> {
-        for (_, bindings) in self.component_lua_bindings.iter() {
-            if let Some(b) = bindings.any_into_dyn(ud) {
-                return Some((bindings.idstr().into(), b));
-            }
-        }
-        None
     }
 
     pub fn register_component_entity(
@@ -246,15 +216,6 @@ impl World {
         }
     }
 
-    pub fn get_component_lua_bindings(
-        &self,
-    ) -> Vec<(String, component::ID, &Box<dyn component::LuaBindings>)> {
-        self.component_by_idstr.iter().filter_map(|(idstr, cid)| {
-            let bindings = self.component_lua_bindings.get(cid)?;
-            Some((idstr.to_string(), *cid, bindings))
-        }).collect()
-    }
-
     pub fn components<'a, T: component::Component>(&'a self) -> ReadComponent<'a, T> {
         ReadComponent {
             world: self,
@@ -267,7 +228,7 @@ impl World {
             world: self,
             phantom: PhantomData,
         }
-    }
+        }
 
     pub fn component_get_dyn_cloned<'a>(
         &'a self,
@@ -288,6 +249,17 @@ impl World {
                 // TODO(q3k): better error handling
                 panic!("get_dyn({:?}): not in queue and ecs said: {:?}", e, err);
             }
+        }
+    }
+
+    pub fn component_get<'a, T: component::Component>(
+        &'a self,
+        e: entity::ID,
+    ) -> Result<ComponentMapRef<'a, T>> {
+        let cid = component::component_id::<T>();
+        let cm = self.components.get(&cid).ok_or(AccessError::NoSuchComponent)?;
+        unsafe {
+            cm.get::<T>(e)
         }
     }
 
@@ -327,10 +299,6 @@ impl World {
 
     pub fn set_global<T: component::Global>(&self, r: T) {
         self.globals.set(r).unwrap();
-    }
-
-    pub fn lua_components(&self) -> &BTreeMap<component::ID, Box<dyn component::LuaBindings>> {
-        &self.component_lua_bindings
     }
 }
 

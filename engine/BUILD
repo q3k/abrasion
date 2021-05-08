@@ -8,6 +8,8 @@ rust_binary(
         "-C", "opt-level=3",
         "-C", "overflow-checks=n",
         "-C", "force-frame-pointers=y",
+        "-C", "debuginfo=2",
+        #"-C", "lto=on",
         "-C", "lto=off",
         "-Zpolonius",
         "-Zborrowck=mir",
@@ -17,10 +19,16 @@ rust_binary(
 
         "src/globals.rs",
         "src/input.rs",
-        "src/scripting.rs",
 
         "src/physics/mod.rs",
         "src/physics/color.rs",
+
+        "src/scripting/mod.rs",
+        "src/scripting/sent.rs",
+
+        "src/scripting/component/mod.rs",
+        "src/scripting/component/renderable.rs",
+        "src/scripting/component/transform.rs",
 
         "src/render/mod.rs",
         "src/render/light.rs",

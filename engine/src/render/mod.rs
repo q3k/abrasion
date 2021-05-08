@@ -115,7 +115,6 @@ impl<'a> ecs::System<'a> for Renderer {
                 Renderable::Mesh(mesh_id, material_id) => {
                     rd.meshes.entry((*mesh_id, *material_id)).or_insert(Vec::new()).push(transform.m4());
                 },
-                _ => (),
             }
         }
         let camera = &scene.camera;
