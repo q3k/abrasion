@@ -39,6 +39,10 @@ http_archive(
     urls = [
         "https://github.com/google/flatbuffers/archive/ac203b20926b13a35ff85277d2e5d3c38698eee8.tar.gz",
     ],
+    patches = [
+        "//third_party/flatbuffers:bashless.diff",
+    ],
+    patch_args = ["-p",  "1"],
 )
 
 http_archive(

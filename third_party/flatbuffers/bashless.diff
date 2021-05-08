@@ -1,0 +1,47 @@
+This allows flatbuffers to be built via Bazel on Windows without MSYS/bash.
+
+This should, at some point, be upstreamed to the flatbuffers project, but there's more to be done here to 'fully' fix everything:
+
+ - Fix the reflection genrule
+ - Investigate cmd_ps werrdness (see //.bazelrc, without this none of this works anyway)
+ - Investigate why only test //tests/... works.
+
+diff --git a/build_defs.bzl b/build_defs.bzl
+index 88792be4..b1ea4b79 100644
+--- a/build_defs.bzl
++++ b/build_defs.bzl
+@@ -73,7 +73,7 @@ def flatbuffer_library_public(
+     output_directory = (
+         ("-o $(@D)/%s" % (out_prefix)) if len(srcs) > 1 else ("-o $(@D)")
+     )
+-    genrule_cmd = " ".join([
++    genrule_cmd_bash = " ".join([
+         "SRCS=($(SRCS));",
+         "for f in $${SRCS[@]:0:%s}; do" % len(srcs),
+         "$(location %s)" % (flatc_path),
+@@ -84,13 +84,24 @@ def flatbuffer_library_public(
+         "$$f;",
+         "done",
+     ])
++    genrule_cmd_ps = " ".join([
++        '"$(SRCS)".Split(" ") | ForEach {',
++        "$(location %s)" % (flatc_path),
++        " ".join(include_paths_cmd),
++        " ".join(flatc_args),
++        language_flag,
++        output_directory,
++        "$$_",
++        "}",
++    ])
+     native.genrule(
+         name = name,
+         srcs = srcs + includes,
+         outs = outs,
+         output_to_bindir = output_to_bindir,
+         tools = [flatc_path],
+-        cmd = genrule_cmd,
++        cmd_bash = genrule_cmd_bash,
++        cmd_ps = genrule_cmd_ps,
+         compatible_with = compatible_with,
+         restricted_to = restricted_to,
+         message = ""
