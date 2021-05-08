@@ -8,5 +8,10 @@ jobs:
   build-windows:
     runs-on: [self-hosted, Windows, X64]
     steps:
-     - uses: actions/checkout@v2
-     - run: bazel build //engine
+    - uses: actions/checkout@v2
+    - run: bazel build //engine:demo
+    - uses: actions/upload-artifact@v2
+      with:
+        name: demo-bin
+        path: bazel-bin/engine/demo.zip
+
