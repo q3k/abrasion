@@ -7,3 +7,9 @@ build --enable_runfiles
 # doesn't work, so we hardcode things to assume that it lives in C:\. We also
 # pollute non-Windows build envs with this, but whatever.
 build --action_env=ProgramData=C:\\ProgramData
+
+# Similar weirdness, but for py_binary called from genrules.
+build --action_env=SYSTEMROOT=C:\\Windows
+build --action_env=PATHEXT=".COM;.EXE"
+build --host_action_env=SYSTEMROOT=C:\\Windows
+build --host_action_env=PATHEXT=".COM;.EXE"
