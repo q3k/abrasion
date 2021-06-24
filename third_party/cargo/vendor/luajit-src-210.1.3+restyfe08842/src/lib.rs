@@ -62,7 +62,9 @@ impl Build {
         let target = &self.target.as_ref().expect("TARGET not set")[..];
         let host = &self.host.as_ref().expect("HOST not set")[..];
         let out_dir = self.out_dir.as_ref().expect("OUT_DIR not set");
-        let source_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("luajit2");
+        // HACK: Bazel: get path to luajit sources as defined by cargo_build_script in mlua.
+        let luajit2 = std::env::var("LUAJIT2").unwrap();
+        let source_dir = Path::new(&luajit2);
         let build_dir = out_dir.join("build");
         let lib_dir = out_dir.join("lib");
         let include_dir = out_dir.join("include");
@@ -194,10 +196,10 @@ Error {}:
 }
 
 fn cp_r(src: &Path, dst: &Path) {
-    for f in fs::read_dir(src).unwrap() {
-        let f = f.unwrap();
+    for f in fs::read_dir(src).expect(&format!("read_dir failed {:?}", src)) {
+        let f = f.expect("f read filed");
         let path = f.path();
-        let name = path.file_name().unwrap();
+        let name = path.file_name().expect("file_name failed");
 
         // Skip git metadata
         if name.to_str() == Some(".git") {

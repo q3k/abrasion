@@ -40,6 +40,7 @@ cargo_build_script(
     name = "mlua_build_script",
     srcs = glob(["**/*.rs"]),
     build_script_env = {
+        "LUAJIT2": "${pwd}/third_party/cargo/vendor/luajit-src-210.1.3+restyfe08842/luajit2",
     },
     crate_features = [
         "lua-src",
@@ -48,7 +49,9 @@ cargo_build_script(
         "vendored",
     ],
     crate_root = "build/main.rs",
-    data = glob(["**"]),
+    data = glob(["**"]) + [
+        "//third_party/cargo/vendor/luajit-src-210.1.3+restyfe08842:luajit2_srcs",
+    ],
     edition = "2018",
     links = "lua",
     rustc_flags = [
