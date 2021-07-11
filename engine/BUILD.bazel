@@ -23,21 +23,10 @@ rust_library(
         "//engine/physics",
         "//engine/render",
         "//lib/ecs",
-        "//third_party/cargo:cgmath",
-        "//third_party/cargo:image",
         "//third_party/cargo:mlua",
         "//third_party/cargo:log",
-        "//third_party/cargo:env_logger",
     ],
-    proc_macro_deps = [
-        "//lib/ecs_macros",
-    ],
-    data = [
-        "//assets:test-128px.png",
-        "//assets:test-128px-roughness.png",
-        "//assets/shaders:forward_vert",
-        "//assets/shaders:forward_frag",
-    ] + glob(["lua/**"]),
+    data = glob(["lua/**"]),
     visibility = [
         "//visibility:public",
     ],

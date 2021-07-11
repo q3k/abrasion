@@ -5,7 +5,7 @@ glsl_binary(
     srcs = [
         "forward.vert",
     ],
-    visibility = ["//engine:__pkg__"],
+    visibility = ["//engine/render:__pkg__"],
 )
 
 glsl_binary(
@@ -16,5 +16,5 @@ glsl_binary(
         "forward_brdf.frag",
         "forward_defs.frag",
     ],
-    visibility = ["//engine:__pkg__"],
+    visibility = ["//engine/render:__pkg__"],
 )
