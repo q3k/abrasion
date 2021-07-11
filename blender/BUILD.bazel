@@ -1,0 +1,24 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@pydeps//:requirements.bzl", "requirement")
+load("//blender/build:blender.bzl", "blender_addon")
+
+py_library(
+    name = "addon_py_lib",
+    srcs = [
+        "addon.py",
+        "export.py",
+    ],
+    deps = [
+        "@com_github_q3k_q3d//:q3d_py",
+        requirement("flatbuffers"),
+    ],
+)
+
+blender_addon(
+    name = "addon",
+    deps = [
+        ":addon_py_lib",
+    ],
+    module = 'abrasion.blender.addon',
+    addon_name = 'Abrasion',
+)
