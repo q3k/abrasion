@@ -16,26 +16,7 @@
 
 use std::sync::Arc;
 
-use vulkano::buffer as vb;
-use vulkano::image as vm;
-use vulkano::format::Format;
-
-use cgmath as cgm;
-
-#[derive(Default, Copy, Clone, Debug)]
-pub struct Vertex {
-    pos: [f32; 3],
-    normal: [f32; 3],
-    tex: [f32; 2],
-}
-
-impl Vertex {
-    pub fn new(pos: [f32; 3], normal: [f32; 3], tex: [f32; 2]) -> Self {
-        Self {
-            pos, normal, tex,
-        }
-    }
-}
+use crate::mesh::Vertex;
 vulkano::impl_vertex!(Vertex, pos, normal, tex);
 
 #[derive(Default, Copy, Clone)]
@@ -44,7 +25,7 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(model: &cgm::Matrix4<f32>) -> Self {
+    pub fn new(model: &cgmath::Matrix4<f32>) -> Self {
         let slice: &[f32; 16] = model.as_ref();
         Self { 
             model: slice.clone(),
@@ -61,26 +42,26 @@ pub struct OmniLight {
 
 #[derive(Copy, Clone, Debug)]
 pub struct PushConstantObject {
-    pub view: cgm::Matrix4<f32>,
+    pub view: cgmath::Matrix4<f32>,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub struct FragmentUniformBufferObject {
-    pub camera_pos: cgm::Vector4<f32>,
+    pub camera_pos: cgmath::Vector4<f32>,
     pub omni_lights: [OmniLight; 4],
 }
 
 #[derive(Clone, Debug)]
 pub struct Textures {
     // diffuse: RGB
-    pub diffuse: Arc<vm::ImmutableImage<Format>>,
+    pub diffuse: Arc<vulkano::image::ImmutableImage<vulkano::format::Format>>,
     // roughness: R
-    pub roughness: Arc<vm::ImmutableImage<Format>>,
+    pub roughness: Arc<vulkano::image::ImmutableImage<vulkano::format::Format>>,
 }
 
 pub struct VertexData {
-    pub vbuffer: Arc<vb::ImmutableBuffer<[Vertex]>>,
-    pub ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
+    pub vbuffer: Arc<vulkano::buffer::ImmutableBuffer<[Vertex]>>,
+    pub ibuffer: Arc<vulkano::buffer::ImmutableBuffer<[u16]>>,
 }
 
 impl std::fmt::Debug for VertexData {

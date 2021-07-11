@@ -24,9 +24,24 @@ use vulkano::sync::GpuFuture;
 
 use crate::vulkan::data;
 
+#[derive(Default, Copy, Clone, Debug)]
+pub struct Vertex {
+    pub pos: [f32; 3],
+    pub normal: [f32; 3],
+    pub tex: [f32; 2],
+}
+
+impl Vertex {
+    pub fn new(pos: [f32; 3], normal: [f32; 3], tex: [f32; 2]) -> Self {
+        Self {
+            pos, normal, tex,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Mesh {
-    vertices: Arc<Vec<data::Vertex>>,
+    vertices: Arc<Vec<Vertex>>,
     indices: Arc<Vec<u16>>,
     // vulkan buffers cache
     vulkan: Mutex<Option<data::VertexData>>,
@@ -34,7 +49,7 @@ pub struct Mesh {
 
 impl Mesh {
     pub fn new(
-        vertices: Arc<Vec<data::Vertex>>,
+        vertices: Arc<Vec<Vertex>>,
         indices: Arc<Vec<u16>>,
     ) -> Self {
         Self {
@@ -47,7 +62,7 @@ impl Mesh {
         &self,
         graphics_queue: Arc<vd::Queue>,
     ) -> (
-        Arc<vb::ImmutableBuffer<[data::Vertex]>>,
+        Arc<vb::ImmutableBuffer<[Vertex]>>,
         Arc<vb::ImmutableBuffer<[u16]>>,
     ) {
         let mut cache = self.vulkan.lock().unwrap();

@@ -30,6 +30,7 @@ use vulkano::pipeline::shader as vps;
 use vulkano::pipeline::vertex as vpv;
 use vulkano::sampler as vs;
 
+use crate::mesh::Vertex;
 use crate::vulkan::data;
 use crate::vulkan::shaders;
 use crate::vulkan::pipeline;
@@ -180,7 +181,7 @@ impl Forward {
         // against most existing software and practices.  This might bite us in the ass at some
         // point in the future.
         let pipeline = Arc::new(vp::GraphicsPipeline::start()
-                 .vertex_input(vpv::OneVertexOneInstanceDefinition::<data::Vertex, data::Instance>::new())
+                 .vertex_input(vpv::OneVertexOneInstanceDefinition::<Vertex, data::Instance>::new())
                  .vertex_shader(vertex_shader.entry_point(), ())
                  .triangle_list()
                  .primitive_restart(false)
