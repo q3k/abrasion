@@ -64,8 +64,8 @@ rust_library(
     data = [
         "//assets:test-128px.png",
         "//assets:test-128px-roughness.png",
-        "//engine/shaders:forward_vert",
-        "//engine/shaders:forward_frag",
+        "//assets/shaders:forward_vert",
+        "//assets/shaders:forward_frag",
         ":init.lua",
     ],
     visibility = [
