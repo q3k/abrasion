@@ -49,7 +49,7 @@ pub use mesh::Mesh;
 pub use renderable::{Transform, Renderable};
 pub use resource::{Resource, ResourceID};
 
-use crate::input;
+use engine_input as input;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;

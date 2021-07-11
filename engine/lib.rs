@@ -15,6 +15,4 @@
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod globals;
-pub mod input;
-pub mod render;
 pub mod scripting;

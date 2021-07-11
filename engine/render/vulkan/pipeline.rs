@@ -21,7 +21,7 @@ use vulkano::pipeline as vp;
 use vulkano::descriptor::descriptor_set as vdd;
 use vulkano::memory as vm;
 
-use crate::render::vulkan::data;
+use crate::vulkan::data;
 
 pub type VulkanoPipeline = dyn vp::GraphicsPipelineAbstract + Send + Sync;
 pub type VulkanoDescriptorSet = dyn vdd::DescriptorSet + Send + Sync;

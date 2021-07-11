@@ -1,0 +1,24 @@
+load("@rules_rust//rust:rust.bzl", "rust_library")
+
+rust_library(
+    name = "input",
+    crate_name = "engine_input",
+    edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
+    ],
+    srcs = [
+        "lib.rs",
+    ],
+    deps = [
+        "//lib/ecs",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)

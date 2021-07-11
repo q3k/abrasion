@@ -21,8 +21,8 @@ use std::cell::Ref;
 use cgmath as cgm;
 
 use ecs::{Component, ComponentLuaBindings};
-use crate::render::{Light, Mesh, Material};
-use crate::render::resource::{ResourceID};
+use crate::{Light, Mesh, Material};
+use crate::resource::{ResourceID};
 
 use mlua::ToLua;
 

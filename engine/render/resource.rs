@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::cmp::Ordering;
 
-use crate::render::{Mesh, Material, Light};
+use crate::{Mesh, Material, Light};
 
 type Map<T> = BTreeMap<ResourceID<T>, T>;
 

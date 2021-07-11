@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock, atomic};
 use std::io::Read;
 
-use crate::render;
+use engine_render as render;
 use engine_util as util;
 use crate::globals::Time;
 

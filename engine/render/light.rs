@@ -20,7 +20,7 @@ use cgmath as cgm;
 
 use engine_physics::color;
 
-use crate::render::vulkan::data;
+use crate::vulkan::data;
 
 /// An Omni point light, with position in 3d space, and 'color' defined in lumens per CIE XYZ
 /// color channel.

@@ -22,7 +22,7 @@ use vulkano::device as vd;
 use vulkano::buffer as vb;
 use vulkano::sync::GpuFuture;
 
-use crate::render::vulkan::data;
+use crate::vulkan::data;
 
 #[derive(Debug)]
 pub struct Mesh {

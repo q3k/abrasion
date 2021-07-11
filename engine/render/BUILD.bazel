@@ -1,0 +1,50 @@
+load("@rules_rust//rust:rust.bzl", "rust_library")
+
+rust_library(
+    name = "render",
+    crate_name = "engine_render",
+    edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
+    ],
+    srcs = [
+        "lib.rs",
+        "light.rs",
+        "material.rs",
+        "mesh.rs",
+        "renderable.rs",
+        "resource.rs",
+
+        "vulkan/data.rs",
+        "vulkan/material.rs",
+        "vulkan/mod.rs",
+        "vulkan/pipeline.rs",
+        "vulkan/pipeline_forward.rs",
+        "vulkan/qfi.rs",
+        "vulkan/shaders.rs",
+        "vulkan/surface_binding.rs",
+        "vulkan/swapchain_binding.rs",
+        "vulkan/worker.rs",
+    ],
+    deps = [
+        "//engine/input",
+        "//engine/util",
+        "//engine/physics",
+        "//lib/ecs",
+        "//third_party/cargo:cgmath",
+        "//third_party/cargo:image",
+        "//third_party/cargo:log",
+        "//third_party/cargo:mlua",
+        "//third_party/cargo:vulkano",
+        "//third_party/cargo:vulkano_win",
+        "//third_party/cargo:winit",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)

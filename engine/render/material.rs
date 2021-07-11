@@ -26,8 +26,8 @@ use vulkano::image as vm;
 use engine_util::file;
 use engine_physics::color;
 
-use crate::render::vulkan::data;
-use crate::render::vulkan::material::ChannelLayoutVulkan;
+use crate::vulkan::data;
+use crate::vulkan::material::ChannelLayoutVulkan;
 
 #[derive(Debug)]
 pub enum Texture<T: ChannelLayoutVulkan> {

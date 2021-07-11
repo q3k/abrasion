@@ -30,9 +30,9 @@ use vulkano::pipeline::shader as vps;
 use vulkano::pipeline::vertex as vpv;
 use vulkano::sampler as vs;
 
-use crate::render::vulkan::data;
-use crate::render::vulkan::shaders;
-use crate::render::vulkan::pipeline;
+use crate::vulkan::data;
+use crate::vulkan::shaders;
+use crate::vulkan::pipeline;
 
 pub struct Forward {
     pipeline: Arc<pipeline::VulkanoPipeline>,

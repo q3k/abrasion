@@ -1,5 +1,4 @@
-load("@rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_rust//rust:rust.bzl", "rust_library")
 
 rust_library(
     name = "engine",
@@ -16,39 +15,18 @@ rust_library(
         "lib.rs",
 
         "globals.rs",
-        "input.rs",
         "scripting.rs",
-
-        "render/mod.rs",
-        "render/light.rs",
-        "render/material.rs",
-        "render/mesh.rs",
-        "render/renderable.rs",
-        "render/resource.rs",
-
-        "render/vulkan/mod.rs",
-        "render/vulkan/data.rs",
-        "render/vulkan/material.rs",
-        "render/vulkan/pipeline.rs",
-        "render/vulkan/pipeline_forward.rs",
-        "render/vulkan/qfi.rs",
-        "render/vulkan/shaders.rs",
-        "render/vulkan/surface_binding.rs",
-        "render/vulkan/swapchain_binding.rs",
-        "render/vulkan/worker.rs",
     ],
     deps = [
         "//engine/util",
         "//engine/physics",
+        "//engine/render",
         "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:image",
         "//third_party/cargo:mlua",
-        "//third_party/cargo:winit",
         "//third_party/cargo:log",
         "//third_party/cargo:env_logger",
-        "//third_party/cargo:vulkano",
-        "//third_party/cargo:vulkano_win",
     ],
     proc_macro_deps = [
         "//lib/ecs_macros",

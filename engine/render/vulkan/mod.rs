@@ -40,8 +40,8 @@ mod shaders;
 mod swapchain_binding;
 mod worker;
 
-use crate::render::{Light, Material, Mesh, ResourceID};
-use crate::render::resource;
+use crate::{Light, Material, Mesh, ResourceID};
+use crate::resource;
 
 const VERSION: vi::Version = vi::Version { major: 1, minor: 0, patch: 0};
 
