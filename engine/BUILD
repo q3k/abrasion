@@ -66,8 +66,7 @@ rust_library(
         "//assets:test-128px-roughness.png",
         "//assets/shaders:forward_vert",
         "//assets/shaders:forward_frag",
-        ":init.lua",
-    ],
+    ] + glob(["lua/**"]),
     visibility = [
         "//visibility:public",
     ],

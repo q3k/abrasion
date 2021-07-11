@@ -169,9 +169,9 @@ fn main() {
 
     let context = scripting::WorldContext::new(&world);
 
-    let init = util::file::resource("//engine/init.lua").unwrap().string().unwrap();
+    let init = util::file::resource("//engine/lua/init.lua").unwrap().string().unwrap();
     context.eval_init(&world, init).unwrap();
-    let scene = util::file::resource("//hsvr/scene.lua").unwrap().string().unwrap();
+    let scene = util::file::resource("//hsvr/lua/scene.lua").unwrap().string().unwrap();
     context.eval_init(&world, scene).unwrap();
 
     log::info!("Starting...");

@@ -25,9 +25,7 @@ rust_binary(
         "//third_party/cargo:env_logger",
         "//third_party/cargo:log",
     ],
-    data = [
-        ":scene.lua",
-    ],
+    data = glob(["lua/**"]),
 )
 
 abrasion_release(
