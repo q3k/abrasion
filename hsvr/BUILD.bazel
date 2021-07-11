@@ -1,5 +1,5 @@
 load("@rules_rust//rust:rust.bzl", "rust_binary")
-load("//engine/release:defs.bzl", "abrasion_release")
+load("//tools/release:defs.bzl", "abrasion_release")
 
 rust_binary(
     name = "hsvr",

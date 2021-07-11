@@ -70,7 +70,7 @@ impl std::io::Seek for Resource {
 }
 
 /// ReleaseFiles is a file/resource accessible for abrasion releases build via
-/// //engine/release.
+/// //tools/release.
 struct ReleaseFiles {
 }
 

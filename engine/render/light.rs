@@ -33,7 +33,7 @@ pub struct Omni {
 impl Omni {
     /// Make a test light. This has... a color. It's kinda yellow. And something close to 650
     /// lumens of luminous power. 
-    // TODO(q3k): implement [Kry85] (eq. 68) somewhere in //engine/src/physics for generation
+    // TODO(q3k): implement [Kry85] (eq. 68) somewhere in //engine/physics for generation
     // of nice lights colours from color temperature.
     //
     // [Kry85]

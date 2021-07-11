@@ -9,7 +9,7 @@ def _abrasion_release_impl(ctx):
     runfiles = [rf for rf in runfiles if not rf.path.endswith(".rs")]
     runfiles = [rf for rf in runfiles if not rf.path == main.path]
 
-    # Proprietary little manifest format, for //engine/release/pack.go to use.
+    # Proprietary little manifest format, for //tools/release/pack.go to use.
     runfile_manifest = ctx.actions.declare_file(ctx.attr.name + "-manifest.text.pb")
     ctx.actions.write(runfile_manifest, proto.encode_text(struct(file = [
         struct(short_path=rf.short_path, path=rf.path)
@@ -45,7 +45,7 @@ abrasion_release = rule(
         "_pack": attr.label(
             executable = True,
             cfg = "exec",
-            default = Label("//engine/release:pack"),
+            default = Label("//tools/release:pack"),
         ),
     }
 )

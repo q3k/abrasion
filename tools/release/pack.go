@@ -5,42 +5,42 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"io/ioutil"
 	"sort"
 
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 
-	pb "abrasion/engine/release/proto"
+	pb "abrasion/tools/release/proto"
 )
 
 var (
 	flagManifest string
-	flagExe string
-	flagZip string
+	flagExe      string
+	flagZip      string
 )
 
 func packFile(w *zip.Writer, file *pb.File) error {
-		fo, err := w.Create(file.ShortPath)
-		if err != nil {
-			return fmt.Errorf("Create: %w", err)
-		}
-		// TODO(q3k): maybe don't read this into memory...
-		data, err := ioutil.ReadFile(file.Path)
-		if err != nil {
-			return fmt.Errorf("Open: %w", err)
-		}
-		h := sha256.Sum256(data)
-		file.Sha256 = h[:]
-		_, err = fo.Write(data)
-		if err != nil {
-			return fmt.Errorf("Write: %w", err)
-		}
-		// We don't need this in the release manifest.
-		file.Path = ""
-		return nil
+	fo, err := w.Create(file.ShortPath)
+	if err != nil {
+		return fmt.Errorf("Create: %w", err)
+	}
+	// TODO(q3k): maybe don't read this into memory...
+	data, err := ioutil.ReadFile(file.Path)
+	if err != nil {
+		return fmt.Errorf("Open: %w", err)
+	}
+	h := sha256.Sum256(data)
+	file.Sha256 = h[:]
+	_, err = fo.Write(data)
+	if err != nil {
+		return fmt.Errorf("Write: %w", err)
+	}
+	// We don't need this in the release manifest.
+	file.Path = ""
+	return nil
 }
 
 func main() {
@@ -81,7 +81,7 @@ func main() {
 	// Pack engine
 	engine := pb.File{
 		ShortPath: "abrasion.exe",
-		Path: flagExe,
+		Path:      flagExe,
 	}
 	if err := packFile(w, &engine); err != nil {
 		log.Fatalf("Failed to pack engine: %v", err)

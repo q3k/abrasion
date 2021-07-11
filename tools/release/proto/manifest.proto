@@ -1,6 +1,6 @@
 syntax = "proto3";
-package abrasion.engine.release.proto;
-option go_package = "abrasion/engine/release/proto";
+package abrasion.tools.release.proto;
+option go_package = "abrasion/tools/release/proto";
 
 message File {
     string short_path = 1;
