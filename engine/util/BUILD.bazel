@@ -1,0 +1,30 @@
+load("@rules_rust//rust:rust.bzl", "rust_library")
+
+rust_library(
+    name = "util",
+    crate_name = "engine_util",
+    edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
+    ],
+    srcs = [
+        "lib.rs",
+
+        "counter.rs",
+        "file.rs",
+        "profiler.rs",
+        "resourcemap.rs",
+    ],
+    deps = [
+        "@rules_rust//tools/runfiles",
+        "//third_party/cargo:log",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)

@@ -23,10 +23,11 @@ use vulkano::device as vd;
 use vulkano::format as vf;
 use vulkano::image as vm;
 
+use engine_util::file;
+
 use crate::physics::color;
 use crate::render::vulkan::data;
 use crate::render::vulkan::material::ChannelLayoutVulkan;
-use crate::util::file;
 
 #[derive(Debug)]
 pub enum Texture<T: ChannelLayoutVulkan> {

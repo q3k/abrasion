@@ -20,6 +20,7 @@ rust_binary(
     ],
     deps = [
         "//engine",
+        "//engine/util",
         "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:env_logger",

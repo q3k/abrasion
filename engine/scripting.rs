@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, RwLock, atomic};
 use std::io::Read;
 
 use crate::render;
-use crate::util;
+use engine_util as util;
 use crate::globals::Time;
 
 use mlua::prelude::LuaError::RuntimeError;

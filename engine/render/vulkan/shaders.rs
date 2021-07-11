@@ -24,7 +24,7 @@ use vulkano::descriptor::pipeline_layout as vdp;
 use vulkano::device as vd;
 use vulkano::pipeline::shader as vps;
 
-use crate::util::file;
+use engine_util::file;
 
 pub struct ShaderDefinition {
     pub name: String,

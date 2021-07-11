@@ -39,14 +39,9 @@ rust_library(
         "render/vulkan/surface_binding.rs",
         "render/vulkan/swapchain_binding.rs",
         "render/vulkan/worker.rs",
-
-        "util/mod.rs",
-        "util/counter.rs",
-        "util/file.rs",
-        "util/profiler.rs",
-        "util/resourcemap.rs",
     ],
     deps = [
+        "//engine/util",
         "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:image",
@@ -56,7 +51,6 @@ rust_library(
         "//third_party/cargo:env_logger",
         "//third_party/cargo:vulkano",
         "//third_party/cargo:vulkano_win",
-        "@rules_rust//tools/runfiles",
     ],
     proc_macro_deps = [
         "//lib/ecs_macros",

@@ -27,6 +27,9 @@ use vulkano::instance as vi;
 use vulkano::swapchain as vs;
 use vulkano::sync::{FenceSignalFuture, GpuFuture};
 
+use engine_util::counter::Counter;
+use engine_util::profiler::Profiler;
+
 pub mod data;
 pub mod material;
 mod surface_binding;
@@ -37,8 +40,6 @@ mod shaders;
 mod swapchain_binding;
 mod worker;
 
-use crate::util::counter::Counter;
-use crate::util::profiler::Profiler;
 use crate::render::{Light, Material, Mesh, ResourceID};
 use crate::render::resource;
 
