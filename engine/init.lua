@@ -65,5 +65,3 @@ sent.register = function (cfg)
         return table
     end
 end
-
-require("//engine/scene.lua")

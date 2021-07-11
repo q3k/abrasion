@@ -1,7 +1,7 @@
 load("@rules_rust//rust:rust.bzl", "rust_binary", "rust_library")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
-rust_binary(
+rust_library(
     name = "engine",
     edition = "2018",
     rustc_flags = [
@@ -13,7 +13,7 @@ rust_binary(
         "-Zborrowck=mir",
     ],
     srcs = [
-        "src/main.rs",
+        "src/lib.rs",
 
         "src/globals.rs",
         "src/input.rs",
@@ -56,7 +56,6 @@ rust_binary(
         "//third_party/cargo:env_logger",
         "//third_party/cargo:vulkano",
         "//third_party/cargo:vulkano_win",
-        "@com_github_q3k_q3d//:q3d_rs",
         "@rules_rust//tools/runfiles",
     ],
     proc_macro_deps = [
@@ -68,15 +67,8 @@ rust_binary(
         "//engine/shaders:forward_vert",
         "//engine/shaders:forward_frag",
         ":init.lua",
-        ":scene.lua",
     ],
-)
-
-load("//engine/release:defs.bzl", "abrasion_release")
-
-abrasion_release(
-    name = "demo",
-    deps = [
-        ":engine"
+    visibility = [
+        "//visibility:public",
     ],
 )

@@ -6,7 +6,7 @@ rust_proc_macro(
     srcs = [
         "src/lib.rs",
     ],
-    visibility = ["//engine:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/cargo:proc_macro2",
         "//third_party/cargo:quote",

@@ -1,39 +1,11 @@
-// Copyright 2020 Sergiusz 'q3k' Bazanski <q3k@q3k.org>
-//
-// This file is part of Abrasion.
-//
-// Abrasion is free software: you can redistribute it and/or modify it under
-// the terms of the GNU General Public License as published by the Free
-// Software Foundation, version 3.
-//
-// Abrasion is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-// details.
-//
-// You should have received a copy of the GNU General Public License along with
-// Abrasion.  If not, see <https://www.gnu.org/licenses/>.
-
-use log;
-use env_logger;
 use std::sync::Arc;
-
 use cgmath as cgm;
 
-pub mod globals;
-pub mod input;
-mod render;
-mod util;
-mod physics;
-mod scripting;
-
-use ecs::{Component, World, Processor};
 use ecs_macros::Access;
-use render::vulkan::data;
-use render::material::{Texture, PBRMaterialBuilder};
-use render::{Light, Material, Mesh, Transform, Renderable};
-use physics::color;
-
+use engine::{globals, input, render, scripting, util};
+use engine::render::material;
+use engine::render::vulkan::data;
+use engine::physics;
 
 struct Main {
     light1: ecs::EntityID,
@@ -44,7 +16,7 @@ struct Main {
 }
 
 impl Main {
-    pub fn new(world: &mut World, renderer: &mut render::Renderer) -> Self {
+    pub fn new(world: &mut ecs::World, renderer: &mut render::Renderer) -> Self {
         let mut rm = render::resource::Manager::new();
         let mesh = {
             let vertices = Arc::new(vec![
@@ -90,15 +62,15 @@ impl Main {
                 20, 22, 21, 22, 20, 23,
 
             ]);
-            rm.add(Mesh::new(vertices, indices), Some("cube"))
+            rm.add(render::Mesh::new(vertices, indices), Some("cube"))
         };
 
-        let material = rm.add(PBRMaterialBuilder {
-            diffuse: Texture::from_image(String::from("//assets/test-128px.png")),
-            roughness: Texture::from_image(String::from("//assets/test-128px-roughness.png")),
+        let material = rm.add(material::PBRMaterialBuilder {
+            diffuse: material::Texture::from_image(String::from("//assets/test-128px.png")),
+            roughness: material::Texture::from_image(String::from("//assets/test-128px-roughness.png")),
         }.build(), Some("test-128px"));
 
-        let light = rm.add(Light::omni_test(), Some("omni"));
+        let light = rm.add(render::Light::omni_test(), Some("omni"));
 
         // The Sun (Sol) is 1AU from the Earth. We ignore the diameter of the Sun and the Earth, as
         // these are negligible at this scale.
@@ -110,23 +82,23 @@ impl Main {
         // Solar luminour power (integrating over a sphere of radius == sun_distance) [lm].
         let sun_lumen: f32 = sun_luminous_emittance * (4.0 * 3.14159 * sun_distance * sun_distance);
 
-        let sun_color = color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0);
-        let sun = rm.add(Light::omni_with_color(sun_color), Some("sun"));
+        let sun_color = physics::color::XYZ::new(sun_lumen/3.0, sun_lumen/3.0, sun_lumen/3.0);
+        let sun = rm.add(render::Light::omni_with_color(sun_color), Some("sun"));
 
         // In our scene, the sun at a 30 degree zenith.
         let sun_angle: f32 = (3.14159 * 2.0) / (360.0 / 30.0);
         
         let light1 = world.new_entity()
-            .with(Transform::at(-10.0, -10.0, -5.0))
-            .with(Renderable::Light(light))
+            .with(render::Transform::at(-10.0, -10.0, -5.0))
+            .with(render::Renderable::Light(light))
             .build();
         let cube1 = world.new_entity()
-            .with(Transform::at(-10.0, -10.0, -5.0))
-            .with(Renderable::Mesh(mesh, material))
+            .with(render::Transform::at(-10.0, -10.0, -5.0))
+            .with(render::Renderable::Mesh(mesh, material))
             .build();
         world.new_entity()
-            .with(Transform::at(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance))
-            .with(Renderable::Light(sun))
+            .with(render::Transform::at(0.0, sun_angle.sin() * sun_distance, sun_angle.cos() * sun_distance))
+            .with(render::Renderable::Light(sun))
             .build();
 
         world.set_global(rm);
@@ -144,7 +116,7 @@ struct MainData<'a> {
     scene_info: ecs::ReadWriteGlobal<'a, render::SceneInfo>,
     time: ecs::ReadGlobal<'a, globals::Time>,
     input: ecs::ReadGlobal<'a, input::Input>,
-    transforms: ecs::ReadWriteComponent<'a, Transform>,
+    transforms: ecs::ReadWriteComponent<'a, render::Transform>,
 }
 
 impl<'a> ecs::System <'a> for Main {
@@ -179,8 +151,8 @@ impl<'a> ecs::System <'a> for Main {
         let ly = 4.0;
         let lz = -0.0 + (ts*2.0).sin() * 4.0;
 
-        *sd.transforms.get_mut(self.light1).unwrap() = Transform::at(lx, ly, lz);
-        let mut ctransform = Transform::at(lx, ly, lz);
+        *sd.transforms.get_mut(self.light1).unwrap() = render::Transform::at(lx, ly, lz);
+        let mut ctransform = render::Transform::at(lx, ly, lz);
         ctransform.0 = ctransform.0 * cgmath::Matrix4::from_scale(0.1);
         *sd.transforms.get_mut(self.cube1).unwrap() = ctransform;
     }
@@ -189,19 +161,22 @@ impl<'a> ecs::System <'a> for Main {
 fn main() {
     env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"));
 
-    let mut world = World::new();
-    world.register_component_lua_bindings(Transform::bindings());
-    world.register_component_lua_bindings(Renderable::bindings());
+    let mut world = ecs::World::new();
+    world.register_component_lua_bindings(render::Transform::bindings());
+    world.register_component_lua_bindings(render::Renderable::bindings());
     let mut renderer = render::Renderer::initialize(&mut world);
     let main = Main::new(&mut world, &mut renderer);
 
     let context = scripting::WorldContext::new(&world);
+
     let init = util::file::resource("//engine/init.lua").unwrap().string().unwrap();
     context.eval_init(&world, init).unwrap();
+    let scene = util::file::resource("//hsvr/scene.lua").unwrap().string().unwrap();
+    context.eval_init(&world, scene).unwrap();
 
     log::info!("Starting...");
 
-    let mut p = Processor::new();
+    let mut p = ecs::Processor::new();
     p.add_system(main);
     p.add_system(context);
     p.add_system(renderer);
@@ -219,4 +194,5 @@ fn main() {
             return;
         }
     }
+
 }

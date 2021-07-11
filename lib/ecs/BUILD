@@ -18,7 +18,7 @@ rust_library(
         "//third_party/cargo:log",
         "//third_party/cargo:mlua",
     ],
-    visibility = ["//engine:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 rust_test(

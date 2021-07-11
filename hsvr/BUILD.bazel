@@ -1,0 +1,38 @@
+load("@rules_rust//rust:rust.bzl", "rust_binary")
+load("//engine/release:defs.bzl", "abrasion_release")
+
+rust_binary(
+    name = "hsvr",
+    edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
+    ],
+    srcs = [
+        "main.rs",
+    ],
+    proc_macro_deps = [
+        "//lib/ecs_macros",
+    ],
+    deps = [
+        "//engine",
+        "//lib/ecs",
+        "//third_party/cargo:cgmath",
+        "//third_party/cargo:env_logger",
+        "//third_party/cargo:log",
+    ],
+    data = [
+        ":scene.lua",
+    ],
+)
+
+abrasion_release(
+    name = "demo",
+    deps = [
+        ":hsvr"
+    ],
+)
