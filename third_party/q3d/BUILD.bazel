@@ -1,0 +1,32 @@
+load("@rules_rust//rust:rust.bzl", "rust_library")
+
+genrule(
+    name = "q3d_rs_layout",
+    srcs = [
+        "@com_github_q3k_q3d//:q3d_object_generated.rs",
+        "@com_github_q3k_q3d//:q3d_model_generated.rs",
+        "lib_.rs",
+    ],
+    outs = [
+        "q3d_object_generated.rs",
+        "q3d_model_generated.rs",
+        "lib.rs",
+    ],
+    cmd_bash = """
+        cp $(location @com_github_q3k_q3d//:q3d_object_generated.rs) $(location q3d_object_generated.rs) 
+        cp $(location @com_github_q3k_q3d//:q3d_model_generated.rs) $(location q3d_model_generated.rs) 
+        cp $(location lib_.rs) $(location lib.rs)
+    """,
+)
+
+rust_library(
+    name = "q3d_rs",
+    edition = "2018",
+    srcs = [
+        ":q3d_rs_layout",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@abrasion//third_party/cargo:flatbuffers",
+    ],
+)

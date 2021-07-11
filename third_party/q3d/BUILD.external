@@ -1,0 +1,65 @@
+load("@com_github_google_flatbuffers//:build_defs.bzl", "flatbuffer_library_public")
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+flatbuffer_library_public(
+    name = "q3d_rs_src",
+    srcs = [
+        ":q3d_object.fbs",
+        ":q3d_model.fbs",
+    ],
+    outs = [
+        "q3d_object_generated.rs",
+        "q3d_model_generated.rs",
+    ],
+    language_flag = "--rust",
+)
+
+flatbuffer_library_public(
+    name = "q3d_py_src",
+    srcs = [
+        ":q3d_object.fbs",
+        ":q3d_model.fbs",
+    ],
+    flatc_args = [
+        "--gen-object-api",
+        "--gen-compare",
+        "--gen-mutable",
+        "--reflect-names",
+        "--cpp-ptr-type flatbuffers::unique_ptr",
+    ],
+    outs = [
+        "Q3DObject/__init__.py",
+        "Q3DObject/Color.py",
+        "Q3DObject/ITriangle.py",
+        "Q3DObject/Material.py",
+        "Q3DObject/Mesh.py",
+        "Q3DObject/Object.py",
+        "Q3DObject/Triangle.py",
+        "Q3DObject/UV.py",
+        "Q3DObject/Vector3.py",
+        "Q3DObject/Vector4.py",
+        "Q3DObject/Vertex.py",
+        "Q3DModel/__init__.py",
+        "Q3DModel/Matrix4.py",
+        "Q3DModel/Model.py",
+        "Q3DModel/Node.py",
+    ],
+    language_flag = "--python",
+)
+
+py_library(
+    name = "q3d_py",
+    visibility = [
+        "//visibility:public",
+    ],
+    srcs = [
+        ":q3d_py_src",
+    ],
+    imports = ["."],
+)
