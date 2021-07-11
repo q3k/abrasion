@@ -14,5 +14,9 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
+pub use engine_input as input;
 pub mod globals;
+pub use engine_physics as physics;
+pub use engine_render as render;
+pub use engine_util as util;
 pub mod scripting;

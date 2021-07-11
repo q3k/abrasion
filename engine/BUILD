@@ -18,6 +18,7 @@ rust_library(
         "scripting.rs",
     ],
     deps = [
+        "//engine/input",
         "//engine/util",
         "//engine/physics",
         "//engine/render",

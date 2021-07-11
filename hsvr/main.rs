@@ -2,14 +2,11 @@ use std::sync::Arc;
 use cgmath as cgm;
 
 use ecs_macros::Access;
-use engine_input as input;
-use engine_render as render;
-use engine_render::material;
-use engine_render::vulkan::data;
-use engine::{globals, scripting};
-
-use engine_physics as physics;
-use engine_util as util;
+use engine::{
+    globals, input, physics, render, scripting, util,
+};
+use engine::render::material;
+use engine::render::vulkan::data;
 
 struct Main {
     light1: ecs::EntityID,
