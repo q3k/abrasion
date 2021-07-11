@@ -24,8 +24,8 @@ use vulkano::format as vf;
 use vulkano::image as vm;
 
 use engine_util::file;
+use engine_physics::color;
 
-use crate::physics::color;
 use crate::render::vulkan::data;
 use crate::render::vulkan::material::ChannelLayoutVulkan;
 

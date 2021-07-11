@@ -19,9 +19,6 @@ rust_library(
         "input.rs",
         "scripting.rs",
 
-        "physics/mod.rs",
-        "physics/color.rs",
-
         "render/mod.rs",
         "render/light.rs",
         "render/material.rs",
@@ -42,6 +39,7 @@ rust_library(
     ],
     deps = [
         "//engine/util",
+        "//engine/physics",
         "//lib/ecs",
         "//third_party/cargo:cgmath",
         "//third_party/cargo:image",

@@ -17,5 +17,4 @@
 pub mod globals;
 pub mod input;
 pub mod render;
-pub mod physics;
 pub mod scripting;

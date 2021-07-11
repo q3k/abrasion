@@ -1,0 +1,24 @@
+load("@rules_rust//rust:rust.bzl", "rust_library")
+
+rust_library(
+    name = "physics",
+    crate_name = "engine_physics",
+    edition = "2018",
+    rustc_flags = [
+        "-C", "opt-level=3",
+        "-C", "overflow-checks=n",
+        "-C", "force-frame-pointers=y",
+        "-C", "lto=off",
+        "-Zpolonius",
+        "-Zborrowck=mir",
+    ],
+    srcs = [
+        "lib.rs",
+        "color.rs",
+    ],
+    deps = [
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)

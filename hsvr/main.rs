@@ -5,8 +5,8 @@ use ecs_macros::Access;
 use engine::{globals, input, render, scripting};
 use engine::render::material;
 use engine::render::vulkan::data;
-use engine::physics;
 
+use engine_physics as physics;
 use engine_util as util;
 
 struct Main {

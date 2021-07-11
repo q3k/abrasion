@@ -27,7 +27,7 @@ use vulkano::sampler as vs;
 use vulkano::sync::GpuFuture;
 use vulkano::command_buffer::CommandBuffer;
 
-use crate::physics::color;
+use engine_physics::color as color;
 
 /// Construct a mipmapped vulkan image from an iterator of raw data.
 fn mipmapped_from_iter<P, I, F>(
