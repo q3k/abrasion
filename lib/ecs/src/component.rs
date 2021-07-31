@@ -1,5 +1,3 @@
-use std::cell::Ref;
-
 pub type ID = std::any::TypeId;
 
 pub trait LuaBindings {
@@ -12,10 +10,10 @@ pub trait LuaBindings {
 pub trait Component: std::fmt::Debug + 'static {
     fn id(&self) -> ID;
     fn clone_dyn(&self) -> Box<dyn Component>;
-    fn lua_userdata<'access, 'lua>(&'access self, lua: &'lua mlua::Lua) -> Option<mlua::Value<'lua>> {
+    fn lua_userdata<'access, 'lua>(&'access self, _: &'lua mlua::Lua) -> Option<mlua::Value<'lua>> {
         None
     }
-    fn lua_fromuserdata<'a>(&self, ud: &'a mlua::AnyUserData) -> Option<Box<dyn Component>> {
+    fn lua_fromuserdata<'a>(&self, _: &'a mlua::AnyUserData) -> Option<Box<dyn Component>> {
         None
     }
 }

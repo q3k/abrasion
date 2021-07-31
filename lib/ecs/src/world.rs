@@ -339,17 +339,31 @@ mod tests {
     use crate::component;
     use crate::world;
 
-    #[derive(Debug)]
+    #[derive(Clone,Debug)]
     struct Position {
         x: u32,
         y: u32,
         z: u32,
     }
-    impl component::Component for Position {}
+    impl component::Component for Position {
+        fn id(&self) -> component::ID {
+            component::component_id::<Position>()
+        }
+        fn clone_dyn(&self) -> Box<dyn component::Component> {
+            Box::new(self.clone())
+        }
+    }
 
-    #[derive(Debug)]
+    #[derive(Clone,Debug)]
     struct Name(String);
-    impl component::Component for Name {}
+    impl component::Component for Name {
+        fn id(&self) -> component::ID {
+            component::component_id::<Name>()
+        }
+        fn clone_dyn(&self) -> Box<dyn component::Component> {
+            Box::new(self.clone())
+        }
+    }
     impl Name {
         fn new(s: &str) -> Name {
             Name(String::from(s))

@@ -185,14 +185,12 @@ impl <'a, J: Join<'a>> Iterator for JoinIter<'a, J> {
 #[cfg(test)]
 mod test {
     use crate::{
-        component::Component,
-        component::Global,
+        component::{component_id, Component, ID, Global},
         system,
         system::Join,
         world::{
             ReadComponent, ReadWriteComponent,
             ReadGlobal, ReadWriteGlobal,
-            ReadWriteAll,
             World,
         },
     };
@@ -213,7 +211,14 @@ mod test {
         y: f32,
         z: f32,
     }
-    impl Component for Position {}
+    impl Component for Position {
+        fn id(&self) -> ID {
+            component_id::<Position>()
+        }
+        fn clone_dyn(&self) -> Box<dyn Component> {
+            Box::new(self.clone())
+        }
+    }
 
     #[derive(Clone,Debug)]
     struct Velocity {
@@ -221,7 +226,14 @@ mod test {
         y: f32,
         z: f32,
     }
-    impl Component for Velocity {}
+    impl Component for Velocity {
+        fn id(&self) -> ID {
+            component_id::<Velocity>()
+        }
+        fn clone_dyn(&self) -> Box<dyn Component> {
+            Box::new(self.clone())
+        }
+    }
 
     struct Physics;
     impl<'a> system::System<'a> for Physics {
@@ -252,17 +264,16 @@ mod test {
         world.set_global(PhysicsStatus { object_count: 0u64 });
 
         let mut p = system::Processor {
-            world: &world,
             runners: Vec::new(),
         };
         p.add_system(Physics);
 
         let positions = world.components::<Position>();
         assert_eq!(vec![3.0, 6.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
-        p.run();
+        p.run(&world);
         assert_eq!(vec![4.0, 8.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
         world.set_global(Delta(2.0));
-        p.run();
+        p.run(&world);
         assert_eq!(vec![6.0, 12.0],  positions.iter().map(|(_, el)| el.z).collect::<Vec<f32>>());
         assert_eq!(2, world.global::<PhysicsStatus>().get().object_count);
     }
