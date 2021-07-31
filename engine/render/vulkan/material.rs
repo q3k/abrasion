@@ -142,7 +142,7 @@ impl VulkanColor for color::XYZ {
         graphics_queue: Arc<vd::Queue>,
     ) -> Arc<vm::ImmutableImage<vf::Format>> {
         let (width, height) = (image.width(), image.height());
-        let rgba = image.to_rgba();
+        let rgba = image.to_rgba8();
 
         let mut xyz = Vec::new();
         for (_, _, color) in rgba.enumerate_pixels() {
@@ -189,7 +189,7 @@ impl VulkanColor for color::LinearF32 {
             image::ColorType::L16 => true,
             _ => false,
         }, "linearf32 texture must be 8-bit grayscale");
-        let gray = image.to_luma();
+        let gray = image.to_luma8();
 
         mipmapped_from_iter(width, height, vf::Format::R8Unorm, gray.into_raw().iter().cloned(), graphics_queue)
     }
@@ -232,17 +232,5 @@ where
                 C::vulkan_from_image(img, graphics_queue)
             },
         }
-    }
-}
-
-fn get_mip_dim(mip_idx: u32, img_dimensions: vm::ImageDimensions) -> Result<[i32; 3], String> {
-    if let Some(dim) = img_dimensions.mipmap_dimensions(mip_idx) {
-        if let vm::ImageDimensions::Dim2d { width, height, .. } = dim {
-            Ok([width as i32, height as i32, 1])
-        } else {
-            Err("MipMapping: Did not get 2D image for blitting".to_string())
-        }
-    } else {
-        Err(format!("MipMapping: image has no mip map at level {}", mip_idx).to_string())
     }
 }

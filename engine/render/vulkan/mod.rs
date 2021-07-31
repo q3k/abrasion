@@ -63,8 +63,6 @@ pub struct Instance<WT> {
     debug_callback: vi::debug::DebugCallback,
     vulkan: Arc<vi::Instance>,
 
-    workers: Vec<worker::Worker>,
-
     surface_binding: Option<surface_binding::SurfaceBinding<WT>>,
     swapchain_binding: Option<swapchain_binding::SwapchainBinding<WT>>,
 
@@ -119,15 +117,9 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let vulkan = vulkan_opt.expect("could not create a vulkan instance");
         let debug_callback = Self::init_debug_callback(&vulkan);
 
-        let workers = (0..4).map(|n| {
-            worker::Worker::new(n)
-        }).collect();
-
         Self {
             debug_callback,
             vulkan,
-
-            workers,
 
             surface_binding: None,
             swapchain_binding: None,

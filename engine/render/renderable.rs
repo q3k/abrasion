@@ -14,10 +14,6 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
-use std::hash;
-use std::cell::Ref;
-
 use cgmath as cgm;
 
 use ecs::{Component, ComponentLuaBindings};

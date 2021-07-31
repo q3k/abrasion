@@ -14,18 +14,7 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::time;
-
-use image;
-use vulkano::device as vd;
-use vulkano::format as vf;
-use vulkano::image as vm;
-
 use engine_physics::color;
-
-use crate::vulkan::data;
 
 #[derive(Debug)]
 pub enum Texture<T: color::Color> {
@@ -37,8 +26,6 @@ pub enum Texture<T: color::Color> {
 pub struct Material {
     pub diffuse: Texture<color::XYZ>,
     pub roughness: Texture<color::LinearF32>,
-
-    pub id: u64,
 }
 
 impl Material {
@@ -49,9 +36,6 @@ impl Material {
         Self {
             diffuse,
             roughness,
-
-            // TODO: use a better method
-            id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
         }
     }
 

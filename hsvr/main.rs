@@ -15,7 +15,7 @@ struct Main {
 }
 
 impl Main {
-    pub fn new(world: &mut ecs::World, renderer: &mut render::Renderer) -> Self {
+    pub fn new(world: &mut ecs::World) -> Self {
         let mut rm = render::resource::Manager::new();
         let mesh = {
             let vertices = Arc::new(vec![
@@ -127,8 +127,8 @@ impl<'a> ecs::System <'a> for Main {
             Some(cursor) => (cursor.dx, cursor.dy),
             _ => (0.0, 0.0),
         };
-        self.cx += (dx);
-        self.cy += (dy);
+        self.cx += dx;
+        self.cy += dy;
 
         let camera = cgm::Point3::new(
             self.cx.sin() * 20.0,
@@ -136,7 +136,7 @@ impl<'a> ecs::System <'a> for Main {
             self.cy.sin() * 20.0,
         );
 
-        let view = cgm::Matrix4::look_at(
+        let view = cgm::Matrix4::look_at_rh(
             camera.clone(),
             cgm::Point3::new(0.0, 0.0, 0.0),
             cgm::Vector3::new(0.0, 0.0, 1.0)
@@ -163,9 +163,9 @@ fn main() {
     let mut world = ecs::World::new();
     world.register_component_lua_bindings(render::Transform::bindings());
     world.register_component_lua_bindings(render::Renderable::bindings());
-    let mut renderer = render::Renderer::initialize(&mut world);
-    let main = Main::new(&mut world, &mut renderer);
 
+    let main = Main::new(&mut world);
+    let renderer = render::Renderer::initialize(&mut world);
     let context = scripting::WorldContext::new(&world);
 
     let init = util::file::resource("//engine/lua/init.lua").unwrap().string().unwrap();

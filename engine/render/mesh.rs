@@ -15,8 +15,6 @@
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::sync::Arc;
-use std::time;
-use std::sync::Mutex;
 
 #[derive(Default, Copy, Clone, Debug)]
 pub struct Vertex {

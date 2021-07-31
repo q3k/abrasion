@@ -1,5 +1,4 @@
 use std::time;
-use std::time::Instant;
 
 pub struct Time {
     start: time::Instant,

@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License along with
 // Abrasion.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::time;
-
 use cgmath as cgm;
 
 use engine_physics::color;

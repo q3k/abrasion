@@ -97,7 +97,7 @@ impl<'a> ecs::System<'a> for Renderer {
         , rm
         , input): Self::SystemData,
     ) {
-        let transformedRenderables = (transforms, renderables);
+        let transformed_renderables = (transforms, renderables);
         let mut input = input.get();
         let mut status = status.get();
         let scene = scene.get();
@@ -107,7 +107,7 @@ impl<'a> ecs::System<'a> for Renderer {
             meshes: BTreeMap::new(),
             lights: Vec::new(),
         };
-        for (transform, renderable) in transformedRenderables.join_all() {
+        for (transform, renderable) in transformed_renderables.join_all() {
             match renderable {
                 Renderable::Light(lrid) => {
                     rd.lights.push((*lrid, transform.xyzw()));
@@ -115,7 +115,6 @@ impl<'a> ecs::System<'a> for Renderer {
                 Renderable::Mesh(mesh_id, material_id) => {
                     rd.meshes.entry((*mesh_id, *material_id)).or_insert(Vec::new()).push(transform.m4());
                 },
-                _ => (),
             }
         }
         let camera = &scene.camera;
