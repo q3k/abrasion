@@ -28,6 +28,9 @@ use vulkano::sync::GpuFuture;
 use vulkano::command_buffer::CommandBuffer;
 
 use engine_physics::color as color;
+use engine_util::file;
+
+use crate::material::Texture;
 
 /// Construct a mipmapped vulkan image from an iterator of raw data.
 fn mipmapped_from_iter<P, I, F>(
@@ -121,9 +124,7 @@ fn mipmapped_from_iter<P, I, F>(
     image
 }
 
-/// Represents a layout of color channels whose users (single colors and textures) can be converted
-/// to Vulkan images.
-pub trait ChannelLayoutVulkan {
+pub trait VulkanColor: color::Color {
     fn vulkan_from_image(
         image: Arc<image::DynamicImage>,
         graphics_queue: Arc<vd::Queue>,
@@ -135,7 +136,7 @@ pub trait ChannelLayoutVulkan {
     ) -> Arc<vm::ImmutableImage<vf::Format>>;
 }
 
-impl ChannelLayoutVulkan for color::XYZ {
+impl VulkanColor for color::XYZ {
     fn vulkan_from_image(
         image: Arc<image::DynamicImage>,
         graphics_queue: Arc<vd::Queue>,
@@ -177,7 +178,7 @@ impl ChannelLayoutVulkan for color::XYZ {
     }
 }
 
-impl ChannelLayoutVulkan for color::LinearF32 {
+impl VulkanColor for color::LinearF32 {
     fn vulkan_from_image(
         image: Arc<image::DynamicImage>,
         graphics_queue: Arc<vd::Queue>,
@@ -210,6 +211,27 @@ impl ChannelLayoutVulkan for color::LinearF32 {
         
         future.flush().unwrap();
         image_view
+    }
+}
+
+pub trait VulkanTexture<C: VulkanColor> {
+    fn vulkan_image(&self, _: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>>;
+}
+
+impl <C> VulkanTexture<C> for Texture<C>
+where
+    C: VulkanColor
+{
+    fn vulkan_image(&self, graphics_queue: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>> {
+        match self {
+            Texture::<C>::Color(c) => c.vulkan_from_value(graphics_queue),
+            Texture::<C>::ImageRef(r) => {
+                let format = image::ImageFormat::from_path(r).unwrap();
+                let r = file::resource(r.clone()).unwrap();
+                let img = Arc::new(image::load(r, format).unwrap());
+                C::vulkan_from_image(img, graphics_queue)
+            },
+        }
     }
 }
 

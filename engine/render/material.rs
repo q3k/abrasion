@@ -23,48 +23,22 @@ use vulkano::device as vd;
 use vulkano::format as vf;
 use vulkano::image as vm;
 
-use engine_util::file;
 use engine_physics::color;
 
 use crate::vulkan::data;
-use crate::vulkan::material::ChannelLayoutVulkan;
 
 #[derive(Debug)]
-pub enum Texture<T: ChannelLayoutVulkan> {
+pub enum Texture<T: color::Color> {
     Color(T),
     ImageRef(String),
 }
 
-impl<T: ChannelLayoutVulkan> Texture<T> {
-    fn vulkan_image(&self, graphics_queue: Arc<vd::Queue>) -> Arc<vm::ImmutableImage<vf::Format>> {
-        match self {
-            Texture::<T>::Color(c) => c.vulkan_from_value(graphics_queue),
-            Texture::<T>::ImageRef(r) => {
-                let format = image::ImageFormat::from_path(r).unwrap();
-                let r = file::resource(r.clone()).unwrap();
-                let img = Arc::new(image::load(r, format).unwrap());
-                T::vulkan_from_image(img, graphics_queue)
-            },
-        }
-    }
-
-    pub fn from_color(color: T) -> Self {
-        Texture::<T>::Color(color)
-    }
-
-    pub fn from_image(name: String) -> Self {
-        Texture::<T>::ImageRef(name)
-    }
-}
-
 #[derive(Debug)]
 pub struct Material {
-    diffuse: Texture<color::XYZ>,
-    roughness: Texture<color::LinearF32>,
+    pub diffuse: Texture<color::XYZ>,
+    pub roughness: Texture<color::LinearF32>,
 
     pub id: u64,
-    // vulkan cache
-    vulkan: Mutex<Option<data::Textures>>,
 }
 
 impl Material {
@@ -78,28 +52,9 @@ impl Material {
 
             // TODO: use a better method
             id: time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos() as u64,
-            vulkan: Mutex::new(None),
         }
     }
 
-    pub fn vulkan_textures(
-        &self,
-        graphics_queue: Arc<vd::Queue>,
-    ) -> data::Textures {
-        let mut cache = self.vulkan.lock().unwrap();
-        match &mut *cache {
-            Some(data) => data.clone(),
-            None => {
-                let diffuse = self.diffuse.vulkan_image(graphics_queue.clone());
-                let roughness = self.roughness.vulkan_image(graphics_queue.clone());
-                let textures = data::Textures {
-                    diffuse, roughness,
-                };
-                *cache = Some(textures.clone());
-                textures
-            },
-        }
-    }
 }
 
 pub struct PBRMaterialBuilder {

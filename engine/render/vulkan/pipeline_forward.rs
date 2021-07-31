@@ -217,7 +217,7 @@ impl pipeline::Pipeline for Forward {
 
     fn make_descriptor_set(
         &mut self,
-        textures: data::Textures,
+        textures: &data::Textures,
         fragment_ubo_buffer: Arc<vb::cpu_pool::CpuBufferPoolSubbuffer<data::FragmentUniformBufferObject, Arc<vm::pool::StdMemoryPool>>>,
     ) -> Arc<pipeline::VulkanoDescriptorSet> {
         let image_sampler = vs::Sampler::simple_repeat_linear(self.device.clone());

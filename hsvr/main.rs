@@ -65,8 +65,8 @@ impl Main {
         };
 
         let material = rm.add(render::material::PBRMaterialBuilder {
-            diffuse: render::material::Texture::from_image(String::from("//assets/test-128px.png")),
-            roughness: render::material::Texture::from_image(String::from("//assets/test-128px-roughness.png")),
+            diffuse: render::material::Texture::ImageRef(String::from("//assets/test-128px.png")),
+            roughness: render::material::Texture::ImageRef(String::from("//assets/test-128px-roughness.png")),
         }.build(), Some("test-128px"));
 
         let light = rm.add(render::Light::omni_test(), Some("omni"));

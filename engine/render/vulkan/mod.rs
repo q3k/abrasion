@@ -75,6 +75,7 @@ pub struct Instance<WT> {
     fps_counter: Counter,
 
     mesh_buffers: BTreeMap<ResourceID<Mesh>, data::VertexData>,
+    material_textures: BTreeMap<ResourceID<Material>, data::Textures>,
 }
 
 type FlipFuture<WT> = FenceSignalFuture<vs::PresentFuture<vc::CommandBufferExecFuture<vs::SwapchainAcquireFuture<WT>, Arc<vc::AutoCommandBuffer>>, WT>>;
@@ -138,6 +139,7 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             fps_counter: Counter::new(time::Duration::from_millis(1000)),
 
             mesh_buffers: BTreeMap::new(),
+            material_textures: BTreeMap::new(),
         }
     }
 
@@ -178,19 +180,6 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
 
     pub fn swapchain_dimensions(&self) -> Option<[u32; 2]> {
         Some(self.swapchain_binding.as_ref()?.chain.dimensions())
-    }
-
-    fn buffers_for_mesh<'a, 'b, 'c>(
-        &'a mut self,
-        mesh_id: ResourceID<Mesh>,
-        rm: &'b resource::Manager,
-        queue: &'c Arc<vulkano::device::Queue>,
-    ) -> &'a data::VertexData {
-        let entry = self.mesh_buffers.entry(mesh_id);
-        entry.or_insert_with(move || {
-            let mesh = mesh_id.get(rm);
-            data::VertexData::new(mesh, queue.clone())
-        })
     }
 
     fn make_graphics_commands(
@@ -251,7 +240,18 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
         let ubo_buffer = Arc::new(self.uniform_pool.as_ref().unwrap().next(ubo).unwrap());
 
         for ((mesh_id, material_id), transforms) in &data.meshes {
-            let material = material_id.get(rm);
+            let textures = {
+                let queue = queue.clone();
+                self.material_textures.entry(material_id.clone()).or_insert_with(move || {
+                    data::Textures::new(material_id.get(rm), queue)
+                })
+            };
+            let mbuffers = {
+                let queue = queue.clone();
+                self.mesh_buffers.entry(mesh_id.clone()).or_insert_with(move || {
+                    data::VertexData::new(mesh_id.get(rm), queue.clone())
+                })
+            };
 
             let mut builder = vc::AutoCommandBufferBuilder::secondary_graphics_one_time_submit(
                 device.clone(), queue.family(), vf::Subpass::from(rp.clone(), 0).unwrap()).unwrap();
@@ -263,10 +263,8 @@ impl<WT: 'static + Send + Sync> Instance<WT> {
             ).unwrap();
             future.flush().unwrap();
 
-            let textures = material.vulkan_textures(queue.clone());
             let ds = self.pipeline.as_mut().unwrap().make_descriptor_set(textures, ubo_buffer.clone());
 
-            let mbuffers = self.buffers_for_mesh(mesh_id.clone(), rm, &queue);
             builder.draw_indexed(pipeline.clone(), &vc::DynamicState::none(),
                 vec![mbuffers.vbuffer.clone(), instancebuffer], mbuffers.ibuffer.clone(), ds, pco)
                 .unwrap();

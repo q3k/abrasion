@@ -95,3 +95,12 @@ pub fn srgb_to_cie_xyz(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
 
     (x, y , z)
 }
+
+pub trait Color {
+}
+
+impl Color for LinearF32 {
+}
+
+impl Color for XYZ {
+}

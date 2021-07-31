@@ -21,6 +21,8 @@ use vulkano::buffer as vb;
 use vulkano::sync::GpuFuture;
 
 use crate::mesh::{Mesh, Vertex};
+use crate::material::Material;
+use crate::vulkan::material::VulkanTexture;
 vulkano::impl_vertex!(Vertex, pos, normal, tex);
 
 #[derive(Default, Copy, Clone)]
@@ -61,6 +63,19 @@ pub struct Textures {
     pub diffuse: Arc<vulkano::image::ImmutableImage<vulkano::format::Format>>,
     // roughness: R
     pub roughness: Arc<vulkano::image::ImmutableImage<vulkano::format::Format>>,
+}
+
+impl Textures {
+    pub fn new(
+        material: &Material,
+        graphics_queue: Arc<vd::Queue>,
+    ) -> Self {
+        let diffuse = material.diffuse.vulkan_image(graphics_queue.clone());
+        let roughness = material.roughness.vulkan_image(graphics_queue.clone());
+        Self {
+            diffuse, roughness,
+        }
+    }
 }
 
 pub struct VertexData {
