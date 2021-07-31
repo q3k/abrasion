@@ -16,7 +16,11 @@
 
 use std::sync::Arc;
 
-use crate::mesh::Vertex;
+use vulkano::device as vd;
+use vulkano::buffer as vb;
+use vulkano::sync::GpuFuture;
+
+use crate::mesh::{Mesh, Vertex};
 vulkano::impl_vertex!(Vertex, pos, normal, tex);
 
 #[derive(Default, Copy, Clone)]
@@ -60,8 +64,30 @@ pub struct Textures {
 }
 
 pub struct VertexData {
-    pub vbuffer: Arc<vulkano::buffer::ImmutableBuffer<[Vertex]>>,
-    pub ibuffer: Arc<vulkano::buffer::ImmutableBuffer<[u16]>>,
+    pub vbuffer: Arc<vb::ImmutableBuffer<[Vertex]>>,
+    pub ibuffer: Arc<vb::ImmutableBuffer<[u16]>>,
+}
+
+impl VertexData {
+    pub fn new(m: &Mesh, gq: Arc<vd::Queue>) -> Self {
+         let (vbuffer, vfuture) = vb::immutable::ImmutableBuffer::from_iter(
+             m.vertices.iter().cloned(),
+             vb::BufferUsage::vertex_buffer(),
+             gq.clone(),
+         ).unwrap();
+         let (ibuffer, ifuture) = vb::immutable::ImmutableBuffer::from_iter(
+             m.indices.iter().cloned(),
+             vb::BufferUsage::index_buffer(),
+             gq.clone(),
+         ).unwrap();
+         vfuture.flush().unwrap();
+         ifuture.flush().unwrap();
+
+         Self {
+             vbuffer: vbuffer.clone(),
+             ibuffer: ibuffer.clone(),
+         }
+    }
 }
 
 impl std::fmt::Debug for VertexData {
