@@ -2,6 +2,7 @@ pub mod borrow;
 pub mod component;
 pub mod componentmap;
 pub mod entity;
+pub mod index;
 pub mod globalmap;
 pub mod system;
 pub mod world;

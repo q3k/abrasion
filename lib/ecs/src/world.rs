@@ -18,6 +18,7 @@ use crate::globalmap::{
 };
 use crate::entity;
 use crate::component;
+use crate::index;
 
 pub struct ReadComponent<'a, T: component::Component> {
     world: &'a World,
@@ -133,6 +134,22 @@ impl<'a, T: component::Global> ReadWriteGlobal<'a, T> {
     }
 }
 
+pub struct ReadIndex<'a, I: index::Index> {
+    world: &'a World,
+    phantom: PhantomData<&'a I>
+}
+
+impl <'a, I: index::Index> ReadIndex<'a, I> {
+    pub fn get(&self) -> &'a I {
+        let iid = index::index_id::<I>();
+        let cid = component::component_id::<I::Component>();
+        let b = self.world.indices.get(&cid).unwrap().get(&iid).unwrap();
+        unsafe {
+            index::retype(b)
+        }
+    }
+}
+
 /// ReadWriteAll gives access to all components/entities/globals within a world. Using it in a
 /// system means that no other system can run in parallel, and limits performance. This should only
 /// be used when absolutely necessary (eg. for scripting systems).
@@ -163,6 +180,7 @@ pub struct World {
     component_queue: RefCell<Vec<(component::ID, Box<dyn component::Component>, entity::Entity)>>,
     globals: GlobalMap,
     next_id: RefCell<entity::ID>,
+    indices: BTreeMap<component::ID, BTreeMap<index::ID, Box<dyn index::IndexDyn>>>,
 }
 
 impl World {
@@ -174,6 +192,7 @@ impl World {
             component_queue: RefCell::new(Vec::new()),
             globals: GlobalMap::new(),
             next_id: RefCell::new(1u64),
+            indices: BTreeMap::new(),
         }
     }
 
@@ -225,6 +244,7 @@ impl World {
         c: Box<dyn component::Component>,
         e: entity::Entity
     ) {
+        self.index_on_added(e.id(), &c);
         let map = self.components.entry(cid).or_insert(ComponentMap::new());
         map.insert(e.id(), c).unwrap();
     }
@@ -332,6 +352,33 @@ impl World {
     pub fn lua_components(&self) -> &BTreeMap<component::ID, Box<dyn component::LuaBindings>> {
         &self.component_lua_bindings
     }
+
+    pub fn add_index<I: index::Index>(&mut self, ix: I) {
+        let inner = self.indices.entry(component::component_id::<I::Component>()).or_insert(BTreeMap::new());
+        let ixid = index::index_id::<I>();
+
+        use std::collections::btree_map::Entry;
+        match inner.entry(ixid) {
+            Entry::Occupied(_) => panic!("index already registered {:?}", ixid),
+            Entry::Vacant(v) => { v.insert(ix.erase()); },
+        }
+    }
+
+    pub fn index<'a, I: index::Index>(&'a self) -> ReadIndex<'a, I> {
+        ReadIndex {
+            world: self,
+            phantom: PhantomData,
+        }
+    }
+
+    fn index_on_added(&mut self, eid: entity::ID, c: &Box<dyn component::Component>) {
+        let cid = c.id();
+        if let Some(indices) = self.indices.get_mut(&cid) {
+            for (_, ix) in indices.iter_mut() {
+                ix.added(eid, c);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -371,7 +418,7 @@ mod tests {
     }
 
     #[test]
-    fn new_list() {
+    fn world() {
         let mut world = world::World::new();
         world.new_entity().with(Name::new("foo")).with(Position { x: 1, y: 2, z: 3 }).build();
         world.new_entity().with(Name::new("bar")).with(Position { x: 4, y: 5, z: 6 }).build();

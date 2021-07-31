@@ -11,6 +11,7 @@ rust_library(
         "src/componentmap.rs",
         "src/globalmap.rs",
         "src/entity.rs",
+        "src/index.rs",
         "src/system.rs",
         "src/world.rs",
     ],

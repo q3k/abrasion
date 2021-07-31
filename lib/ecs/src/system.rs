@@ -3,10 +3,12 @@ use std::iter::Peekable;
 
 use crate::{
     component,
+    index,
     world::{
         ReadComponent, ReadComponentIter,
         ReadWriteComponent, ReadWriteComponentIter,
         ReadGlobal, ReadWriteGlobal,
+        ReadIndex,
         ReadWriteAll,
         World,
     }
@@ -79,6 +81,12 @@ impl<'a, T: component::Global> Access<'a> for ReadGlobal<'a, T> {
 impl<'a, T: component::Global> Access<'a> for ReadWriteGlobal<'a, T> {
     fn fetch(world: &'a World) -> Self {
         world.global_mut()
+    }
+}
+
+impl<'a, I: index::Index> Access<'a> for ReadIndex<'a, I> {
+    fn fetch(world: &'a World) -> Self {
+        world.index()
     }
 }
 
