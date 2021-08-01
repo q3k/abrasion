@@ -9,20 +9,36 @@ pub fn index_id<I: Index>() -> ID {
     std::any::TypeId::of::<I>()
 }
 
+pub trait IndexComponent: 'static {
+    type Data<'a>;
+    type Typed: Sized;
+
+    unsafe fn retype<'a>(&'a self) -> &'a Self::Typed;
+    fn encode<'a>(c: &'a Box<dyn component::Component>) -> Self::Data<'a>;
+}
+
+impl<C: component::Component> IndexComponent for C {
+    type Data<'a> = Option<&'a C>;
+    type Typed = C;
+
+    unsafe fn retype<'a>(&'a self) -> &'a C {
+        let val = self as *const Self;
+        &(*val)
+    }
+
+    fn encode<'a>(c: &'a Box<dyn component::Component>) -> Option<&'a C> {
+        let v = c.as_ref() as *const (dyn component::Component) as *const C;
+        unsafe {
+            Some(&*v)
+        }
+    }
+}
+
 pub trait Index: component::Global + 'static {
-    type Component: component::Component;
+    type Component: IndexComponent;
 
     fn id(&self) -> ID where Self: Sized {
         index_id::<Self>()
-    }
-
-    fn undyn<'a>(&self, c: &'a Box<dyn component::Component>) -> &'a Self::Component {
-        let c = c.as_ref();
-        let val = c as *const (dyn component::Component);
-        let val = val as *const Self::Component;
-        unsafe {
-            &(*val)
-        }
     }
 
     fn erase(self) -> Box<dyn IndexDyn> where Self: Sized {
@@ -31,9 +47,7 @@ pub trait Index: component::Global + 'static {
         })
     }
 
-    fn added(&mut self, _eid: entity::ID, _c: &Self::Component) {}
-    fn updated(&mut self, _eid: entity::ID, _c: &Self::Component) {}
-    fn removed(&mut self, _eid: entity::ID) {}
+    fn added<'a>(&'a mut self, _eid: entity::ID, _c: <Self::Component as IndexComponent>::Data<'a>) {}
 }
 
 impl<I: Index> component::Global for I {}
@@ -50,14 +64,13 @@ pub unsafe fn retype<'a, I: Index>(b: &'a Box<dyn IndexDyn>) -> &'a I {
     res
 }
 
-struct IndexDynWrapper<C: component::Component> {
+struct IndexDynWrapper<C: IndexComponent> {
     ix: Box<dyn Index<Component=C>>,
 }
 
-impl<C: component::Component> IndexDyn for IndexDynWrapper<C> {
+impl<C: IndexComponent> IndexDyn for IndexDynWrapper<C> {
     fn added(&mut self, eid: entity::ID, c: &Box<dyn component::Component>) {
-        let cv = self.ix.undyn(c);
-        self.ix.added(eid, cv)
+        self.ix.added(eid, C::encode(c))
     }
 }
 
@@ -92,8 +105,8 @@ mod tests {
     impl index::Index for Sorted {
         type Component = Position;
 
-        fn added(&mut self, eid: entity::ID, c: &Position) {
-            self.by_x.push((c.x, eid));
+        fn added(&mut self, eid: entity::ID, c: Option<&Position>) {
+            self.by_x.push((c.as_ref().unwrap().x, eid));
             self.by_x.sort_by(|a, b| a.0.cmp(&b.0));
         }
     }

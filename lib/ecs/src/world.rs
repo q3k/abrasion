@@ -142,10 +142,9 @@ pub struct ReadIndex<'a, I: index::Index> {
 impl <'a, I: index::Index> ReadIndex<'a, I> {
     pub fn get(&self) -> &'a I {
         let iid = index::index_id::<I>();
-        let cid = component::component_id::<I::Component>();
-        let b = self.world.indices.get(&cid).unwrap().get(&iid).unwrap();
+        let b = self.world.indices.get(&iid).unwrap();
         unsafe {
-            index::retype(b)
+            index::retype::<I>(b)
         }
     }
 }
@@ -180,7 +179,7 @@ pub struct World {
     component_queue: RefCell<Vec<(component::ID, Box<dyn component::Component>, entity::Entity)>>,
     globals: GlobalMap,
     next_id: RefCell<entity::ID>,
-    indices: BTreeMap<component::ID, BTreeMap<index::ID, Box<dyn index::IndexDyn>>>,
+    indices: BTreeMap<index::ID, Box<dyn index::IndexDyn>>,
 }
 
 impl World {
@@ -354,11 +353,11 @@ impl World {
     }
 
     pub fn add_index<I: index::Index>(&mut self, ix: I) {
-        let inner = self.indices.entry(component::component_id::<I::Component>()).or_insert(BTreeMap::new());
+        //let inner = self.indices.entry(component::component_id::<I::Component>()).or_insert(BTreeMap::new());
         let ixid = index::index_id::<I>();
 
         use std::collections::btree_map::Entry;
-        match inner.entry(ixid) {
+        match self.indices.entry(ixid) {
             Entry::Occupied(_) => panic!("index already registered {:?}", ixid),
             Entry::Vacant(v) => { v.insert(ix.erase()); },
         }
@@ -372,11 +371,8 @@ impl World {
     }
 
     fn index_on_added(&mut self, eid: entity::ID, c: &Box<dyn component::Component>) {
-        let cid = c.id();
-        if let Some(indices) = self.indices.get_mut(&cid) {
-            for (_, ix) in indices.iter_mut() {
-                ix.added(eid, c);
-            }
+        for (_, ix) in self.indices.iter_mut() {
+            ix.added(eid, c);
         }
     }
 }

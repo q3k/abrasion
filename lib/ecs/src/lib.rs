@@ -1,3 +1,5 @@
+#![feature(generic_associated_types)]
+
 pub mod borrow;
 pub mod component;
 pub mod componentmap;
