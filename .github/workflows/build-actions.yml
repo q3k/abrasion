@@ -9,9 +9,9 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     steps:
     - uses: actions/checkout@v2
-    - run: bazel build //engine:demo
+    - run: bazel build //hsvr:demo
     - uses: actions/upload-artifact@v2
       with:
         name: demo-bin
-        path: bazel-bin/engine/demo.zip
+        path: bazel-bin/hsvr/demo.zip
 

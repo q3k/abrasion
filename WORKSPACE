@@ -13,6 +13,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 pip_parse(
     name = "pydeps",
     requirements_lock = "//third_party/py:requirements.txt",
+    python_interpreter = "python",
 )
 
 load("@pydeps//:requirements.bzl", "install_deps")
